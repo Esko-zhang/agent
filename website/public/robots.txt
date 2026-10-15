@@ -1,0 +1,5 @@
+# This site is private: accounts are issued by Durlevel and every page requires
+# a sign-in. It is sent to specific customers, not published. Nothing here is
+# meant to be indexed.
+User-agent: *
+Disallow: /
