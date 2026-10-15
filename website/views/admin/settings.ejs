@@ -79,6 +79,22 @@
   </div>
 
   <div class="card">
+    <h2>访问记录 <span class="hint">（「访问记录」页的时间显示与日志保留期）</span></h2>
+    <div class="form-grid">
+      <label class="field">
+        <span>时区 <span class="hint">IANA 名称，如 Asia/Shanghai</span></span>
+        <input name="log_timezone" value="<%= settings.log_timezone %>" maxlength="60"
+               placeholder="Asia/Shanghai">
+      </label>
+      <label class="field">
+        <span>日志保留天数 <span class="hint">超期自动删除；IP 属个人数据，建议不超过 180 天</span></span>
+        <input name="log_retention_days" type="number" min="1" max="3650"
+               value="<%= settings.log_retention_days %>">
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="form-actions">
       <button class="btn" type="submit">保存设置</button>
       <a class="btn btn-ghost" href="/products" target="_blank" rel="noopener">预览前台 →</a>

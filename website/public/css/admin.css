@@ -133,3 +133,19 @@ table.data .mini-thumb {
   .admin-side .side-foot { margin-top: 14px; }
   .admin-main { padding: 20px; }
 }
+
+/* ---------- 访问记录 ---------- */
+table.data td.nowrap { white-space: nowrap; }
+table.data td.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+}
+table.data td.ua {
+  max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; color: var(--ink-soft); font-size: 12px;
+}
+.badge-fail { background: #fdf0ef; color: var(--danger); }
+.pager {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+}

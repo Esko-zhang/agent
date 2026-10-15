@@ -3,6 +3,7 @@ const express = require('express');
 const settings = require('../lib/settings');
 const { verifyLogin, q } = require('../lib/users');
 const ratelimit = require('../lib/ratelimit');
+const accesslog = require('../lib/accesslog');
 
 const router = express.Router();
 
@@ -37,6 +38,7 @@ router.post('/login', (req, res) => {
 
   const limited = ratelimit.check(ip, username);
   if (limited.blocked) {
+    accesslog.record(req, 'login_failed', { username, path: '/login (rate limited)' });
     return render(`Too many failed attempts. Please try again in ${limited.retryAfterMin} minute(s).`);
   }
 
@@ -47,19 +49,23 @@ router.post('/login', (req, res) => {
   const user = verifyLogin(username, password);
   if (!user) {
     ratelimit.recordFailure(ip, username);
+    accesslog.record(req, 'login_failed', { username, path: '/login' });
     return render('Incorrect account or password.');
   }
   if (user.blocked) {
+    accesslog.record(req, 'login_failed', { username, path: '/login (account disabled)' });
     return render('This account has been disabled. Please contact your administrator.');
   }
 
   ratelimit.reset(ip, username);
   q.touchLogin.run(user.id);
   res.setSession({ uid: user.id });
+  accesslog.record(req, 'login_success', { user, username: user.username, path: '/login' });
   return res.redirect(next);
 });
 
 router.post('/logout', (req, res) => {
+  if (req.user) accesslog.record(req, 'logout', { path: '/logout' });
   res.clearSession();
   res.redirect('/');
 });

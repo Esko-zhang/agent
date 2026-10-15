@@ -9,6 +9,24 @@ function bool(v, dflt = false) {
   return /^(1|true|yes|on)$/i.test(String(v));
 }
 
+/**
+ * Express's `trust proxy` setting, which decides how much of X-Forwarded-For
+ * to believe — and therefore which IP the access log records.
+ *   off / 0 / false  -> trust nothing (direct connections)
+ *   1                -> one proxy in front (a plain Nginx or Caddy)
+ *   2, 3, …          -> that many proxies (e.g. Cloudflare -> Nginx -> app)
+ *   loopback, an IP, a CIDR, or a comma-separated list of them
+ * Too low and every visitor is logged as the CDN; too high and a visitor can
+ * forge their own IP by sending the header themselves.
+ */
+function parseTrustProxy(raw) {
+  const v = String(raw == null ? '' : raw).trim();
+  if (v === '' || /^(0|false|off|no)$/i.test(v)) return false;
+  if (/^(1|true|on|yes)$/i.test(v)) return 1;
+  if (/^\d+$/.test(v)) return Number(v);
+  return v;
+}
+
 const isProd = process.env.NODE_ENV === 'production';
 const sessionSecret = process.env.SESSION_SECRET || '';
 
@@ -75,7 +93,7 @@ module.exports = {
   host: process.env.HOST || '0.0.0.0',
   sessionSecret: sessionSecret || 'dev-only-insecure-secret-change-me',
   sessionTtlMs: Number(process.env.SESSION_TTL_HOURS || 12) * 60 * 60 * 1000,
-  trustProxy: bool(process.env.TRUST_PROXY, false),
+  trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
   cookieSecure: bool(process.env.COOKIE_SECURE, isProd),
   dbFile: process.env.DB_FILE || path.join(ROOT, 'data', 'site.db'),
   uploadDir: process.env.UPLOAD_DIR || path.join(ROOT, 'public', 'uploads'),

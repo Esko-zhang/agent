@@ -34,6 +34,7 @@ router.get('/', (_req, res) => {
 router.use('/products', require('./products'));
 router.use('/staff', require('./staff'));
 router.use('/users', require('./users'));
+router.use('/logs', require('./logs'));
 router.use('/settings', require('./settings'));
 
 module.exports = router;

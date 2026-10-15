@@ -1,0 +1,167 @@
+<%- include('_shell-top', { heading: '访问记录' }) %>
+
+<%
+// Carries the current filter into pagination links and the CSV export.
+function qs(overrides) {
+  var p = new URLSearchParams();
+  var base = {
+    username: filter.username, event: filter.event, q: filter.q,
+    from: filter.from, to: filter.to, page: page,
+  };
+  Object.keys(base).forEach(function (k) {
+    var v = (overrides && k in overrides) ? overrides[k] : base[k];
+    if (v) p.set(k, v);
+  });
+  var s = p.toString();
+  return s ? '?' + s : '';
+}
+var hasFilter = filter.username || filter.event || filter.q || filter.from || filter.to;
+%>
+
+<div class="admin-head">
+  <h1>访问记录</h1>
+  <div class="spacer"></div>
+  <div class="actions">
+    <a class="btn btn-ghost" href="/admin/logs/export.csv<%= qs({ page: '' }) %>">导出 CSV</a>
+  </div>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<div class="stat-grid">
+  <div class="stat">
+    <div class="n"><%= stats.loginsToday %></div>
+    <div class="k">近 24 小时登录次数</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.activeAccountsToday %></div>
+    <div class="k">近 24 小时活跃账号</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.uniqueIpsToday %></div>
+    <div class="k">近 24 小时独立 IP</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.failedWeek %></div>
+    <div class="k">近 7 天登录失败</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>筛选 <span class="hint">时间按「<%= tz %>」显示；日志保留 <%= retentionDays %> 天，可在「网站设置」里调整。</span></h2>
+  <form method="get" action="/admin/logs">
+    <div class="form-grid">
+      <label class="field">
+        <span>账号</span>
+        <select name="username">
+          <option value="">全部账号</option>
+          <% usernames.forEach(function (u) { %>
+            <option value="<%= u %>" <%= filter.username === u ? 'selected' : '' %>><%= u %></option>
+          <% }); %>
+        </select>
+      </label>
+      <label class="field">
+        <span>事件类型</span>
+        <select name="event">
+          <option value="">全部事件</option>
+          <% events.forEach(function (e) { %>
+            <option value="<%= e.key %>" <%= filter.event === e.key ? 'selected' : '' %>><%= e.zh %></option>
+          <% }); %>
+        </select>
+      </label>
+      <label class="field">
+        <span>开始日期</span>
+        <input type="date" name="from" value="<%= filter.from %>">
+      </label>
+      <label class="field">
+        <span>结束日期 <span class="hint">（含当天）</span></span>
+        <input type="date" name="to" value="<%= filter.to %>">
+      </label>
+      <label class="field span-2">
+        <span>关键词 <span class="hint">（匹配 IP、页面地址或浏览器标识）</span></span>
+        <input name="q" value="<%= filter.q %>" placeholder="例如 203.0.113 或 /products">
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn" type="submit">筛选</button>
+      <% if (hasFilter) { %><a class="btn btn-ghost" href="/admin/logs">清除条件</a><% } %>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>
+    共 <%= total %> 条记录
+    <% if (pages > 1) { %><span class="hint">第 <%= page %> / <%= pages %> 页</span><% } %>
+  </h2>
+
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>时间</th>
+          <th>账号</th>
+          <th>事件</th>
+          <th>页面</th>
+          <th>IP 地址</th>
+          <th>浏览器 / 设备</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr>
+            <td colspan="6" class="empty-row">
+              <%= hasFilter ? '没有符合条件的记录。' : '还没有访问记录。有人登录或浏览页面后这里就会出现。' %>
+            </td>
+          </tr>
+        <% } %>
+        <% rows.forEach(function (r) { %>
+          <tr>
+            <td class="nowrap"><%= fmt(r.occurred_at) %></td>
+            <td>
+              <% if (r.username) { %>
+                <strong><%= r.username %></strong>
+                <% if (r.role === 'admin') { %><span class="badge badge-admin">管理员</span><% } %>
+              <% } else { %>
+                <span class="hint">（未知账号）</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (r.event === 'login_failed') { %>
+                <span class="badge badge-fail"><%= eventLabels[r.event] %></span>
+              <% } else if (r.event === 'login_success') { %>
+                <span class="badge badge-on"><%= eventLabels[r.event] %></span>
+              <% } else { %>
+                <span class="badge badge-off"><%= eventLabels[r.event] || r.event %></span>
+              <% } %>
+            </td>
+            <td class="mono"><%= r.path || '—' %></td>
+            <td class="mono"><%= r.ip || '—' %></td>
+            <td class="ua" title="<%= r.user_agent %>"><%= r.user_agent || '—' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (pages > 1) { %>
+    <div class="pager">
+      <% if (page > 1) { %>
+        <a class="btn btn-ghost btn-sm" href="/admin/logs<%= qs({ page: 1 }) %>">« 首页</a>
+        <a class="btn btn-ghost btn-sm" href="/admin/logs<%= qs({ page: page - 1 }) %>">‹ 上一页</a>
+      <% } %>
+      <span class="hint">第 <%= page %> / <%= pages %> 页</span>
+      <% if (page < pages) { %>
+        <a class="btn btn-ghost btn-sm" href="/admin/logs<%= qs({ page: page + 1 }) %>">下一页 ›</a>
+        <a class="btn btn-ghost btn-sm" href="/admin/logs<%= qs({ page: pages }) %>">末页 »</a>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<p class="admin-hint">
+  IP 地址属于个人数据。请在网站上说明你们会记录访问日志及保留多久，并只在排查问题或安全审计时查阅。
+  日志超过保留期会自动删除。
+</p>
+
+<%- include('_shell-bottom') %>

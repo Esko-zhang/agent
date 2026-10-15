@@ -52,3 +52,21 @@ CREATE TABLE IF NOT EXISTS settings (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL DEFAULT ''
 );
+
+-- Who reached the site, from which IP, and when. Logins (success and failure)
+-- are always recorded; page views are recorded for signed-in visitors.
+CREATE TABLE IF NOT EXISTS access_log (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  occurred_at TEXT    NOT NULL DEFAULT (datetime('now')),   -- UTC
+  user_id     INTEGER,                                      -- NULL for a failed login
+  username    TEXT    NOT NULL DEFAULT '',                  -- copied in, survives account deletion
+  role        TEXT    NOT NULL DEFAULT '',
+  event       TEXT    NOT NULL,                             -- see EVENTS in src/lib/accesslog.js
+  path        TEXT    NOT NULL DEFAULT '',
+  ip          TEXT    NOT NULL DEFAULT '',
+  user_agent  TEXT    NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_access_log_time ON access_log (occurred_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_access_log_user ON access_log (username, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_access_log_event ON access_log (event, occurred_at DESC);

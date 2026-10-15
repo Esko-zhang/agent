@@ -15,6 +15,10 @@ const DEFAULTS = {
   contact_intro: 'Our sales team is ready to support your enquiry.',
   footer_text: '© Durlevel. All rights reserved.',
   company_address: '',
+  // Access log: the timezone its timestamps are shown in, and how long rows are
+  // kept. IP addresses are personal data, so the log is not kept indefinitely.
+  log_timezone: 'Asia/Shanghai',
+  log_retention_days: '180',
   ...Object.fromEntries(CATEGORIES.map((c) => [c.settingKey, c.defaultTitle])),
 };
 
