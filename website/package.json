@@ -4,12 +4,15 @@
   "private": true,
   "description": "Durlevel foreign-trade product catalogue site (login-gated) with admin backend",
   "type": "commonjs",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
     "init-db": "node scripts/init-db.js",
-    "reset-password": "node scripts/reset-password.js"
+    "reset-password": "node scripts/reset-password.js",
+    "seed-demo": "node scripts/seed-demo.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

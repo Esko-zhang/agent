@@ -5,6 +5,37 @@
 
 设计方案见 [`docs/规划方案.md`](docs/规划方案.md)。
 
+## 在自己电脑上预览（约 5 分钟）
+
+需要先装 [Node.js](https://nodejs.org/)（选 LTS 版，一路下一步即可），然后打开终端
+（Windows：开始菜单搜 `PowerShell`；Mac：搜 `终端`），逐行粘贴：
+
+```bash
+git clone -b claude/adoring-shannon-88sms1 https://github.com/Esko-zhang/agent.git
+cd agent/website
+npm ci                                  # 安装依赖
+ADMIN_PASSWORD=Preview123 npm run init-db   # 建库，并把管理员密码设为 Preview123
+npm run seed-demo                       # 填入演示产品和业务员，便于查看效果
+npm start
+```
+
+Windows PowerShell 的第 4 行要改成两句：
+
+```powershell
+$env:ADMIN_PASSWORD="Preview123"
+npm run init-db
+```
+
+然后浏览器打开 **http://localhost:3000** ，用 `admin` / `Preview123` 登录。
+
+- 产品列表：<http://localhost:3000/products>
+- 联系我们：<http://localhost:3000/contact>
+- 管理后台：<http://localhost:3000/admin>
+
+停止运行按 `Ctrl + C`。换个端口用 `PORT=8080 npm start`。
+
+> 演示数据只是为了看效果，正式使用前先清掉：`node scripts/seed-demo.js --clear`
+
 ## 功能一览
 
 **前台（英文，面向海外客户）**
@@ -95,6 +126,8 @@ server {
 
 ```bash
 npm run reset-password <账号> <新密码>    # 管理员忘记密码时在服务器上重置
+npm run seed-demo                        # 填充演示数据（仅用于预览）
+node scripts/seed-demo.js --clear        # 清空所有产品和业务员
 ```
 
 **备份**只需这两项（均不入 Git）：
