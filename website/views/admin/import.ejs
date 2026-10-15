@@ -1,0 +1,164 @@
+<%- include('_shell-top', { heading: '批量导入产品' }) %>
+
+<div class="admin-head">
+  <h1>批量导入产品</h1>
+  <div class="spacer"></div>
+  <a class="btn btn-ghost" href="/admin/products">← 返回产品列表</a>
+</div>
+
+<% if (error) { %><p class="alert alert-error"><%= error %></p><% } %>
+
+<% if (stage === 'upload') { %>
+
+  <div class="card">
+    <h2>第 1 步：下载模板</h2>
+    <p class="hint">
+      模板里已经写好表头和三个分类的示例行，还有一页「填写说明」。
+      也可以直接用你们现有的表格，只要表头能对上就行。
+    </p>
+    <div class="form-actions">
+      <a class="btn" href="/admin/products/import/template.xlsx">下载 Excel 模板</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>第 2 步：上传填好的文件</h2>
+    <form method="post" action="/admin/products/import" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="field">
+        <span>Excel 或 CSV 文件 <span class="hint">（.xlsx / .xls / .csv，取第一个工作表）</span></span>
+        <input type="file" name="sheet" required accept=".xlsx,.xls,.csv">
+      </label>
+      <div class="form-actions">
+        <button class="btn" type="submit">上传并预览</button>
+        <span class="hint">上传后会先显示预览，确认无误才会写入。</span>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>识别规则</h2>
+    <ul class="rule-list">
+      <li><strong>分类</strong>：
+        <% categories.forEach(function (c, i) { %><%= i ? ' / ' : '' %><code><%= c.zh %></code><% }); %>
+        （也认 <code>oem</code> / <code>extract</code> / <code>additive</code>）
+      </li>
+      <li><strong>产品英文名字</strong>必填，并以它识别产品：
+        同分类下名字已存在就<strong>更新</strong>，不存在就<strong>新增</strong>。</li>
+      <li>各分类用到的列不同，用不到的留空即可。</li>
+      <li>产品图片和文档不能通过表格导入，请在后台逐个上传。</li>
+    </ul>
+    <p class="hint">可识别的表头（中英文均可）：</p>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>列</th><th>也可以写成</th></tr></thead>
+        <tbody>
+          <% columns.forEach(function (c) { %>
+            <tr>
+              <td><strong><%= c.zh %></strong></td>
+              <td class="hint"><%= c.aliases.join('、') %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<% } else { %>
+
+  <%
+  var s = analysed.summary;
+  var errors = analysed.rows.filter(function (r) { return r.action === 'error'; });
+  %>
+
+  <p class="admin-hint">
+    文件：<strong><%= meta.filename %></strong> · 共读取 <%= meta.rows %> 行。
+    <strong>下面还没有写入数据库</strong>，确认后才会执行。
+  </p>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="n"><%= s.create %></div><div class="k">将新增</div></div>
+    <div class="stat"><div class="n"><%= s.update %></div><div class="k">将更新</div></div>
+    <div class="stat"><div class="n"><%= s.error %></div><div class="k">有问题（跳过）</div></div>
+    <div class="stat"><div class="n"><%= s.total %></div><div class="k">总行数</div></div>
+  </div>
+
+  <% if (errors.length) { %>
+    <div class="card">
+      <h2>需要修正的行 <span class="hint">这些行会被跳过，不影响其他行导入</span></h2>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>表格行号</th><th>产品英文名字</th><th>分类</th><th>问题</th></tr></thead>
+          <tbody>
+            <% errors.forEach(function (r) { %>
+              <tr>
+                <td>第 <%= r.row._row %> 行</td>
+                <td><%= r.row.name_en || '（空）' %></td>
+                <td><%= r.row.category || '（无法识别）' %></td>
+                <td><span class="badge badge-fail"><%= r.problems.join('；') %></span></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="card">
+    <h2>导入预览</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>行号</th><th>操作</th><th>产品英文名字</th><th>分类</th>
+            <th>关键字段</th><th>备注</th><th>上架</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% analysed.rows.forEach(function (r) { %>
+            <% var cat = categories.filter(function (c) { return c.key === r.row.category; })[0]; %>
+            <tr>
+              <td><%= r.row._row %></td>
+              <td>
+                <% if (r.action === 'create') { %><span class="badge badge-on">新增</span>
+                <% } else if (r.action === 'update') { %><span class="badge badge-new">更新</span>
+                <% } else { %><span class="badge badge-fail">跳过</span><% } %>
+              </td>
+              <td><strong><%= r.row.name_en || '（空）' %></strong></td>
+              <td><%= cat ? cat.zh : (r.row.category || '—') %></td>
+              <td>
+                <% if (cat) { cat.fields.forEach(function (f) { %>
+                  <% if (r.row[f]) { %>
+                    <div><span class="hint"><%= fieldLabels[f].zh %>：</span><%= r.row[f] %></div>
+                  <% } %>
+                <% }); } %>
+              </td>
+              <td><%= r.row.remark || '—' %></td>
+              <td><%= r.row.is_active ? '是' : '否' %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="post" action="/admin/products/import/confirm">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="token" value="<%= token %>">
+      <div class="form-actions">
+        <button class="btn" type="submit"
+                <%= (s.create + s.update) ? '' : 'disabled' %>>
+          确认导入（新增 <%= s.create %>，更新 <%= s.update %>）
+        </button>
+        <a class="btn btn-ghost" href="/admin/products/import">重新上传</a>
+      </div>
+      <% if (!(s.create + s.update)) { %>
+        <p class="hint">没有可导入的行，请修正文件后重新上传。</p>
+      <% } %>
+    </form>
+  </div>
+
+<% } %>
+
+<%- include('_shell-bottom') %>

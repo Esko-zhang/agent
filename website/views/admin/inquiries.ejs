@@ -1,0 +1,105 @@
+<%- include('_shell-top', { heading: '询盘管理' }) %>
+
+<%
+function qs(over) {
+  var p = new URLSearchParams();
+  var base = { status: status, q: term, page: page };
+  Object.keys(base).forEach(function (k) {
+    var v = (over && k in over) ? over[k] : base[k];
+    if (v) p.set(k, v);
+  });
+  var s = p.toString();
+  return s ? '?' + s : '';
+}
+%>
+
+<div class="admin-head">
+  <h1>询盘管理</h1>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<% if (!mailStatus.enabled) { %>
+  <p class="admin-hint">
+    邮件通知未配置：询盘会正常保存并显示在这里，但不会自动发邮件给业务员。
+    需要的话在 <code>.env</code> 里配置 <code>SMTP_HOST</code> 等变量（见 README）。
+  </p>
+<% } %>
+
+<div class="stat-grid">
+  <div class="stat"><div class="n"><%= counts.new || 0 %></div><div class="k">待处理</div></div>
+  <div class="stat"><div class="n"><%= counts.handled || 0 %></div><div class="k">已跟进</div></div>
+  <div class="stat"><div class="n"><%= counts.closed || 0 %></div><div class="k">已关闭</div></div>
+  <div class="stat"><div class="n"><%= total %></div><div class="k">当前筛选结果</div></div>
+</div>
+
+<div class="filter-tabs">
+  <a href="/admin/inquiries" class="<%= status ? '' : 'active' %>">全部</a>
+  <% statuses.forEach(function (st) { %>
+    <a href="/admin/inquiries?status=<%= st.key %>"
+       class="<%= status === st.key ? 'active' : '' %>"><%= st.zh %></a>
+  <% }); %>
+</div>
+
+<div class="card">
+  <form method="get" action="/admin/inquiries" class="search-row">
+    <% if (status) { %><input type="hidden" name="status" value="<%= status %>"><% } %>
+    <input name="q" value="<%= term %>" placeholder="搜索账号、公司、联系人或邮箱">
+    <button class="btn" type="submit">搜索</button>
+    <% if (term) { %><a class="btn btn-ghost" href="/admin/inquiries<%= status ? '?status=' + status : '' %>">清除</a><% } %>
+  </form>
+</div>
+
+<div class="card">
+  <h2>共 <%= total %> 条询盘<% if (pages > 1) { %> <span class="hint">第 <%= page %> / <%= pages %> 页</span><% } %></h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>#</th><th>时间</th><th>账号 / 公司</th><th>联系方式</th>
+          <th>产品数</th><th>状态</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="7" class="empty-row">暂无询盘。客户在产品列表页点「+ Inquiry」并提交后会出现在这里。</td></tr>
+        <% } %>
+        <% rows.forEach(function (r) { %>
+          <tr>
+            <td><strong>#<%= r.id %></strong></td>
+            <td class="nowrap"><%= fmt(r.created_at) %></td>
+            <td>
+              <strong><%= r.company || '（未填公司）' %></strong>
+              <div class="hint"><%= r.username %></div>
+            </td>
+            <td>
+              <div><%= r.contact_name || '—' %></div>
+              <div class="hint"><%= r.email %></div>
+            </td>
+            <td><%= r.item_count %></td>
+            <td>
+              <% if (r.status === 'new') { %><span class="badge badge-new">待处理</span>
+              <% } else if (r.status === 'handled') { %><span class="badge badge-on">已跟进</span>
+              <% } else { %><span class="badge badge-off">已关闭</span><% } %>
+            </td>
+            <td><a class="btn btn-ghost btn-sm" href="/admin/inquiries/<%= r.id %>">查看</a></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (pages > 1) { %>
+    <div class="pager">
+      <% if (page > 1) { %>
+        <a class="btn btn-ghost btn-sm" href="/admin/inquiries<%= qs({ page: page - 1 }) %>">‹ 上一页</a>
+      <% } %>
+      <span class="hint">第 <%= page %> / <%= pages %> 页</span>
+      <% if (page < pages) { %>
+        <a class="btn btn-ghost btn-sm" href="/admin/inquiries<%= qs({ page: page + 1 }) %>">下一页 ›</a>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('_shell-bottom') %>

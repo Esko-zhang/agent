@@ -298,3 +298,71 @@ table.products .remark { color: var(--ink-soft); max-width: 260px; }
 }
 .message-page h1 { margin: 0 0 10px; font-size: 26px; }
 .message-page p { margin: 0 0 22px; color: var(--ink-soft); max-width: 46ch; }
+
+/* ---------- Documents & inquiry on the product table ---------- */
+table.products td.docs { white-space: nowrap; }
+.doc-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.doc-link {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+  font-size: 12px; font-weight: 600; text-decoration: none; color: var(--brand);
+}
+.doc-link:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+.muted { color: var(--ink-soft); }
+table.products .col-rfq { width: 108px; white-space: nowrap; }
+.in-basket { font-size: 13px; font-weight: 600; color: var(--brand); white-space: nowrap; }
+
+.nav-count {
+  display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 5px;
+  border-radius: 999px; background: var(--brand); color: #fff;
+  font-size: 11.5px; font-weight: 700; text-align: center;
+}
+
+/* ---------- Inquiry page ---------- */
+.rfq-section { margin-bottom: 32px; }
+.rfq-section h2 {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 0 0 14px; padding-bottom: 10px; font-size: 20px;
+  border-bottom: 2px solid var(--brand);
+}
+.rfq-section h2 .count {
+  padding: 1px 10px; border-radius: 999px; background: var(--brand-light);
+  color: var(--brand-dark); font-size: 13px; font-weight: 700;
+}
+.rfq-section .table-scroll { background: var(--surface); }
+.rfq-section table.products input {
+  width: 100%; min-width: 150px; padding: 8px 10px; font: inherit;
+  border: 1px solid var(--line); border-radius: var(--radius);
+}
+.rfq-grid {
+  display: grid; gap: 0 20px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.rfq-section textarea {
+  width: 100%; padding: 10px 12px; font: inherit; resize: vertical;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+}
+.rfq-section .form-actions {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  padding-top: 14px; border-top: 1px solid var(--line);
+}
+.link-danger {
+  border: 0; background: none; padding: 0; font: inherit; font-size: 13px;
+  color: var(--danger); text-decoration: underline; cursor: pointer;
+}
+.hidden-form { display: none; }
+.clear-form { padding-bottom: 28px; }
+
+.empty-panel, .sent-panel {
+  padding: 44px 24px; margin: 20px 0 40px; text-align: center;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.empty-panel p, .sent-panel p { color: var(--ink-soft); margin: 0 0 18px; }
+.sent-panel h1 { margin: 0 0 10px; font-size: 25px; text-wrap: balance; }
+.sent-panel .sent-mark {
+  width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 28px; font-weight: 700;
+  background: var(--brand-light); color: var(--brand);
+}
+.sent-panel .form-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }

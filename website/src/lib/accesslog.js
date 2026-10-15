@@ -7,6 +7,8 @@ const EVENTS = [
   { key: 'login_failed', zh: '登录失败' },
   { key: 'logout', zh: '退出登录' },
   { key: 'page_view', zh: '浏览页面' },
+  { key: 'doc_download', zh: '下载文档' },
+  { key: 'inquiry_submitted', zh: '提交询盘' },
 ];
 const EVENT_KEYS = EVENTS.map((e) => e.key);
 const EVENT_LABELS = Object.fromEntries(EVENTS.map((e) => [e.key, e.zh]));

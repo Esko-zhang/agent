@@ -14,6 +14,7 @@ router.use(requireAdmin);
 // Shared view context for every admin page.
 router.use((req, res, next) => {
   res.locals.settings = settings.all();
+  res.locals.newInquiries = require('../../lib/inquiry').q.newCount.get().n;
   res.locals.categories = config.CATEGORIES;
   res.locals.fieldLabels = config.FIELD_LABELS;
   res.locals.flash = req.query.ok || null;
@@ -31,9 +32,12 @@ router.get('/', (_req, res) => {
   });
 });
 
+router.use('/products/import', require('./import'));
 router.use('/products', require('./products'));
 router.use('/staff', require('./staff'));
 router.use('/users', require('./users'));
+router.use('/inquiries', require('./inquiries'));
+router.use('/intent', require('./intent'));
 router.use('/logs', require('./logs'));
 router.use('/settings', require('./settings'));
 

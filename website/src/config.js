@@ -97,7 +97,11 @@ module.exports = {
   cookieSecure: bool(process.env.COOKIE_SECURE, isProd),
   dbFile: process.env.DB_FILE || path.join(ROOT, 'data', 'site.db'),
   uploadDir: process.env.UPLOAD_DIR || path.join(ROOT, 'public', 'uploads'),
+  // Spec sheets are deliberately NOT under public/: they are served only
+  // through an authenticated route, unlike product images.
+  docDir: process.env.DOC_DIR || path.join(ROOT, 'data', 'docs'),
   maxUploadBytes: Number(process.env.MAX_UPLOAD_MB || 5) * 1024 * 1024,
+  maxDocBytes: Number(process.env.MAX_DOC_MB || 20) * 1024 * 1024,
   login: {
     maxAttempts: Number(process.env.LOGIN_MAX_ATTEMPTS || 8),
     windowMs: Number(process.env.LOGIN_WINDOW_MINUTES || 15) * 60 * 1000,

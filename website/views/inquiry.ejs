@@ -1,0 +1,115 @@
+<%- include('partials/head', { pageTitle: settings.site_name + ' — Inquiry', lang: 'en' }) %>
+<body>
+  <%- include('partials/header', { nav: 'inquiry' }) %>
+
+  <main class="wrap">
+    <div class="page-head">
+      <h1>Request a Quotation</h1>
+      <p>Tell us the quantities you need and our export team will reply with pricing.</p>
+    </div>
+
+    <% if (error) { %><p class="alert alert-error" role="alert"><%= error %></p><% } %>
+
+    <% if (!rows.length) { %>
+      <div class="empty-panel">
+        <p>Your inquiry list is empty.</p>
+        <a class="btn" href="/products">Browse the catalogue</a>
+      </div>
+    <% } else { %>
+      <form method="post" action="/inquiry">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <section class="rfq-section">
+          <h2>Products <span class="count"><%= rows.length %></span></h2>
+          <div class="table-scroll">
+            <table class="products">
+              <thead>
+                <tr>
+                  <th class="col-no">No.</th>
+                  <th>Product Name</th>
+                  <th>Quantity needed</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% rows.forEach(function (p, i) { %>
+                  <tr>
+                    <td class="col-no"><%= i + 1 %></td>
+                    <td class="name"><%= p.name_en %></td>
+                    <td>
+                      <input name="qty_<%= p.id %>" value="<%= quantities[p.id] || '' %>"
+                             placeholder="e.g. 500 kg" maxlength="60"
+                             aria-label="Quantity for <%= p.name_en %>">
+                    </td>
+                    <td>
+                      <input name="note_<%= p.id %>" value="<%= notes[p.id] || '' %>"
+                             placeholder="Packaging, spec, target price…" maxlength="300"
+                             aria-label="Notes for <%= p.name_en %>">
+                    </td>
+                    <td class="col-rfq">
+                      <button class="link-danger" type="submit" name="remove_id"
+                              form="rm-<%= p.id %>">Remove</button>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="rfq-section">
+          <h2>Your details</h2>
+          <div class="rfq-grid">
+            <label class="field">
+              <span>Company</span>
+              <input name="company" value="<%= form.company %>" maxlength="150">
+            </label>
+            <label class="field">
+              <span>Contact name</span>
+              <input name="contact_name" value="<%= form.contact_name %>" maxlength="100">
+            </label>
+            <label class="field">
+              <span>Email *</span>
+              <input name="email" type="email" value="<%= form.email %>" required maxlength="150">
+            </label>
+            <label class="field">
+              <span>Phone / WhatsApp</span>
+              <input name="phone" value="<%= form.phone %>" maxlength="60">
+            </label>
+            <label class="field">
+              <span>Country / Region</span>
+              <input name="country" value="<%= form.country %>" maxlength="80">
+            </label>
+          </div>
+          <label class="field">
+            <span>Message</span>
+            <textarea name="message" rows="4" maxlength="2000"
+                      placeholder="Target price, shipping terms, certifications required…"><%= form.message %></textarea>
+          </label>
+          <div class="form-actions">
+            <button class="btn" type="submit">Send inquiry</button>
+            <a class="btn btn-ghost" href="/products">Add more products</a>
+          </div>
+        </section>
+      </form>
+
+      <%# Remove buttons post to their own forms, kept outside the main form. %>
+      <% rows.forEach(function (p) { %>
+        <form id="rm-<%= p.id %>" method="post" action="/inquiry/remove" class="hidden-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="product_id" value="<%= p.id %>">
+          <input type="hidden" name="back" value="/inquiry">
+        </form>
+      <% }); %>
+
+      <form method="post" action="/inquiry/clear" class="clear-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="link-danger" type="submit">Clear the whole list</button>
+      </form>
+    <% } %>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

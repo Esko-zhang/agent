@@ -10,6 +10,9 @@
     <nav class="site-nav">
       <a href="/products" class="<%= nav === 'products' ? 'active' : '' %>">Products</a>
       <a href="/contact" class="<%= nav === 'contact' ? 'active' : '' %>">Contact Us</a>
+      <a href="/inquiry" class="<%= nav === 'inquiry' ? 'active' : '' %>">
+        Inquiry<% if (typeof basket !== 'undefined' && basket.length) { %><span class="nav-count"><%= basket.length %></span><% } %>
+      </a>
       <% if (currentUser && currentUser.role === 'admin') { %>
         <a href="/admin">管理后台</a>
       <% } %>

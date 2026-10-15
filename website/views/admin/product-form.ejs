@@ -21,6 +21,7 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
 </div>
 
 <% if (error) { %><p class="alert alert-error"><%= error %></p><% } %>
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
 
 <form class="card" method="post" enctype="multipart/form-data"
       action="<%= isNew ? '/admin/products' : '/admin/products/' + product.id %>">
@@ -93,5 +94,74 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
     <a class="btn btn-ghost" href="/admin/products">取消</a>
   </div>
 </form>
+
+<div class="card">
+  <h2>产品文档
+    <span class="hint">TDS / COA / MSDS 等。客户登录后可在产品列表页下载，下载行为会记入访问记录。</span>
+  </h2>
+
+  <% if (isNew) { %>
+    <p class="hint">先保存产品，再回到这里上传文档。</p>
+  <% } else { %>
+    <% if (productDocs.length) { %>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr><th>标签</th><th>原始文件名</th><th>大小</th><th>上传时间</th><th>操作</th></tr>
+          </thead>
+          <tbody>
+            <% productDocs.forEach(function (d) { %>
+              <tr>
+                <td><span class="badge badge-on"><%= d.label %></span></td>
+                <td><%= d.original %></td>
+                <td><%= humanSize(d.size_bytes) %></td>
+                <td><%= d.created_at %></td>
+                <td>
+                  <div class="row-actions">
+                    <a class="btn btn-ghost btn-sm" href="/docs/<%= d.id %>">下载</a>
+                    <form class="inline-form" method="post"
+                          action="/admin/products/<%= product.id %>/docs/<%= d.id %>/delete"
+                          data-confirm="确定删除文档「<%= d.label %> · <%= d.original %>」？">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <p class="hint">这个产品还没有文档。</p>
+    <% } %>
+
+    <form method="post" action="/admin/products/<%= product.id %>/docs"
+          enctype="multipart/form-data" class="doc-upload">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-grid">
+        <label class="field">
+          <span>标签 <span class="hint">（显示给客户，如 TDS / COA / MSDS）</span></span>
+          <input name="label" value="TDS" maxlength="40" list="doc-labels">
+          <datalist id="doc-labels">
+            <option value="TDS"></option>
+            <option value="COA"></option>
+            <option value="MSDS"></option>
+            <option value="Spec Sheet"></option>
+            <option value="Certificate"></option>
+          </datalist>
+        </label>
+        <label class="field">
+          <span>文件 <span class="hint">（PDF / Word / Excel / 图片，单个不超过 20MB）</span></span>
+          <input type="file" name="doc" required
+                 accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" type="submit">上传文档</button>
+      </div>
+    </form>
+  <% } %>
+</div>
 
 <%- include('_shell-bottom') %>

@@ -23,6 +23,10 @@
       </nav>
     </div>
 
+    <% if (flash) { %>
+      <p class="alert alert-ok" role="status"><%= flash %></p>
+    <% } %>
+
     <% if (search) { %>
       <p class="search-summary">
         <strong><%= totalFound %></strong> result<%= totalFound === 1 ? '' : 's' %>
@@ -46,12 +50,14 @@
                 <% cols.forEach(function (f) { %>
                   <th><%= fieldLabels[f].en %></th>
                 <% }); %>
+                <th>Documents</th>
+                <th class="col-rfq">Inquiry</th>
               </tr>
             </thead>
             <tbody>
               <% if (!s.rows.length) { %>
                 <tr>
-                  <td class="empty-row" colspan="<%= cols.length + 3 %>">
+                  <td class="empty-row" colspan="<%= cols.length + 5 %>">
                     <%= search ? 'No products in this category match your search.'
                                : 'No products published in this category yet.' %>
                   </td>
@@ -84,6 +90,35 @@
                       <% } %>
                     </td>
                   <% }); %>
+
+                  <td class="docs">
+                    <% var pdocs = docsByProduct.get(p.id) || []; %>
+                    <% if (!pdocs.length) { %>
+                      <span class="muted">—</span>
+                    <% } else { %>
+                      <span class="doc-list">
+                        <% pdocs.forEach(function (d) { %>
+                          <a class="doc-link" href="/docs/<%= d.id %>"
+                             title="<%= d.original %> · <%= humanSize(d.size_bytes) %>">
+                            <%= d.label || 'Document' %>
+                          </a>
+                        <% }); %>
+                      </span>
+                    <% } %>
+                  </td>
+
+                  <td class="col-rfq">
+                    <% if (basket.indexOf(p.id) !== -1) { %>
+                      <span class="in-basket">✓ Added</span>
+                    <% } else { %>
+                      <form method="post" action="/inquiry/add">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="product_id" value="<%= p.id %>">
+                        <input type="hidden" name="back" value="<%= currentUrl %>">
+                        <button class="btn btn-ghost btn-sm" type="submit">+ Inquiry</button>
+                      </form>
+                    <% } %>
+                  </td>
                 </tr>
               <% }); %>
             </tbody>

@@ -1,0 +1,65 @@
+<%- include('_shell-top', { heading: '客户意向' }) %>
+
+<div class="admin-head">
+  <h1>客户意向</h1>
+  <div class="spacer"></div>
+  <div class="filter-tabs">
+    <% windows.forEach(function (d) { %>
+      <a href="/admin/intent?days=<%= d %>" class="<%= days === d ? 'active' : '' %>">近 <%= d %> 天</a>
+    <% }); %>
+  </div>
+</div>
+
+<p class="admin-hint">
+  产品列表是一整页，所以「打开了页面」说明不了客户关心哪个产品。真正有意义的信号是
+  <strong>搜了什么</strong>、<strong>下载了谁的 TDS/COA</strong>、<strong>询了哪些产品</strong>——
+  意向由弱到强。下表按这个权重排序，排在前面的最值得先打电话。
+</p>
+
+<div class="card">
+  <h2>共 <%= rows.length %> 个账号在近 <%= days %> 天内有活动</h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>账号 / 公司</th><th>意向分</th><th>询盘</th><th>下载文档</th>
+          <th>搜索</th><th>浏览</th><th>活跃天数</th><th>IP 数</th><th>最近活动</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="10" class="empty-row">这段时间还没有客户活动。</td></tr>
+        <% } %>
+        <% rows.forEach(function (r) { %>
+          <tr>
+            <td>
+              <strong><%= r.username %></strong>
+              <% if (r.role === 'admin') { %><span class="badge badge-admin">管理员</span><% } %>
+              <% if (r.deleted) { %><span class="badge badge-off">账号已删除</span><% } %>
+              <div class="hint"><%= r.display_name || '—' %></div>
+            </td>
+            <td>
+              <div class="score-bar" aria-hidden="true">
+                <span class="score-fill score-w<%= Math.min(10, Math.ceil(r.score / 12)) %>"></span>
+              </div>
+              <span class="hint"><%= r.score %></span>
+            </td>
+            <td><% if (r.inquiries) { %><span class="badge badge-new"><%= r.inquiries %></span><% } else { %>—<% } %></td>
+            <td><% if (r.downloads) { %><span class="badge badge-on"><%= r.downloads %></span><% } else { %>—<% } %></td>
+            <td><%= r.searches || '—' %></td>
+            <td><%= r.views %></td>
+            <td><%= r.active_days %></td>
+            <td><%= r.ips %></td>
+            <td class="nowrap"><%= fmt(r.last_seen) %></td>
+            <td>
+              <a class="btn btn-ghost btn-sm"
+                 href="/admin/intent/<%= encodeURIComponent(r.username) %>?days=<%= days %>">详情</a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('_shell-bottom') %>

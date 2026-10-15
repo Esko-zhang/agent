@@ -1,0 +1,91 @@
+<%- include('_shell-top', { heading: '询盘 #' + inquiry.id }) %>
+
+<div class="admin-head">
+  <h1>询盘 #<%= inquiry.id %></h1>
+  <div class="spacer"></div>
+  <a class="btn btn-ghost" href="/admin/inquiries">← 返回列表</a>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<div class="card">
+  <h2>客户信息</h2>
+  <dl class="kv">
+    <div><dt>提交时间</dt><dd><%= fmt(inquiry.created_at) %></dd></div>
+    <div><dt>登录账号</dt><dd><%= inquiry.username %></dd></div>
+    <div><dt>公司</dt><dd><%= inquiry.company || '—' %></dd></div>
+    <div><dt>联系人</dt><dd><%= inquiry.contact_name || '—' %></dd></div>
+    <div><dt>邮箱</dt><dd><a href="mailto:<%= inquiry.email %>"><%= inquiry.email %></a></dd></div>
+    <div><dt>电话</dt><dd><%= inquiry.phone || '—' %></dd></div>
+    <div><dt>国家 / 地区</dt><dd><%= inquiry.country || '—' %></dd></div>
+    <div><dt>提交 IP</dt><dd class="mono"><%= inquiry.ip || '—' %></dd></div>
+  </dl>
+  <% if (inquiry.message) { %>
+    <div class="message-box">
+      <div class="hint">客户留言</div>
+      <p><%= inquiry.message %></p>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>询价产品（<%= items.length %>）</h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>No.</th><th>产品</th><th>需求数量</th><th>客户备注</th></tr></thead>
+      <tbody>
+        <% items.forEach(function (it, i) { %>
+          <tr>
+            <td><%= i + 1 %></td>
+            <td><strong><%= it.name_en %></strong></td>
+            <td><%= it.quantity || '未填' %></td>
+            <td><%= it.note || '—' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<form method="post" action="/admin/inquiries/<%= inquiry.id %>" class="card">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <h2>跟进</h2>
+  <div class="form-grid">
+    <label class="field">
+      <span>状态</span>
+      <select name="status">
+        <% statuses.forEach(function (st) { %>
+          <option value="<%= st.key %>" <%= inquiry.status === st.key ? 'selected' : '' %>><%= st.zh %></option>
+        <% }); %>
+      </select>
+    </label>
+    <label class="field">
+      <span>指派业务员</span>
+      <select name="assigned_to">
+        <option value="">未指派</option>
+        <% team.forEach(function (m) { %>
+          <option value="<%= m.id %>" <%= inquiry.assigned_to === m.id ? 'selected' : '' %>><%= m.name %></option>
+        <% }); %>
+      </select>
+    </label>
+  </div>
+  <label class="field">
+    <span>内部备注 <span class="hint">（只有后台可见，客户看不到）</span></span>
+    <textarea name="admin_note" rows="4" maxlength="2000"><%= inquiry.admin_note %></textarea>
+  </label>
+  <div class="form-actions">
+    <button class="btn" type="submit">保存</button>
+    <a class="btn btn-ghost" href="mailto:<%= inquiry.email %>?subject=Re:%20Your%20inquiry%20%23<%= inquiry.id %>">回复客户</a>
+  </div>
+</form>
+
+<div class="card">
+  <h2>危险操作</h2>
+  <form method="post" action="/admin/inquiries/<%= inquiry.id %>/delete"
+        data-confirm="确定删除询盘 #<%= inquiry.id %>？此操作不可撤销。">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button class="btn btn-danger" type="submit">删除这条询盘</button>
+  </form>
+</div>
+
+<%- include('_shell-bottom') %>

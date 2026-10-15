@@ -1,0 +1,154 @@
+<%- include('_shell-top', { heading: '客户意向 — ' + username }) %>
+
+<div class="admin-head">
+  <h1><%= username %></h1>
+  <% if (summary && summary.display_name) { %>
+    <span class="badge badge-on"><%= summary.display_name %></span>
+  <% } %>
+  <div class="spacer"></div>
+  <div class="filter-tabs">
+    <% windows.forEach(function (d) { %>
+      <a href="/admin/intent/<%= encodeURIComponent(username) %>?days=<%= d %>"
+         class="<%= days === d ? 'active' : '' %>">近 <%= d %> 天</a>
+    <% }); %>
+  </div>
+  <a class="btn btn-ghost" href="/admin/intent?days=<%= days %>">← 返回</a>
+</div>
+
+<% if (summary) { %>
+  <div class="stat-grid">
+    <div class="stat"><div class="n"><%= summary.inquiries %></div><div class="k">询盘</div></div>
+    <div class="stat"><div class="n"><%= summary.downloads %></div><div class="k">下载文档</div></div>
+    <div class="stat"><div class="n"><%= summary.searches %></div><div class="k">搜索</div></div>
+    <div class="stat"><div class="n"><%= summary.views %></div><div class="k">浏览页面</div></div>
+    <div class="stat"><div class="n"><%= summary.active_days %></div><div class="k">活跃天数</div></div>
+  </div>
+<% } %>
+
+<div class="card">
+  <h2>询过价的产品 <span class="hint">最强的意向信号</span></h2>
+  <% if (!data.productInterest.length) { %>
+    <p class="hint">这段时间没有提交过询盘。</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>产品</th><th>询价次数</th><th>最近一次</th></tr></thead>
+        <tbody>
+          <% data.productInterest.forEach(function (p) { %>
+            <tr>
+              <td><strong><%= p.name_en %></strong></td>
+              <td><span class="badge badge-new"><%= p.n %></span></td>
+              <td class="nowrap"><%= fmt(p.last) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>下载过的文档 <span class="hint">采购前通常先要 TDS / COA</span></h2>
+  <% if (!data.downloads.length) { %>
+    <p class="hint">这段时间没有下载过文档。</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>文档</th><th>时间</th></tr></thead>
+        <tbody>
+          <% data.downloads.forEach(function (d) { %>
+            <tr>
+              <td><strong><%= d.label %></strong></td>
+              <td class="nowrap"><%= fmt(d.at) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>搜索过的关键词 <span class="hint">客户自己说出口的需求</span></h2>
+  <% if (!data.searches.length) { %>
+    <p class="hint">这段时间没有使用过搜索。</p>
+  <% } else { %>
+    <div class="term-list">
+      <% data.searches.forEach(function (t) { %>
+        <span class="term">
+          <%= t.term %><span class="term-n"><%= t.count %></span>
+        </span>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>询盘记录（<%= data.inquiries.length %>）</h2>
+  <% if (!data.inquiries.length) { %>
+    <p class="hint">这段时间没有询盘。</p>
+  <% } else { %>
+    <% data.inquiries.forEach(function (inq) { %>
+      <div class="inq-block">
+        <div class="inq-head">
+          <a href="/admin/inquiries/<%= inq.id %>"><strong>询盘 #<%= inq.id %></strong></a>
+          <span class="hint"><%= fmt(inq.created_at) %></span>
+          <% if (inq.status === 'new') { %><span class="badge badge-new">待处理</span>
+          <% } else if (inq.status === 'handled') { %><span class="badge badge-on">已跟进</span>
+          <% } else { %><span class="badge badge-off">已关闭</span><% } %>
+        </div>
+        <ul class="inq-items">
+          <% (data.itemsByInquiry.get(inq.id) || []).forEach(function (it) { %>
+            <li><%= it.name_en %><% if (it.quantity) { %> <span class="hint">· <%= it.quantity %></span><% } %></li>
+          <% }); %>
+        </ul>
+      </div>
+    <% }); %>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>使用过的 IP</h2>
+  <% if (!data.ips.length) { %>
+    <p class="hint">没有记录。</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>IP 地址</th><th>次数</th><th>最近一次</th></tr></thead>
+        <tbody>
+          <% data.ips.forEach(function (r) { %>
+            <tr>
+              <td class="mono"><%= r.ip %></td>
+              <td><%= r.n %></td>
+              <td class="nowrap"><%= fmt(r.last) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>最近活动 <span class="hint">最多 100 条</span></h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>时间</th><th>事件</th><th>页面</th><th>IP</th></tr></thead>
+      <tbody>
+        <% if (!data.visits.length) { %>
+          <tr><td colspan="4" class="empty-row">没有记录。</td></tr>
+        <% } %>
+        <% data.visits.forEach(function (v) { %>
+          <tr>
+            <td class="nowrap"><%= fmt(v.occurred_at) %></td>
+            <td><span class="badge badge-off"><%= eventLabels[v.event] || v.event %></span></td>
+            <td class="mono"><%= v.path %></td>
+            <td class="mono"><%= v.ip %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('_shell-bottom') %>
