@@ -1,0 +1,68 @@
+<%- include('_shell-top', { heading: '概览' }) %>
+
+<div class="admin-head">
+  <h1>概览</h1>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<div class="stat-grid">
+  <div class="stat">
+    <div class="n"><%= totalProducts %></div>
+    <div class="k">产品总数</div>
+  </div>
+  <% categories.forEach(function (c) { %>
+    <div class="stat">
+      <div class="n"><%= counts[c.key] || 0 %></div>
+      <div class="k"><%= c.zh %></div>
+    </div>
+  <% }); %>
+  <div class="stat">
+    <div class="n"><%= staffCount %></div>
+    <div class="k">业务员</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= users.length %></div>
+    <div class="k">登录账号</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>快捷操作</h2>
+  <div class="admin-head actions">
+    <a class="btn" href="/admin/products/new">新增产品</a>
+    <a class="btn btn-ghost" href="/admin/staff/new">新增业务员</a>
+    <a class="btn btn-ghost" href="/admin/users">创建登录账号</a>
+    <a class="btn btn-ghost" href="/admin/settings">修改 Logo / 站点文案</a>
+  </div>
+</div>
+
+<div class="card">
+  <h2>账号一览 <span class="hint">用户账号只能由管理员在此创建，前台不提供注册入口。</span></h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr><th>账号</th><th>姓名</th><th>角色</th><th>状态</th><th>最近登录</th></tr>
+      </thead>
+      <tbody>
+        <% users.forEach(function (u) { %>
+          <tr>
+            <td><%= u.username %></td>
+            <td><%= u.display_name || '—' %></td>
+            <td>
+              <% if (u.role === 'admin') { %><span class="badge badge-admin">管理员</span>
+              <% } else { %><span class="badge badge-off">用户</span><% } %>
+            </td>
+            <td>
+              <% if (u.is_active) { %><span class="badge badge-on">启用</span>
+              <% } else { %><span class="badge badge-off">停用</span><% } %>
+            </td>
+            <td><%= u.last_login_at || '从未登录' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('_shell-bottom') %>

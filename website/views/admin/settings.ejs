@@ -1,0 +1,89 @@
+<%- include('_shell-top', { heading: '网站设置' }) %>
+
+<div class="admin-head">
+  <h1>网站设置</h1>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+<% if (error) { %><p class="alert alert-error"><%= error %></p><% } %>
+
+<form method="post" action="/admin/settings" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="card">
+    <h2>品牌与 Logo</h2>
+    <div class="field">
+      <span>网站 Logo <span class="hint">（显示在登录页与所有页面顶部；未上传时显示品牌文字）</span></span>
+      <% if (settings.logo_path) { %>
+        <div class="image-preview">
+          <img src="<%= settings.logo_path %>" alt="">
+          <label class="check-row">
+            <input type="checkbox" name="remove_logo" value="1">
+            <span>删除当前 Logo</span>
+          </label>
+        </div>
+      <% } %>
+      <input type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/gif"
+             data-preview-target="logo-file-name">
+      <p class="hint" id="logo-file-name"></p>
+    </div>
+
+    <div class="form-grid">
+      <label class="field">
+        <span>品牌名称 <span class="hint">（无 Logo 时显示的文字）</span></span>
+        <input name="brand_name" value="<%= settings.brand_name %>" maxlength="80">
+      </label>
+      <label class="field">
+        <span>网站名称 <span class="hint">（浏览器标签页标题）</span></span>
+        <input name="site_name" value="<%= settings.site_name %>" maxlength="80">
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>页面文案 <span class="hint">（前台为英文展示，请填写英文内容）</span></h2>
+    <label class="field">
+      <span>登录页副标题 <span class="hint">login_tagline</span></span>
+      <input name="login_tagline" value="<%= settings.login_tagline %>" maxlength="200">
+    </label>
+    <label class="field">
+      <span>产品页说明 <span class="hint">products_intro</span></span>
+      <input name="products_intro" value="<%= settings.products_intro %>" maxlength="300">
+    </label>
+    <label class="field">
+      <span>联系我们页说明 <span class="hint">contact_intro</span></span>
+      <input name="contact_intro" value="<%= settings.contact_intro %>" maxlength="300">
+    </label>
+    <div class="form-grid">
+      <label class="field">
+        <span>页脚版权文字</span>
+        <input name="footer_text" value="<%= settings.footer_text %>" maxlength="200">
+      </label>
+      <label class="field">
+        <span>页脚公司地址 <span class="hint">（可留空）</span></span>
+        <input name="company_address" value="<%= settings.company_address %>" maxlength="200">
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>产品区块标题 <span class="hint">（产品列表页三个区块的英文大标题）</span></h2>
+    <div class="form-grid">
+      <% categories.forEach(function (c) { %>
+        <label class="field">
+          <span><%= c.zh %> <span class="hint">（<%= c.en %>）</span></span>
+          <input name="<%= c.settingKey %>" value="<%= settings[c.settingKey] %>" maxlength="150">
+        </label>
+      <% }); %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="form-actions">
+      <button class="btn" type="submit">保存设置</button>
+      <a class="btn btn-ghost" href="/products" target="_blank" rel="noopener">预览前台 →</a>
+    </div>
+  </div>
+</form>
+
+<%- include('_shell-bottom') %>

@@ -1,0 +1,25 @@
+<%- include('../partials/head', { pageTitle: '管理后台 — ' + heading, lang: 'zh-CN', adminCss: true }) %>
+<body class="admin-body">
+  <div class="admin-shell">
+    <aside class="admin-side">
+      <div class="side-brand">
+        <%= settings.brand_name %>
+        <small>Admin Console</small>
+      </div>
+      <nav>
+        <a href="/admin" class="<%= nav === 'dashboard' ? 'active' : '' %>">概览</a>
+        <a href="/admin/products" class="<%= nav === 'products' ? 'active' : '' %>">产品管理</a>
+        <a href="/admin/staff" class="<%= nav === 'staff' ? 'active' : '' %>">业务员管理</a>
+        <a href="/admin/users" class="<%= nav === 'users' ? 'active' : '' %>">账号管理</a>
+        <a href="/admin/settings" class="<%= nav === 'settings' ? 'active' : '' %>">网站设置</a>
+      </nav>
+      <div class="side-foot">
+        <div><%= currentUser.display_name || currentUser.username %></div>
+        <a href="/products">← 返回前台</a>
+        <form method="post" action="/logout">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit">退出登录</button>
+        </form>
+      </div>
+    </aside>
+    <main class="admin-main">

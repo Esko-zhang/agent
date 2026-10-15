@@ -1,0 +1,70 @@
+<%- include('_shell-top', { heading: isNew ? '新增业务员' : '编辑业务员' }) %>
+
+<div class="admin-head">
+  <h1><%= isNew ? '新增业务员' : '编辑业务员 #' + member.id %></h1>
+  <div class="spacer"></div>
+  <a class="btn btn-ghost" href="/admin/staff">← 返回列表</a>
+</div>
+
+<% if (error) { %><p class="alert alert-error"><%= error %></p><% } %>
+
+<form class="card" method="post" enctype="multipart/form-data"
+      action="<%= isNew ? '/admin/staff' : '/admin/staff/' + member.id %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-grid">
+    <label class="field">
+      <span>业务员姓名 *</span>
+      <input name="name" value="<%= member.name || '' %>" required maxlength="100">
+    </label>
+    <label class="field">
+      <span>职位 <span class="hint">（留空则前台显示 Sales Representative）</span></span>
+      <input name="title" value="<%= member.title || '' %>" maxlength="100"
+             placeholder="Sales Manager">
+    </label>
+    <label class="field">
+      <span>电话 <span class="hint">（建议含国际区号，如 +86 139…）</span></span>
+      <input name="phone" value="<%= member.phone || '' %>" maxlength="60">
+    </label>
+    <label class="field">
+      <span>WhatsApp <span class="hint">（含国际区号，前台生成 wa.me 链接）</span></span>
+      <input name="whatsapp" value="<%= member.whatsapp || '' %>" maxlength="60">
+    </label>
+    <label class="field">
+      <span>邮箱</span>
+      <input name="email" type="email" value="<%= member.email || '' %>" maxlength="150">
+    </label>
+    <label class="field">
+      <span>排序值 <span class="hint">（数字越小越靠前）</span></span>
+      <input name="sort_order" type="number" value="<%= member.sort_order || 0 %>" step="10">
+    </label>
+  </div>
+
+  <div class="field">
+    <span>照片 <span class="hint">（建议正方形头像，JPG / PNG / WebP）</span></span>
+    <% if (member.photo_path) { %>
+      <div class="image-preview">
+        <img src="<%= member.photo_path %>" alt="">
+        <label class="check-row">
+          <input type="checkbox" name="remove_photo" value="1">
+          <span>删除当前照片</span>
+        </label>
+      </div>
+    <% } %>
+    <input type="file" name="photo" accept="image/png,image/jpeg,image/webp,image/gif"
+           data-preview-target="photo-file-name">
+    <p class="hint" id="photo-file-name"></p>
+  </div>
+
+  <label class="check-row">
+    <input type="checkbox" name="is_active" value="1" <%= member.is_active ? 'checked' : '' %>>
+    <span>在「联系我们」页显示</span>
+  </label>
+
+  <div class="form-actions">
+    <button class="btn" type="submit"><%= isNew ? '创建' : '保存修改' %></button>
+    <a class="btn btn-ghost" href="/admin/staff">取消</a>
+  </div>
+</form>
+
+<%- include('_shell-bottom') %>

@@ -1,0 +1,112 @@
+<%- include('_shell-top', { heading: '账号管理' }) %>
+
+<div class="admin-head">
+  <h1>账号管理</h1>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+<% if (error) { %><p class="alert alert-error"><%= error %></p><% } %>
+
+<div class="card">
+  <h2>新建账号
+    <span class="hint">用户账号只能在此创建，网站前台不提供自助注册入口。</span>
+  </h2>
+  <form method="post" action="/admin/users">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-grid">
+      <label class="field">
+        <span>登录账号 *<span class="hint">（3-32 位字母、数字或 . _ @ -）</span></span>
+        <input name="username" required maxlength="32" pattern="[A-Za-z0-9._@\-]{3,32}"
+               autocapitalize="none" spellcheck="false">
+      </label>
+      <label class="field">
+        <span>登录密码 *<span class="hint">（至少 8 位）</span></span>
+        <input name="password" type="password" required minlength="8" autocomplete="new-password">
+      </label>
+      <label class="field">
+        <span>姓名 / 客户名称</span>
+        <input name="display_name" maxlength="100">
+      </label>
+      <label class="field">
+        <span>角色</span>
+        <select name="role">
+          <option value="user">用户（仅浏览前台）</option>
+          <option value="admin">管理员（可进入后台）</option>
+        </select>
+      </label>
+    </div>
+    <label class="check-row">
+      <input type="checkbox" name="is_active" value="1" checked>
+      <span>启用该账号</span>
+    </label>
+    <div class="form-actions">
+      <button class="btn" type="submit">创建账号</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>现有账号（<%= rows.length %>）</h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>账号</th><th>姓名</th><th>角色 / 状态</th>
+          <th>最近登录</th><th>重置密码</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.forEach(function (u) { %>
+          <tr>
+            <td>
+              <strong><%= u.username %></strong>
+              <% if (u.id === currentUser.id) { %><span class="badge badge-admin">当前登录</span><% } %>
+            </td>
+            <td>
+              <form method="post" action="/admin/users/<%= u.id %>" id="u-<%= u.id %>">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input name="display_name" value="<%= u.display_name || '' %>" maxlength="100">
+              </form>
+            </td>
+            <td>
+              <select name="role" form="u-<%= u.id %>">
+                <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>用户</option>
+                <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>管理员</option>
+              </select>
+              <label class="check-row">
+                <input type="checkbox" name="is_active" value="1" form="u-<%= u.id %>"
+                       <%= u.is_active ? 'checked' : '' %>>
+                <span>启用</span>
+              </label>
+              <button class="btn btn-ghost btn-sm" type="submit" form="u-<%= u.id %>">保存</button>
+            </td>
+            <td><%= u.last_login_at || '从未登录' %></td>
+            <td>
+              <form method="post" action="/admin/users/<%= u.id %>/password">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="row-actions">
+                  <input name="password" type="password" minlength="8" required
+                         placeholder="新密码（≥8 位）" autocomplete="new-password">
+                  <button class="btn btn-ghost btn-sm" type="submit">重置</button>
+                </div>
+              </form>
+            </td>
+            <td>
+              <% if (u.id === currentUser.id) { %>
+                <span class="hint">—</span>
+              <% } else { %>
+                <form method="post" action="/admin/users/<%= u.id %>/delete"
+                      data-confirm="确定删除账号「<%= u.username %>」？该账号将无法再登录。">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('_shell-bottom') %>

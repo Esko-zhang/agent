@@ -1,0 +1,111 @@
+<%- include('partials/head', { pageTitle: settings.site_name + ' — Products', lang: 'en' }) %>
+<body>
+  <%- include('partials/header', { nav: 'products' }) %>
+
+  <main class="wrap">
+    <div class="page-head">
+      <h1>Product Catalogue</h1>
+      <p><%= settings.products_intro %></p>
+    </div>
+
+    <!-- Search box + in-page category jump links (per the spreadsheet note on A5). -->
+    <div class="toolbar">
+      <form class="search-form" method="get" action="/products" role="search">
+        <label class="visually-hidden" for="q">Search products</label>
+        <input id="q" name="q" value="<%= search %>" placeholder="Search by name, spec, CAS no., tag…">
+        <button class="btn" type="submit">Search</button>
+        <% if (search) { %><a class="btn btn-ghost" href="/products">Clear</a><% } %>
+      </form>
+      <nav class="cat-nav" aria-label="Product categories">
+        <% sections.forEach(function (s) { %>
+          <a href="#<%= s.anchor %>"><%= s.en %> <span class="count">(<%= s.rows.length %>)</span></a>
+        <% }); %>
+      </nav>
+    </div>
+
+    <% if (search) { %>
+      <p class="search-summary">
+        <strong><%= totalFound %></strong> result<%= totalFound === 1 ? '' : 's' %>
+        for “<%= search %>”.
+      </p>
+    <% } %>
+
+    <% sections.forEach(function (s) { %>
+      <% var cols = s.fields.concat(['remark']); %>
+      <section class="product-section" id="<%= s.anchor %>">
+        <h2><%= s.title %> <span class="zh"><%= s.zh %></span></h2>
+
+        <p class="scroll-hint" aria-hidden="true">Swipe the table sideways to see all columns</p>
+        <div class="table-scroll">
+          <table class="products">
+            <thead>
+              <tr>
+                <th class="col-no">No.</th>
+                <th class="col-img">Image</th>
+                <th>Product Name</th>
+                <% cols.forEach(function (f) { %>
+                  <th><%= fieldLabels[f].en %></th>
+                <% }); %>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!s.rows.length) { %>
+                <tr>
+                  <td class="empty-row" colspan="<%= cols.length + 3 %>">
+                    <%= search ? 'No products in this category match your search.'
+                               : 'No products published in this category yet.' %>
+                  </td>
+                </tr>
+              <% } %>
+              <% s.rows.forEach(function (p, i) { %>
+                <tr>
+                  <td class="col-no"><%= i + 1 %></td>
+                  <td class="col-img">
+                    <% if (p.image_path) { %>
+                      <a href="#img-<%= p.id %>">
+                        <img class="thumb" src="<%= p.image_path %>" alt="<%= p.name_en %>" loading="lazy">
+                      </a>
+                    <% } else { %>
+                      <span class="thumb-empty">No image</span>
+                    <% } %>
+                  </td>
+                  <td class="name"><%= p.name_en %></td>
+                  <% cols.forEach(function (f) { %>
+                    <td class="<%= f === 'remark' ? 'remark' : '' %>">
+                      <% if (f === 'tags' && p.tags) { %>
+                        <span class="tag-list">
+                          <% p.tags.split(/[,，;；]/).map(function (t) { return t.trim(); })
+                               .filter(Boolean).forEach(function (t) { %>
+                            <span class="tag"><%= t %></span>
+                          <% }); %>
+                        </span>
+                      <% } else { %>
+                        <%= p[f] || '—' %>
+                      <% } %>
+                    </td>
+                  <% }); %>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    <% }); %>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <!-- CSS-only image lightboxes, so no inline script is needed under our CSP. -->
+  <% sections.forEach(function (s) { s.rows.forEach(function (p) { %>
+    <% if (p.image_path) { %>
+      <div class="lightbox" id="img-<%= p.id %>">
+        <a class="close" href="#" aria-label="Close"></a>
+        <figure>
+          <img src="<%= p.image_path %>" alt="<%= p.name_en %>">
+          <figcaption><%= p.name_en %></figcaption>
+        </figure>
+      </div>
+    <% } %>
+  <% }); }); %>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand-link" href="/products">
+      <% if (settings.logo_path) { %>
+        <img src="<%= settings.logo_path %>" alt="<%= settings.brand_name %>">
+      <% } else { %>
+        <%= settings.brand_name %>
+      <% } %>
+    </a>
+    <nav class="site-nav">
+      <a href="/products" class="<%= nav === 'products' ? 'active' : '' %>">Products</a>
+      <a href="/contact" class="<%= nav === 'contact' ? 'active' : '' %>">Contact Us</a>
+      <% if (currentUser && currentUser.role === 'admin') { %>
+        <a href="/admin">管理后台</a>
+      <% } %>
+      <span class="user-chip">
+        <span><%= currentUser.display_name || currentUser.username %></span>
+        <form method="post" action="/logout">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="logout-btn">Sign out</button>
+        </form>
+      </span>
+    </nav>
+  </div>
+</header>

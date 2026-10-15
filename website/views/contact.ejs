@@ -1,0 +1,54 @@
+<%- include('partials/head', { pageTitle: settings.site_name + ' — Contact Us', lang: 'en' }) %>
+<body>
+  <%- include('partials/header', { nav: 'contact' }) %>
+
+  <main class="wrap">
+    <div class="page-head">
+      <h1>Contact Us</h1>
+      <p><%= settings.contact_intro %></p>
+    </div>
+
+    <% if (!team.length) { %>
+      <p class="alert alert-ok">No sales contacts have been published yet.</p>
+    <% } %>
+
+    <div class="staff-grid">
+      <% team.forEach(function (m) { %>
+        <article class="staff-card">
+          <% if (m.photo_path) { %>
+            <img class="staff-photo" src="<%= m.photo_path %>" alt="<%= m.name %>" loading="lazy">
+          <% } else { %>
+            <span class="staff-photo-empty" aria-hidden="true"><%= m.name.trim().charAt(0).toUpperCase() %></span>
+          <% } %>
+          <div class="staff-body">
+            <h3><%= m.name %></h3>
+            <p class="role"><%= m.title || 'Sales Representative' %></p>
+            <ul class="staff-contact">
+              <% if (m.phone) { %>
+                <li><span class="label">Tel</span>
+                  <a href="tel:<%= m.phone.replace(/[^+\d]/g, '') %>"><%= m.phone %></a></li>
+              <% } %>
+              <% if (m.whatsapp) { %>
+                <li><span class="label">WhatsApp</span>
+                  <% var wa = waLink(m.whatsapp); %>
+                  <% if (wa) { %>
+                    <a href="<%= wa %>" target="_blank" rel="noopener noreferrer"><%= m.whatsapp %></a>
+                  <% } else { %>
+                    <span><%= m.whatsapp %></span>
+                  <% } %>
+                </li>
+              <% } %>
+              <% if (m.email) { %>
+                <li><span class="label">Email</span>
+                  <a href="mailto:<%= m.email %>"><%= m.email %></a></li>
+              <% } %>
+            </ul>
+          </div>
+        </article>
+      <% }); %>
+    </div>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

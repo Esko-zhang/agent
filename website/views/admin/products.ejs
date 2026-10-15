@@ -1,0 +1,80 @@
+<%- include('_shell-top', { heading: '产品管理' }) %>
+
+<div class="admin-head">
+  <h1>产品管理</h1>
+  <div class="spacer"></div>
+  <div class="actions">
+    <a class="btn" href="/admin/products/new<%= category ? '?category=' + category : '' %>">+ 新增产品</a>
+  </div>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<div class="filter-tabs">
+  <a href="/admin/products" class="<%= category ? '' : 'active' %>">全部</a>
+  <% categories.forEach(function (c) { %>
+    <a href="/admin/products?category=<%= c.key %>"
+       class="<%= category === c.key ? 'active' : '' %>"><%= c.zh %></a>
+  <% }); %>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>排序</th>
+          <th>图片</th>
+          <th>产品英文名字</th>
+          <th>分类</th>
+          <th>关键字段</th>
+          <th>备注</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="8" class="empty-row">暂无产品，点击右上角「新增产品」开始录入。</td></tr>
+        <% } %>
+        <% rows.forEach(function (p) { %>
+          <% var cat = categories.find(function (c) { return c.key === p.category; }); %>
+          <tr>
+            <td><%= p.sort_order %></td>
+            <td>
+              <% if (p.image_path) { %>
+                <img class="mini-thumb" src="<%= p.image_path %>" alt="">
+              <% } else { %>—<% } %>
+            </td>
+            <td><strong><%= p.name_en %></strong></td>
+            <td><%= cat ? cat.zh : p.category %></td>
+            <td>
+              <% cat.fields.forEach(function (f) { %>
+                <% if (p[f]) { %>
+                  <div><span class="hint"><%= fieldLabels[f].zh %>：</span><%= p[f] %></div>
+                <% } %>
+              <% }); %>
+            </td>
+            <td><%= p.remark || '—' %></td>
+            <td>
+              <% if (p.is_active) { %><span class="badge badge-on">上架</span>
+              <% } else { %><span class="badge badge-off">下架</span><% } %>
+            </td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-ghost btn-sm" href="/admin/products/<%= p.id %>/edit">编辑</a>
+                <form class="inline-form" method="post" action="/admin/products/<%= p.id %>/delete"
+                      data-confirm="确定删除产品「<%= p.name_en %>」？此操作不可撤销。">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('_shell-bottom') %>

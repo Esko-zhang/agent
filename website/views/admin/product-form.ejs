@@ -1,0 +1,97 @@
+<%- include('_shell-top', { heading: isNew ? '新增产品' : '编辑产品' }) %>
+
+<%
+// Which categories each attribute belongs to, derived from the category config
+// so the form and the public table can never drift apart.
+var fieldOwners = {};
+categories.forEach(function (c) {
+  c.fields.forEach(function (f) {
+    (fieldOwners[f] = fieldOwners[f] || []).push(c.key);
+  });
+});
+var allCatKeys = categories.map(function (c) { return c.key; });
+fieldOwners.remark = allCatKeys;
+var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', 'remark'];
+%>
+
+<div class="admin-head">
+  <h1><%= isNew ? '新增产品' : '编辑产品 #' + product.id %></h1>
+  <div class="spacer"></div>
+  <a class="btn btn-ghost" href="/admin/products">← 返回列表</a>
+</div>
+
+<% if (error) { %><p class="alert alert-error"><%= error %></p><% } %>
+
+<form class="card" method="post" enctype="multipart/form-data"
+      action="<%= isNew ? '/admin/products' : '/admin/products/' + product.id %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-grid">
+    <label class="field">
+      <span>所属分类 *</span>
+      <select name="category" data-category-select required>
+        <% categories.forEach(function (c) { %>
+          <option value="<%= c.key %>" <%= product.category === c.key ? 'selected' : '' %>>
+            <%= c.zh %>（<%= c.en %>）
+          </option>
+        <% }); %>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>产品英文名字 *<span class="hint">（前台展示的名称）</span></span>
+      <input name="name_en" value="<%= product.name_en || '' %>" required maxlength="200">
+    </label>
+
+    <% fieldOrder.forEach(function (f) { %>
+      <% var owners = fieldOwners[f] || allCatKeys; %>
+      <div class="field <%= f === 'remark' ? 'span-2' : '' %>"
+           data-for-categories="<%= owners.join(' ') %>">
+        <label>
+          <span>
+            <%= fieldLabels[f].zh %>
+            <span class="hint">（<%= fieldLabels[f].en %><% if (f === 'tags') { %>，多个标签用逗号分隔<% } %>）</span>
+          </span>
+          <% if (f === 'remark') { %>
+            <textarea name="remark" rows="3" maxlength="1000"><%= product.remark || '' %></textarea>
+          <% } else { %>
+            <input name="<%= f %>" value="<%= product[f] || '' %>" maxlength="200">
+          <% } %>
+        </label>
+      </div>
+    <% }); %>
+
+    <label class="field">
+      <span>排序值 <span class="hint">（数字越小越靠前）</span></span>
+      <input name="sort_order" type="number" value="<%= product.sort_order || 0 %>" step="10">
+    </label>
+  </div>
+
+  <div class="field">
+    <span>产品图片 <span class="hint">（JPG / PNG / WebP / GIF）</span></span>
+    <% if (product.image_path) { %>
+      <div class="image-preview">
+        <img src="<%= product.image_path %>" alt="">
+        <label class="check-row">
+          <input type="checkbox" name="remove_image" value="1">
+          <span>删除当前图片</span>
+        </label>
+      </div>
+    <% } %>
+    <input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif"
+           data-preview-target="image-file-name">
+    <p class="hint" id="image-file-name"></p>
+  </div>
+
+  <label class="check-row">
+    <input type="checkbox" name="is_active" value="1" <%= product.is_active ? 'checked' : '' %>>
+    <span>上架（前台可见）</span>
+  </label>
+
+  <div class="form-actions">
+    <button class="btn" type="submit"><%= isNew ? '创建产品' : '保存修改' %></button>
+    <a class="btn btn-ghost" href="/admin/products">取消</a>
+  </div>
+</form>
+
+<%- include('_shell-bottom') %>

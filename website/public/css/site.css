@@ -1,0 +1,300 @@
+/* ---------- Design tokens ---------- */
+:root {
+  --brand: #11684f;
+  --brand-dark: #0b4a38;
+  --brand-light: #e7f2ee;
+  --accent: #b4883a;
+  --ink: #16201c;
+  --ink-soft: #5a6b63;
+  --line: #dfe6e2;
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --danger: #a3302a;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 32, 26, .06), 0 8px 24px rgba(16, 32, 26, .06);
+  --font: "Helvetica Neue", Helvetica, Arial, "Segoe UI", "Noto Sans SC",
+          "Microsoft YaHei", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+/* An explicit `display` on a class beats the UA rule for [hidden], so the
+   admin's category-driven field toggling needs this to take effect. */
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+a { color: var(--brand); }
+
+img { max-width: 100%; }
+
+.wrap { width: min(1180px, 100% - 40px); margin-inline: auto; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---------- Buttons & forms ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; border: 1px solid transparent; border-radius: var(--radius);
+  background: var(--brand); color: #fff; font: inherit; font-weight: 600;
+  text-decoration: none; cursor: pointer;
+}
+.btn:hover { background: var(--brand-dark); }
+.btn-ghost { background: transparent; color: var(--brand); border-color: var(--line); }
+.btn-ghost:hover { background: var(--brand-light); }
+.btn-danger { background: var(--danger); }
+.btn-danger:hover { background: #85241f; }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.field { display: block; margin-bottom: 16px; }
+.field > span { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 10px 12px; font: inherit; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand);
+}
+.field .hint { font-weight: 400; color: var(--ink-soft); font-size: 12px; }
+
+.alert {
+  padding: 12px 14px; border-radius: var(--radius); margin-bottom: 18px;
+  border: 1px solid; font-size: 14px;
+}
+.alert-error { background: #fdf0ef; border-color: #f0c6c3; color: var(--danger); }
+.alert-ok { background: var(--brand-light); border-color: #bcdcd1; color: var(--brand-dark); }
+
+/* ---------- Login page ---------- */
+.login-page {
+  min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr;
+}
+.login-brand {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; padding: 48px; text-align: center;
+  background: linear-gradient(160deg, var(--brand) 0%, var(--brand-dark) 100%);
+  color: #fff;
+}
+/* A light plate behind the logo so a dark or transparent logo stays legible
+   against the green panel, whatever the customer uploads. */
+.login-brand .logo-plate {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 22px 30px; background: #fff; border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+}
+.login-brand .logo-img { max-height: 120px; max-width: 280px; display: block; }
+.login-brand .logo-text {
+  font-size: 44px; font-weight: 700; letter-spacing: .06em; margin: 0;
+}
+.login-brand .tagline {
+  margin: 0; font-size: 15px; letter-spacing: .04em; color: rgba(255, 255, 255, .85);
+  max-width: 34ch;
+}
+.login-form-side {
+  display: flex; align-items: center; justify-content: center; padding: 48px 32px;
+}
+.login-card { width: 100%; max-width: 380px; }
+.login-card h2 { margin: 0 0 6px; font-size: 24px; }
+.login-card .sub { margin: 0 0 24px; color: var(--ink-soft); font-size: 14px; }
+.login-note {
+  margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--ink-soft);
+}
+
+@media (max-width: 820px) {
+  .login-page { grid-template-columns: 1fr; }
+  .login-brand { padding: 44px 24px; }
+  .login-brand .logo-text { font-size: 34px; }
+}
+
+/* ---------- Site header ---------- */
+.site-header {
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 20;
+}
+.site-header .bar {
+  display: flex; align-items: center; gap: 24px; padding: 14px 0;
+}
+.brand-link {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 20px; color: var(--brand);
+  text-decoration: none; letter-spacing: .04em; flex-shrink: 0;
+}
+.brand-link img { max-height: 40px; }
+.site-nav { display: flex; gap: 6px; margin-left: auto; align-items: center; }
+.site-nav a {
+  padding: 8px 14px; border-radius: var(--radius); text-decoration: none;
+  color: var(--ink-soft); font-weight: 600; font-size: 14px;
+}
+.site-nav a:hover { background: var(--bg); color: var(--brand); }
+.site-nav a.active { background: var(--brand-light); color: var(--brand-dark); }
+.user-chip {
+  display: flex; align-items: center; gap: 10px; padding-left: 16px;
+  margin-left: 6px; border-left: 1px solid var(--line); font-size: 13px;
+  color: var(--ink-soft);
+}
+.logout-btn {
+  border: 0; background: none; padding: 0; font: inherit; font-size: 13px;
+  color: var(--brand); cursor: pointer; text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+  .site-header .bar { flex-wrap: wrap; gap: 10px; }
+  .site-nav { margin-left: 0; width: 100%; flex-wrap: wrap; }
+  .user-chip { border-left: 0; padding-left: 0; margin-left: 0; }
+}
+
+/* ---------- Page intro + search ---------- */
+.page-head { padding: 32px 0 20px; }
+.page-head h1 { margin: 0 0 6px; font-size: 28px; }
+.page-head p { margin: 0; color: var(--ink-soft); }
+
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+  padding: 16px; margin-bottom: 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  position: sticky; top: 69px; z-index: 10;
+}
+/* min-width:0 lets the form shrink below its content width — without it the
+   320px flex-basis forces a horizontal page scroll on small phones. */
+.search-form { display: flex; gap: 8px; flex: 1 1 240px; min-width: 0; }
+.search-form input {
+  flex: 1; min-width: 0; padding: 10px 12px; font: inherit;
+  border: 1px solid var(--line); border-radius: var(--radius);
+}
+.search-form input:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+.cat-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+.cat-nav a {
+  padding: 9px 16px; border: 1px solid var(--line); border-radius: 999px;
+  text-decoration: none; color: var(--ink); font-weight: 600; font-size: 13.5px;
+  background: var(--surface);
+}
+.cat-nav a:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+.cat-nav .count { color: var(--ink-soft); font-weight: 400; }
+.cat-nav a:hover .count { color: rgba(255, 255, 255, .8); }
+
+.search-summary { padding: 4px 0 12px; color: var(--ink-soft); font-size: 14px; }
+
+/* ---------- Product sections ---------- */
+.product-section { margin-bottom: 44px; scroll-margin-top: 150px; }
+.product-section h2 {
+  display: flex; align-items: baseline; gap: 12px;
+  margin: 0 0 14px; padding-bottom: 10px; font-size: 21px;
+  border-bottom: 2px solid var(--brand);
+}
+.product-section h2 .zh { font-size: 14px; font-weight: 400; color: var(--ink-soft); }
+
+.table-scroll {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow);
+}
+table.products { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.products th, table.products td {
+  padding: 12px 14px; text-align: left; vertical-align: middle;
+  border-bottom: 1px solid var(--line);
+}
+table.products thead th {
+  background: #f2f6f4; font-size: 12px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-soft); white-space: nowrap;
+}
+table.products tbody tr:last-child td { border-bottom: 0; }
+table.products tbody tr:hover { background: #fafcfb; }
+table.products .col-no { width: 56px; color: var(--ink-soft); }
+table.products .col-img { width: 92px; }
+table.products .name { font-weight: 600; }
+table.products .remark { color: var(--ink-soft); max-width: 260px; }
+
+.thumb {
+  width: 64px; height: 64px; object-fit: cover; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); display: block;
+}
+.thumb-empty {
+  width: 64px; height: 64px; border-radius: 8px; border: 1px dashed var(--line);
+  display: grid; place-items: center; color: var(--ink-soft); font-size: 10px;
+  background: var(--bg);
+}
+.tag-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag {
+  padding: 2px 9px; border-radius: 999px; font-size: 12px;
+  background: var(--brand-light); color: var(--brand-dark); white-space: nowrap;
+}
+.empty-row { padding: 28px; text-align: center; color: var(--ink-soft); }
+
+/* Wide data tables scroll inside their card; on narrow screens say so. */
+.scroll-hint { display: none; }
+@media (max-width: 760px) {
+  .scroll-hint {
+    display: block; margin: 0 0 8px; font-size: 12.5px; color: var(--ink-soft);
+  }
+}
+
+/* ---------- Lightbox (CSS-only, uses :target) ---------- */
+.lightbox {
+  position: fixed; inset: 0; display: none; z-index: 100;
+  background: rgba(12, 22, 18, .82); place-items: center; padding: 32px;
+}
+.lightbox:target { display: grid; }
+.lightbox img {
+  max-width: min(900px, 92vw); max-height: 84vh; border-radius: var(--radius);
+  background: #fff;
+}
+.lightbox .close {
+  position: absolute; inset: 0; display: block;
+}
+.lightbox figure { margin: 0; text-align: center; position: relative; }
+.lightbox figcaption { margin-top: 12px; color: #fff; font-weight: 600; }
+
+/* ---------- Contact page ---------- */
+.staff-grid {
+  display: grid; gap: 18px; padding-bottom: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+}
+.staff-card {
+  display: flex; gap: 16px; padding: 18px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.staff-photo {
+  width: 86px; height: 86px; flex-shrink: 0; object-fit: cover;
+  border-radius: 50%; border: 2px solid var(--brand-light);
+}
+.staff-photo-empty {
+  width: 86px; height: 86px; flex-shrink: 0; border-radius: 50%;
+  display: grid; place-items: center; font-size: 28px; font-weight: 700;
+  color: var(--brand); background: var(--brand-light);
+}
+.staff-body { min-width: 0; }
+.staff-body h3 { margin: 0 0 2px; font-size: 17px; }
+.staff-body .role { margin: 0 0 10px; font-size: 13px; color: var(--accent); font-weight: 600; }
+.staff-contact { list-style: none; margin: 0; padding: 0; font-size: 13.5px; }
+.staff-contact li {
+  display: flex; gap: 8px; align-items: baseline; padding: 2px 0;
+  overflow-wrap: anywhere;
+}
+.staff-contact .label { color: var(--ink-soft); flex-shrink: 0; min-width: 72px; }
+.staff-contact a { text-decoration: none; font-weight: 600; }
+.staff-contact a:hover { text-decoration: underline; }
+
+/* ---------- Footer ---------- */
+.site-footer {
+  margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--line);
+  color: var(--ink-soft); font-size: 13px; background: var(--surface);
+}
+.site-footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+
+/* ---------- Standalone message page ---------- */
+.message-page {
+  min-height: 70vh; display: grid; place-items: center; text-align: center; padding: 40px 20px;
+}
+.message-page h1 { margin: 0 0 10px; font-size: 26px; }
+.message-page p { margin: 0 0 22px; color: var(--ink-soft); max-width: 46ch; }

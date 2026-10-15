@@ -1,0 +1,14 @@
+<%- include('partials/head', { pageTitle: title, lang: 'en' }) %>
+<body>
+  <main class="message-page">
+    <div>
+      <h1><%= title %></h1>
+      <p><%= message %></p>
+      <% var signedIn = typeof currentUser !== 'undefined' && currentUser; %>
+      <a class="btn" href="<%= signedIn ? '/products' : '/' %>">
+        <%= signedIn ? 'Back to products' : 'Back to sign in' %>
+      </a>
+    </div>
+  </main>
+</body>
+</html>

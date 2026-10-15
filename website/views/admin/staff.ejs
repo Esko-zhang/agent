@@ -1,0 +1,58 @@
+<%- include('_shell-top', { heading: '业务员管理' }) %>
+
+<div class="admin-head">
+  <h1>业务员管理</h1>
+  <div class="spacer"></div>
+  <a class="btn" href="/admin/staff/new">+ 新增业务员</a>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<div class="card">
+  <h2>联系我们页展示的业务员 <span class="hint">（数量不限，可随时增减）</span></h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>排序</th><th>照片</th><th>业务员</th><th>职位</th>
+          <th>电话</th><th>WhatsApp</th><th>邮箱</th><th>状态</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="9" class="empty-row">暂无业务员，点击右上角「新增业务员」开始录入。</td></tr>
+        <% } %>
+        <% rows.forEach(function (m) { %>
+          <tr>
+            <td><%= m.sort_order %></td>
+            <td>
+              <% if (m.photo_path) { %><img class="mini-thumb" src="<%= m.photo_path %>" alt="">
+              <% } else { %>—<% } %>
+            </td>
+            <td><strong><%= m.name %></strong></td>
+            <td><%= m.title || '—' %></td>
+            <td><%= m.phone || '—' %></td>
+            <td><%= m.whatsapp || '—' %></td>
+            <td><%= m.email || '—' %></td>
+            <td>
+              <% if (m.is_active) { %><span class="badge badge-on">显示</span>
+              <% } else { %><span class="badge badge-off">隐藏</span><% } %>
+            </td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-ghost btn-sm" href="/admin/staff/<%= m.id %>/edit">编辑</a>
+                <form class="inline-form" method="post" action="/admin/staff/<%= m.id %>/delete"
+                      data-confirm="确定删除业务员「<%= m.name %>」？">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('_shell-bottom') %>

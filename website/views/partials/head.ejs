@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'en' %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title><%= pageTitle %></title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/site.css">
+  <% if (typeof adminCss !== 'undefined' && adminCss) { %>
+  <link rel="stylesheet" href="/css/admin.css">
+  <% } %>
+</head>
