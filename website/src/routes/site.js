@@ -16,10 +16,31 @@ const router = express.Router();
 // Guards are attached per route: this router is mounted at "/", so a blanket
 // `router.use(requireAuth)` would also swallow /healthz and every 404.
 
-/** Only allow redirects back into this site. */
+// The header shows the inquiry count on every page, so it cannot be a local of
+// just the two routes that happened to need it first.
+router.use((req, res, next) => {
+  res.locals.basket = req.user ? inquiry.readBasket(req) : [];
+  next();
+});
+
+/**
+ * Only allow redirects back into this site, and drop any `ok` already on the
+ * URL — otherwise every add-to-inquiry appends another one and the flash grows
+ * into "added…,added…,added…" while the address bar fills with duplicates.
+ */
 function safeBack(value, fallback) {
   const v = String(value || '');
-  return /^\/(?!\/)/.test(v) ? v : fallback;
+  if (!/^\/(?!\/)/.test(v)) return fallback;
+  const [path, query = ''] = v.split('?');
+  const params = new URLSearchParams(query);
+  params.delete('ok');
+  const rest = params.toString();
+  return rest ? `${path}?${rest}` : path;
+}
+
+/** Appends a one-off message to a path that may or may not already have a query. */
+function withFlash(path, message) {
+  return path + (path.includes('?') ? '&' : '?') + 'ok=' + encodeURIComponent(message);
 }
 
 // Product list page: one page, three anchored category sections, one search box.
@@ -85,15 +106,10 @@ router.post('/inquiry/add', requireAuth, (req, res) => {
   const basket = inquiry.readBasket(req);
   const already = basket.includes(id);
   if (!already && basket.length >= inquiry.MAX_ITEMS) {
-    return res.redirect(
-      back + (back.includes('?') ? '&' : '?') + 'ok=' + encodeURIComponent('Inquiry list is full.')
-    );
+    return res.redirect(withFlash(back, 'Your inquiry list is full.'));
   }
   if (!already) inquiry.writeBasket(res, basket.concat(id));
-  const sep = back.includes('?') ? '&' : '?';
-  return res.redirect(
-    back + sep + 'ok=' + encodeURIComponent(`${product.name_en} added to your inquiry list.`)
-  );
+  return res.redirect(withFlash(back, `${product.name_en} added to your inquiry list.`));
 });
 
 router.post('/inquiry/remove', requireAuth, (req, res) => {

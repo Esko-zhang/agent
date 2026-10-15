@@ -25,18 +25,16 @@
             <table class="products">
               <thead>
                 <tr>
-                  <th class="col-no">No.</th>
-                  <th>Product Name</th>
+                  <th>Product</th>
                   <th>Quantity needed</th>
                   <th>Notes</th>
-                  <th></th>
+                  <th class="col-act"></th>
                 </tr>
               </thead>
               <tbody>
-                <% rows.forEach(function (p, i) { %>
+                <% rows.forEach(function (p) { %>
                   <tr>
-                    <td class="col-no"><%= i + 1 %></td>
-                    <td class="name"><%= p.name_en %></td>
+                    <td class="col-name"><span class="name"><%= p.name_en %></span></td>
                     <td>
                       <input name="qty_<%= p.id %>" value="<%= quantities[p.id] || '' %>"
                              placeholder="e.g. 500 kg" maxlength="60"
@@ -47,9 +45,8 @@
                              placeholder="Packaging, spec, target price…" maxlength="300"
                              aria-label="Notes for <%= p.name_en %>">
                     </td>
-                    <td class="col-rfq">
-                      <button class="link-danger" type="submit" name="remove_id"
-                              form="rm-<%= p.id %>">Remove</button>
+                    <td class="col-act">
+                      <button class="link-danger" type="submit" form="rm-<%= p.id %>">Remove</button>
                     </td>
                   </tr>
                 <% }); %>

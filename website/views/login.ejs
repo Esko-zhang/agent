@@ -1,51 +1,44 @@
 <%- include('partials/head', { pageTitle: settings.site_name + ' — Sign in', lang: 'en' }) %>
-<body>
-  <main class="login-page">
-    <!-- Brand panel: the big logo block from the requirement sheet (B12:H26). -->
-    <section class="login-brand">
-      <% if (settings.logo_path) { %>
-        <span class="logo-plate">
+<body class="login-body">
+  <main class="login-shell">
+    <div class="login-card">
+      <div class="login-brand">
+        <% if (settings.logo_path) { %>
           <img class="logo-img" src="<%= settings.logo_path %>" alt="<%= settings.brand_name %>">
-        </span>
-      <% } else { %>
-        <p class="logo-text"><%= settings.brand_name %></p>
-      <% } %>
-      <p class="tagline"><%= settings.login_tagline %></p>
-    </section>
-
-    <section class="login-form-side">
-      <div class="login-card">
-        <h2>Member sign in</h2>
-        <p class="sub">Please sign in to view our product catalogue.</p>
-
-        <% if (error) { %>
-          <p class="alert alert-error" role="alert"><%= error %></p>
+        <% } else { %>
+          <p class="logo-text"><%= settings.brand_name %></p>
         <% } %>
-
-        <form method="post" action="/login" autocomplete="on">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <input type="hidden" name="next" value="<%= next %>">
-
-          <label class="field">
-            <span>Account</span>
-            <input name="username" value="<%= username %>" required autocomplete="username"
-                   autocapitalize="none" spellcheck="false" autofocus>
-          </label>
-
-          <label class="field">
-            <span>Password</span>
-            <input name="password" type="password" required autocomplete="current-password">
-          </label>
-
-          <button class="btn" type="submit">Sign in</button>
-        </form>
-
-        <p class="login-note">
-          Accounts are issued by Durlevel only — there is no public registration.
-          Please contact your sales representative to request access.
-        </p>
+        <p class="tagline"><%= settings.login_tagline %></p>
       </div>
-    </section>
+
+      <% if (error) { %>
+        <p class="alert alert-error" role="alert"><%= error %></p>
+      <% } %>
+
+      <form method="post" action="/login" autocomplete="on">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="next" value="<%= next %>">
+
+        <label class="field" for="login-user">
+          <span>Account</span>
+          <input id="login-user" name="username" value="<%= username %>" required
+                 autocomplete="username" autocapitalize="none" spellcheck="false" autofocus>
+        </label>
+
+        <label class="field" for="login-pass">
+          <span>Password</span>
+          <input id="login-pass" name="password" type="password" required
+                 autocomplete="current-password">
+        </label>
+
+        <button class="btn btn-block" type="submit">Sign in</button>
+      </form>
+
+      <p class="login-note">
+        Accounts are issued by <%= settings.brand_name %> only — there is no public
+        registration. Please contact your sales representative to request access.
+      </p>
+    </div>
   </main>
 </body>
 </html>

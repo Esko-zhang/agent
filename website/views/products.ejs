@@ -18,7 +18,7 @@
       </form>
       <nav class="cat-nav" aria-label="Product categories">
         <% sections.forEach(function (s) { %>
-          <a href="#<%= s.anchor %>"><%= s.en %> <span class="count">(<%= s.rows.length %>)</span></a>
+          <a href="#<%= s.anchor %>"><%= s.en %> <span class="count"><%= s.rows.length %></span></a>
         <% }); %>
       </nav>
     </div>
@@ -35,89 +35,89 @@
     <% } %>
 
     <% sections.forEach(function (s) { %>
-      <% var cols = s.fields.concat(['remark']); %>
+      <%
+      // Only the two or three attributes this category actually uses get a
+      // column. Tags and remarks sit under the product name, and the image
+      // column disappears entirely when nothing in the section has a picture.
+      var cols = s.fields.filter(function (f) { return f !== 'tags'; });
+      var hasImages = s.rows.some(function (p) { return p.image_path; });
+      var colCount = cols.length + 2 + (hasImages ? 1 : 0);
+      %>
       <section class="product-section" id="<%= s.anchor %>">
-        <h2><%= s.title %> <span class="zh"><%= s.zh %></span></h2>
+        <h2><%= s.title %></h2>
 
         <p class="scroll-hint" aria-hidden="true">Swipe the table sideways to see all columns</p>
         <div class="table-scroll">
           <table class="products">
             <thead>
               <tr>
-                <th class="col-no">No.</th>
-                <th class="col-img">Image</th>
-                <th>Product Name</th>
+                <% if (hasImages) { %><th class="col-img"><span class="visually-hidden">Image</span></th><% } %>
+                <th>Product</th>
                 <% cols.forEach(function (f) { %>
                   <th><%= fieldLabels[f].en %></th>
                 <% }); %>
-                <th>Documents</th>
-                <th class="col-rfq">Inquiry</th>
+                <th class="col-act"><span class="visually-hidden">Actions</span></th>
               </tr>
             </thead>
             <tbody>
               <% if (!s.rows.length) { %>
                 <tr>
-                  <td class="empty-row" colspan="<%= cols.length + 5 %>">
+                  <td class="empty-row" colspan="<%= colCount %>">
                     <%= search ? 'No products in this category match your search.'
                                : 'No products published in this category yet.' %>
                   </td>
                 </tr>
               <% } %>
-              <% s.rows.forEach(function (p, i) { %>
+              <% s.rows.forEach(function (p) { %>
+                <%
+                var tags = (p.tags || '').split(/[,，;；]/)
+                  .map(function (t) { return t.trim(); }).filter(Boolean);
+                var pdocs = docsByProduct.get(p.id) || [];
+                %>
                 <tr>
-                  <td class="col-no"><%= i + 1 %></td>
-                  <td class="col-img">
-                    <% if (p.image_path) { %>
-                      <a href="#img-<%= p.id %>">
-                        <img class="thumb" src="<%= p.image_path %>" alt="<%= p.name_en %>" loading="lazy">
-                      </a>
-                    <% } else { %>
-                      <span class="thumb-empty">No image</span>
-                    <% } %>
-                  </td>
-                  <td class="name"><%= p.name_en %></td>
-                  <% cols.forEach(function (f) { %>
-                    <td class="<%= f === 'remark' ? 'remark' : '' %>">
-                      <% if (f === 'tags' && p.tags) { %>
-                        <span class="tag-list">
-                          <% p.tags.split(/[,，;；]/).map(function (t) { return t.trim(); })
-                               .filter(Boolean).forEach(function (t) { %>
-                            <span class="tag"><%= t %></span>
-                          <% }); %>
-                        </span>
-                      <% } else { %>
-                        <%= p[f] || '—' %>
+                  <% if (hasImages) { %>
+                    <td class="col-img">
+                      <% if (p.image_path) { %>
+                        <a href="#img-<%= p.id %>">
+                          <img class="thumb" src="<%= p.image_path %>" alt="<%= p.name_en %>" loading="lazy">
+                        </a>
                       <% } %>
                     </td>
-                  <% }); %>
+                  <% } %>
 
-                  <td class="docs">
-                    <% var pdocs = docsByProduct.get(p.id) || []; %>
-                    <% if (!pdocs.length) { %>
-                      <span class="muted">—</span>
-                    <% } else { %>
-                      <span class="doc-list">
-                        <% pdocs.forEach(function (d) { %>
-                          <a class="doc-link" href="/docs/<%= d.id %>"
-                             title="<%= d.original %> · <%= humanSize(d.size_bytes) %>">
-                            <%= d.label || 'Document' %>
-                          </a>
-                        <% }); %>
+                  <td class="col-name">
+                    <span class="name"><%= p.name_en %></span>
+                    <% if (s.fields.indexOf('tags') !== -1 && tags.length) { %>
+                      <span class="tag-list">
+                        <% tags.forEach(function (t) { %><span class="tag"><%= t %></span><% }); %>
                       </span>
                     <% } %>
+                    <% if (p.remark) { %><span class="remark"><%= p.remark %></span><% } %>
                   </td>
 
-                  <td class="col-rfq">
-                    <% if (basket.indexOf(p.id) !== -1) { %>
-                      <span class="in-basket">✓ Added</span>
-                    <% } else { %>
-                      <form method="post" action="/inquiry/add">
-                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                        <input type="hidden" name="product_id" value="<%= p.id %>">
-                        <input type="hidden" name="back" value="<%= currentUrl %>">
-                        <button class="btn btn-ghost btn-sm" type="submit">+ Inquiry</button>
-                      </form>
-                    <% } %>
+                  <% cols.forEach(function (f) { %>
+                    <td><%= p[f] || '—' %></td>
+                  <% }); %>
+
+                  <td class="col-act">
+                    <span class="row-act">
+                      <% pdocs.forEach(function (d) { %>
+                        <a class="doc-link" href="/docs/<%= d.id %>"
+                           title="<%= d.original %> · <%= humanSize(d.size_bytes) %>">
+                          <%= d.label || 'Document' %>
+                        </a>
+                      <% }); %>
+                      <% if (basket.indexOf(p.id) !== -1) { %>
+                        <span class="in-basket">✓ Added</span>
+                      <% } else { %>
+                        <form method="post" action="/inquiry/add">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <input type="hidden" name="product_id" value="<%= p.id %>">
+                          <input type="hidden" name="back" value="<%= currentUrl %>">
+                          <button class="btn btn-ghost btn-sm" type="submit">+ Inquiry</button>
+                        </form>
+                      <% } %>
+                    </span>
                   </td>
                 </tr>
               <% }); %>

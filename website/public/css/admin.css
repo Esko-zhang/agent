@@ -78,7 +78,9 @@ table.data .mini-thumb {
   width: 46px; height: 46px; object-fit: cover; border-radius: 6px;
   border: 1px solid var(--line); display: block;
 }
-.table-wrap { overflow-x: auto; }
+/* position:relative for the same reason as .table-scroll: keep absolutely
+   positioned children from escaping the scroller and widening the page. */
+.table-wrap { position: relative; overflow-x: auto; }
 
 .badge {
   display: inline-block; padding: 2px 9px; border-radius: 999px;
