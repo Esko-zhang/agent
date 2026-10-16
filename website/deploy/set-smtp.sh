@@ -54,6 +54,18 @@ case "$smtp_pass" in
   *[[:space:]]*) warn "注意：密码里含有空格，常见于复制时多选了字符。如果认证一直失败，先检查这一点。" ;;
 esac
 
+# ---- 显示名 ----------------------------------------------------------------
+# 客户收件箱里看到的是「Durlevel <sales@…>」还是光秃秃一个地址，差别不小。
+current_name="$(grep -m1 '^SMTP_FROM=' "$ENV_FILE" 2>/dev/null \
+  | cut -d= -f2- | tr -d '"'"'" | sed -E 's/[[:space:]]*<.*//' || true)"
+[ "$current_name" = "$current_user" ] && current_name=""
+echo
+printf '发件人显示名（客户收件箱里看到的名字，直接回车用 %s）\n> ' "${current_name:-Durlevel}"
+read -r from_name
+from_name="${from_name:-${current_name:-Durlevel}}"
+# 显示名里有引号会把 .env 的那一行拆坏，直接去掉。
+from_name="$(printf '%s' "$from_name" | tr -d '"\\')"
+
 # ---- 服务器 ----------------------------------------------------------------
 echo
 echo "发信服务器：1) smtp.qiye.aliyun.com（默认）   2) smtp.mxhichina.com（部分租户只认这个）"
@@ -81,7 +93,13 @@ sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$ENV_FILE"
   printf 'SMTP_SECURE="1"\n'
   printf 'SMTP_USER="%s"\n' "$smtp_user"
   printf 'SMTP_PASS="%s"\n' "$smtp_pass"
-  printf 'SMTP_FROM="%s"\n' "$smtp_user"
+  # 地址必须和 SMTP_USER 完全一致，阿里云按「发件人不是本人」拒收；
+  # 显示名只是前面那段，不影响认证。
+  if [ -n "$from_name" ]; then
+    printf 'SMTP_FROM="%s <%s>"\n' "$from_name" "$smtp_user"
+  else
+    printf 'SMTP_FROM="%s"\n' "$smtp_user"
+  fi
 } >> "$ENV_FILE"
 
 # .env 的属主和权限保持原样（里面是密码，必须 600）。
