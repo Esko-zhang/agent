@@ -12,7 +12,13 @@ CREATE TABLE IF NOT EXISTS users (
   role          TEXT    NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'sales', 'user')),
   is_active     INTEGER NOT NULL DEFAULT 1,
   created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
-  last_login_at TEXT
+  last_login_at TEXT,
+  -- Who issued this account. The name is copied in so the record still reads
+  -- correctly after the issuing account is renamed or removed.
+  created_by      INTEGER,
+  created_by_name TEXT   NOT NULL DEFAULT '',
+  -- For a sales account: the contact card customers should reach them on.
+  staff_id        INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS products (
@@ -67,6 +73,7 @@ CREATE TABLE IF NOT EXISTS access_log (
   event       TEXT    NOT NULL,                             -- see EVENTS in src/lib/accesslog.js
   path        TEXT    NOT NULL DEFAULT '',
   ip          TEXT    NOT NULL DEFAULT '',
+  country     TEXT    NOT NULL DEFAULT '',   -- ISO 3166-1 alpha-2, '' if unknown
   user_agent  TEXT    NOT NULL DEFAULT ''
 );
 

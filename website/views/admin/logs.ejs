@@ -6,7 +6,7 @@ function qs(overrides) {
   var p = new URLSearchParams();
   var base = {
     username: filter.username, event: filter.event, q: filter.q,
-    from: filter.from, to: filter.to, page: page,
+    country: filter.country, from: filter.from, to: filter.to, page: page,
   };
   Object.keys(base).forEach(function (k) {
     var v = (overrides && k in overrides) ? overrides[k] : base[k];
@@ -15,7 +15,8 @@ function qs(overrides) {
   var s = p.toString();
   return s ? '?' + s : '';
 }
-var hasFilter = filter.username || filter.event || filter.q || filter.from || filter.to;
+var hasFilter = filter.username || filter.event || filter.q || filter.country
+  || filter.from || filter.to;
 %>
 
 <div class="admin-head">
@@ -42,6 +43,10 @@ var hasFilter = filter.username || filter.event || filter.q || filter.from || fi
     <div class="k">近 24 小时独立 IP</div>
   </div>
   <div class="stat">
+    <div class="n"><%= stats.countriesToday %></div>
+    <div class="k">近 24 小时国家/地区</div>
+  </div>
+  <div class="stat">
     <div class="n"><%= stats.failedWeek %></div>
     <div class="k">近 7 天登录失败</div>
   </div>
@@ -66,6 +71,17 @@ var hasFilter = filter.username || filter.event || filter.q || filter.from || fi
           <option value="">全部事件</option>
           <% events.forEach(function (e) { %>
             <option value="<%= e.key %>" <%= filter.event === e.key ? 'selected' : '' %>><%= e.zh %></option>
+          <% }); %>
+        </select>
+      </label>
+      <label class="field">
+        <span>国家 / 地区</span>
+        <select name="country">
+          <option value="">全部国家 / 地区</option>
+          <% countries.forEach(function (c) { %>
+            <option value="<%= c.code %>" <%= filter.country === c.code ? 'selected' : '' %>>
+              <%= c.flag %> <%= c.name %>（<%= c.count %>）
+            </option>
           <% }); %>
         </select>
       </label>
@@ -104,13 +120,14 @@ var hasFilter = filter.username || filter.event || filter.q || filter.from || fi
           <th>事件</th>
           <th>页面</th>
           <th>IP 地址</th>
+          <th>国家 / 地区</th>
           <th>浏览器 / 设备</th>
         </tr>
       </thead>
       <tbody>
         <% if (!rows.length) { %>
           <tr>
-            <td colspan="6" class="empty-row">
+            <td colspan="7" class="empty-row">
               <%= hasFilter ? '没有符合条件的记录。' : '还没有访问记录。有人登录或浏览页面后这里就会出现。' %>
             </td>
           </tr>
@@ -137,6 +154,13 @@ var hasFilter = filter.username || filter.event || filter.q || filter.from || fi
             </td>
             <td class="mono"><%= r.path || '—' %></td>
             <td class="mono"><%= r.ip || '—' %></td>
+            <td class="nowrap">
+              <% if (r.country) { %>
+                <%= geo.flagOf(r.country) %> <%= geo.nameOf(r.country) %>
+              <% } else { %>
+                <span class="hint">未知</span>
+              <% } %>
+            </td>
             <td class="ua" title="<%= r.user_agent %>"><%= r.user_agent || '—' %></td>
           </tr>
         <% }); %>
@@ -161,7 +185,7 @@ var hasFilter = filter.username || filter.event || filter.q || filter.from || fi
 
 <p class="admin-hint">
   IP 地址属于个人数据。请在网站上说明你们会记录访问日志及保留多久，并只在排查问题或安全审计时查阅。
-  日志超过保留期会自动删除。
+  日志超过保留期会自动删除。国家/地区由离线 IP 库推算，IPv6 和使用 VPN 的访客可能显示「未知」或落在出口节点所在国。
 </p>
 
 <%- include('_shell-bottom') %>

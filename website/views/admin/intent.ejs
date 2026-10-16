@@ -22,13 +22,13 @@
     <table class="data">
       <thead>
         <tr>
-          <th>账号 / 公司</th><th>意向分</th><th>询盘</th><th>下载文档</th>
+          <th>账号 / 公司</th><th>归属业务员</th><th>意向分</th><th>询盘</th><th>下载文档</th>
           <th>搜索</th><th>浏览</th><th>活跃天数</th><th>IP 数</th><th>最近活动</th><th></th>
         </tr>
       </thead>
       <tbody>
         <% if (!rows.length) { %>
-          <tr><td colspan="10" class="empty-row">这段时间还没有客户活动。</td></tr>
+          <tr><td colspan="11" class="empty-row">这段时间还没有客户活动。</td></tr>
         <% } %>
         <% rows.forEach(function (r) { %>
           <tr>
@@ -37,6 +37,10 @@
               <% if (r.role === 'admin') { %><span class="badge badge-admin">管理员</span><% } %>
               <% if (r.deleted) { %><span class="badge badge-off">账号已删除</span><% } %>
               <div class="hint"><%= r.display_name || '—' %></div>
+            </td>
+            <td>
+              <% if (r.created_by_name) { %><%= r.created_by_name %>
+              <% } else { %><span class="hint">—</span><% } %>
             </td>
             <td>
               <div class="score-bar" aria-hidden="true">

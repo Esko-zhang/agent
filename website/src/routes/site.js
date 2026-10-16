@@ -10,6 +10,7 @@ const inquiry = require('../lib/inquiry');
 const accesslog = require('../lib/accesslog');
 const mailer = require('../lib/mailer');
 const { requireAuth } = require('../lib/auth');
+const usersLib = require('../lib/users');
 
 const router = express.Router();
 
@@ -41,6 +42,49 @@ function safeBack(value, fallback) {
 /** Appends a one-off message to a path that may or may not already have a query. */
 function withFlash(path, message) {
   return path + (path.includes('?') ? '&' : '?') + 'ok=' + encodeURIComponent(message);
+}
+
+/**
+ * The rep a customer should talk to: whoever issued their login, falling back
+ * to the first published contact card so the button is never a dead end for
+ * accounts an administrator created.
+ */
+function repFor(user) {
+  const managed = usersLib.accountManagerOf(user);
+  if (managed && managed.card) {
+    return { name: managed.card.name, title: managed.card.title, card: managed.card, owned: true };
+  }
+  if (managed) {
+    // A sales account with no card linked yet — name them, but no number.
+    return { name: managed.owner.display_name || managed.owner.username, title: '', card: null, owned: true };
+  }
+  const fallback = staff.q.listActive.all().find((m) => m.whatsapp);
+  return fallback ? { name: fallback.name, title: fallback.title, card: fallback, owned: false } : null;
+}
+
+/** A wa.me link, optionally carrying a prefilled message. */
+function waLinkWithText(whatsapp, text) {
+  const digits = String(whatsapp || '').replace(/\D/g, '');
+  if (!digits) return '';
+  const base = 'https://wa.me/' + digits;
+  return text ? base + '?text=' + encodeURIComponent(text) : base;
+}
+
+/** The inquiry, written out for WhatsApp. */
+function inquiryText(user, rows, quantities, notes) {
+  const lines = [
+    'Hello' + (user.display_name ? ', this is ' + user.display_name : '') + '.',
+    'I would like a quotation for:',
+    '',
+  ];
+  rows.forEach((p, i) => {
+    const bits = [`${i + 1}. ${p.name_en}`];
+    if (quantities[p.id]) bits.push(`Qty: ${quantities[p.id]}`);
+    if (notes[p.id]) bits.push(notes[p.id]);
+    lines.push(bits.join(' — '));
+  });
+  lines.push('', 'Account: ' + user.username);
+  return lines.join('\n');
 }
 
 // Product list page: one page, three anchored category sections, one search box.
@@ -127,6 +171,7 @@ router.post('/inquiry/clear', requireAuth, (req, res) => {
 router.get('/inquiry', requireAuth, (req, res) => {
   const ids = inquiry.readBasket(req);
   const rows = ids.map((id) => products.q.byId.get(id)).filter(Boolean);
+  const rep = repFor(req.user);
   res.render('inquiry', {
     settings: settings.all(),
     rows,
@@ -142,6 +187,12 @@ router.get('/inquiry', requireAuth, (req, res) => {
     },
     quantities: {},
     notes: {},
+    rep,
+    waChat: rep && rep.card ? waLinkWithText(rep.card.whatsapp, '') : '',
+    waInquiry:
+      rep && rep.card && rows.length
+        ? waLinkWithText(rep.card.whatsapp, inquiryText(req.user, rows, {}, {}))
+        : '',
   });
 });
 
@@ -164,6 +215,7 @@ router.post('/inquiry', requireAuth, async (req, res) => {
     notes[r.id] = String(req.body['note_' + r.id] || '').trim().slice(0, 300);
   }
 
+  const rep = repFor(req.user);
   const reject = (message) =>
     res.status(400).render('inquiry', {
       settings: settings.all(),
@@ -173,6 +225,12 @@ router.post('/inquiry', requireAuth, async (req, res) => {
       form,
       quantities,
       notes,
+      rep,
+      waChat: rep && rep.card ? waLinkWithText(rep.card.whatsapp, '') : '',
+      waInquiry:
+        rep && rep.card && rows.length
+          ? waLinkWithText(rep.card.whatsapp, inquiryText(req.user, rows, quantities, notes))
+          : '',
     });
 
   if (!rows.length) return reject('Your inquiry list is empty. Add products from the catalogue first.');
@@ -213,9 +271,12 @@ router.post('/inquiry', requireAuth, async (req, res) => {
 });
 
 router.get('/inquiry/sent', requireAuth, (req, res) => {
+  const rep = repFor(req.user);
   res.render('inquiry-sent', {
     settings: settings.all(),
     reference: String(req.query.id || '').slice(0, 12),
+    rep,
+    waChat: rep && rep.card ? waLinkWithText(rep.card.whatsapp, '') : '',
   });
 });
 

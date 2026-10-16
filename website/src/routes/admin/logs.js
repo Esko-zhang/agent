@@ -13,6 +13,7 @@ function readFilter(query, tz) {
   return {
     username: String(query.username || '').trim().slice(0, 64),
     event: String(query.event || '').trim(),
+    country: /^[A-Za-z]{2}$/.test(String(query.country || '')) ? String(query.country) : '',
     q: String(query.q || '').trim().slice(0, 80),
     from: isDate(query.from) ? query.from : '',
     to: isDate(query.to) ? query.to : '',
@@ -42,6 +43,8 @@ router.get('/', (req, res) => {
     events: accesslog.EVENTS,
     eventLabels: accesslog.EVENT_LABELS,
     usernames: accesslog.usernames(),
+    countries: accesslog.countries(),
+    geo: require('../../lib/geo'),
     stats: accesslog.stats(),
     fmt: (t) => accesslog.formatTime(t, tz),
     retentionDays: s.log_retention_days,
@@ -63,7 +66,8 @@ router.get('/export.csv', (req, res) => {
   const filter = readFilter(req.query, tz);
   const rows = accesslog.listAll(filter, EXPORT_CAP);
 
-  const header = ['时间 (' + tz + ')', '账号', '角色', '事件', '页面', 'IP', '浏览器标识'];
+  const geo = require('../../lib/geo');
+  const header = ['时间 (' + tz + ')', '账号', '角色', '事件', '页面', 'IP', '国家/地区', '浏览器标识'];
   const lines = [header.map(csvCell).join(',')];
 
   for (const r of rows) {
@@ -75,6 +79,7 @@ router.get('/export.csv', (req, res) => {
         accesslog.EVENT_LABELS[r.event] || r.event,
         r.path,
         r.ip,
+        r.country ? `${geo.nameOf(r.country)} (${r.country})` : '',
         r.user_agent,
       ]
         .map(csvCell)

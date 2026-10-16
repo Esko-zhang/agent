@@ -49,10 +49,27 @@ function migrateUserRoles() {
   console.log('[db] done.');
 }
 
+/** Adds a column to an existing table when it is not there yet. */
+function addColumn(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (cols.some((c) => c.name === column)) return;
+  console.log(`[db] adding ${table}.${column}…`);
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+}
+
 /** Create any missing tables, then apply schema changes. Safe to run repeatedly. */
 function migrate() {
   db.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
   migrateUserRoles();
+
+  // Country of the visitor's IP, resolved once at write time so history stays
+  // put even if the lookup table is updated later.
+  addColumn('access_log', 'country', "TEXT NOT NULL DEFAULT ''");
+
+  // Who issued this account, and which contact card a sales account belongs to.
+  addColumn('users', 'created_by', 'INTEGER');
+  addColumn('users', 'created_by_name', "TEXT NOT NULL DEFAULT ''");
+  addColumn('users', 'staff_id', 'INTEGER');
 }
 
 // Run before anything else: the lib modules prepare their statements at import

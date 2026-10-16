@@ -1,5 +1,6 @@
 'use strict';
 const { db } = require('../db');
+const geo = require('./geo');
 
 /** Event types, with the Chinese labels the admin UI shows. */
 const EVENTS = [
@@ -15,12 +16,15 @@ const EVENT_LABELS = Object.fromEntries(EVENTS.map((e) => [e.key, e.zh]));
 
 const q = {
   insert: db.prepare(
-    `INSERT INTO access_log (user_id, username, role, event, path, ip, user_agent)
-     VALUES (@user_id, @username, @role, @event, @path, @ip, @user_agent)`
+    `INSERT INTO access_log (user_id, username, role, event, path, ip, country, user_agent)
+     VALUES (@user_id, @username, @role, @event, @path, @ip, @country, @user_agent)`
   ),
   purge: db.prepare("DELETE FROM access_log WHERE occurred_at < datetime('now', ?)"),
   distinctUsers: db.prepare(
     "SELECT DISTINCT username FROM access_log WHERE username <> '' ORDER BY username COLLATE NOCASE"
+  ),
+  distinctCountries: db.prepare(
+    "SELECT country, COUNT(*) AS n FROM access_log WHERE country <> '' GROUP BY country ORDER BY n DESC"
   ),
   total: db.prepare('SELECT COUNT(*) AS n FROM access_log'),
   oldest: db.prepare('SELECT MIN(occurred_at) AS t FROM access_log'),
@@ -40,6 +44,7 @@ function clientIp(req) {
 function record(req, event, extra = {}) {
   if (!EVENT_KEYS.includes(event)) return;
   const user = extra.user || req.user || null;
+  const ip = clientIp(req);
   try {
     q.insert.run({
       user_id: user ? user.id : null,
@@ -47,7 +52,9 @@ function record(req, event, extra = {}) {
       role: user ? user.role : '',
       event,
       path: String(extra.path ?? req.originalUrl ?? '').slice(0, 300),
-      ip: clientIp(req).slice(0, 64),
+      ip: ip.slice(0, 64),
+      // Resolved now, so the record keeps the answer that was true at the time.
+      country: geo.countryCode(ip),
       user_agent: String(req.headers['user-agent'] || '').slice(0, 300),
     });
   } catch (err) {
@@ -68,6 +75,10 @@ function buildFilter(filter = {}) {
   if (filter.event && EVENT_KEYS.includes(filter.event)) {
     where.push('event = ?');
     params.push(filter.event);
+  }
+  if (filter.country) {
+    where.push('country = ?');
+    params.push(String(filter.country).toUpperCase().slice(0, 2));
   }
   if (filter.q) {
     const like = '%' + String(filter.q).replace(/[\\%_]/g, (m) => '\\' + m) + '%';
@@ -170,6 +181,10 @@ function stats() {
     uniqueIpsToday: one(
       `SELECT COUNT(DISTINCT ip) AS n FROM access_log WHERE ip <> '' AND occurred_at >= ${day}`
     ).n,
+    countriesToday: one(
+      `SELECT COUNT(DISTINCT country) AS n FROM access_log
+       WHERE country <> '' AND occurred_at >= ${day}`
+    ).n,
     failedWeek: one(
       `SELECT COUNT(*) AS n FROM access_log WHERE event = 'login_failed' AND occurred_at >= ${week}`
     ).n,
@@ -180,6 +195,16 @@ function stats() {
 
 function usernames() {
   return q.distinctUsers.all().map((r) => r.username);
+}
+
+/** Countries seen in the log, most frequent first, for the filter dropdown. */
+function countries() {
+  return q.distinctCountries.all().map((r) => ({
+    code: r.country,
+    name: geo.nameOf(r.country),
+    flag: geo.flagOf(r.country),
+    count: r.n,
+  }));
 }
 
 /** Drops rows older than the retention window. Returns how many were removed. */
@@ -202,5 +227,6 @@ module.exports = {
   count,
   stats,
   usernames,
+  countries,
   purgeOlderThan,
 };

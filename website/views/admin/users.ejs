@@ -15,6 +15,7 @@
     业务员和管理员账号由管理员负责，这里不会显示。
   <% } %>
   网站前台没有注册入口，账号只能在这里发放。
+  <strong>每个用户账号会记录是谁创建的</strong>——该客户打开询盘页时，会看到创建他账号的那位业务员的 WhatsApp 按钮。
 </p>
 
 <div class="card">
@@ -53,6 +54,21 @@
         <% } %>
       </label>
     </div>
+    <% if (canAssignRoles) { %>
+      <label class="field">
+        <span>关联「业务员名片」
+          <span class="hint">（创建业务员账号时选；客户的询盘页会显示这张名片的 WhatsApp）</span>
+        </span>
+        <select name="staff_id">
+          <option value="">不关联</option>
+          <% cards.forEach(function (c) { %>
+            <option value="<%= c.id %>">
+              <%= c.name %><%= c.whatsapp ? '（' + c.whatsapp + '）' : '（未填 WhatsApp）' %>
+            </option>
+          <% }); %>
+        </select>
+      </label>
+    <% } %>
     <label class="check-row">
       <input type="checkbox" name="is_active" value="1" checked>
       <span>启用该账号</span>
@@ -70,12 +86,12 @@
       <thead>
         <tr>
           <th>账号</th><th>姓名</th><th>角色 / 状态</th>
-          <th>最近登录</th><th>重置密码</th><th>操作</th>
+          <th>创建人</th><th>最近登录</th><th>重置密码</th><th>操作</th>
         </tr>
       </thead>
       <tbody>
         <% if (!rows.length) { %>
-          <tr><td colspan="6" class="empty-row">还没有可管理的账号。</td></tr>
+          <tr><td colspan="7" class="empty-row">还没有可管理的账号。</td></tr>
         <% } %>
         <% rows.forEach(function (u) { %>
           <tr>
@@ -99,12 +115,27 @@
               <% } else { %>
                 <span class="badge badge-role-<%= u.role %>"><%= roleLabels[u.role] %></span>
               <% } %>
+              <% if (canAssignRoles && u.role === 'sales') { %>
+                <select name="staff_id" form="u-<%= u.id %>">
+                  <option value="">不关联名片</option>
+                  <% cards.forEach(function (c) { %>
+                    <option value="<%= c.id %>" <%= u.staff_id === c.id ? 'selected' : '' %>><%= c.name %></option>
+                  <% }); %>
+                </select>
+              <% } %>
               <label class="check-row">
                 <input type="checkbox" name="is_active" value="1" form="u-<%= u.id %>"
                        <%= u.is_active ? 'checked' : '' %>>
                 <span>启用</span>
               </label>
               <button class="btn btn-ghost btn-sm" type="submit" form="u-<%= u.id %>">保存</button>
+            </td>
+            <td>
+              <% if (u.created_by_name) { %>
+                <%= u.created_by_name %>
+              <% } else { %>
+                <span class="hint">—</span>
+              <% } %>
             </td>
             <td><%= u.last_login_at || '从未登录' %></td>
             <td>

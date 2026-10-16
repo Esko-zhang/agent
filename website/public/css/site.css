@@ -387,3 +387,43 @@ table.products .col-act { width: 1%; white-space: nowrap; text-align: right; }
   background: var(--brand-light); color: var(--brand);
 }
 .sent-panel .form-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* ---------- Account manager on the inquiry page ---------- */
+.rep-panel {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 18px;
+  padding: 18px 20px; margin-bottom: 14px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.rep-photo, .rep-photo-empty {
+  width: 60px; height: 60px; flex-shrink: 0; border-radius: 50%;
+}
+.rep-photo { object-fit: cover; border: 2px solid var(--brand-light); }
+.rep-photo-empty {
+  display: grid; place-items: center; font-size: 22px; font-weight: 700;
+  color: var(--brand); background: var(--brand-light);
+}
+.rep-body { flex: 1 1 200px; min-width: 0; }
+.rep-label {
+  margin: 0 0 2px; font-size: 11.5px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.rep-body h2 {
+  margin: 0; padding: 0; border: 0; font-size: 18px; font-weight: 600;
+}
+.rep-title { margin: 2px 0 0; font-size: 13px; color: var(--accent); font-weight: 600; }
+.rep-number {
+  margin: 4px 0 0; font-size: 13px; color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.rep-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rep-email { font-size: 12.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+
+/* WhatsApp's own green, so the button is recognised instantly. */
+.btn-wa { background: #25d366; color: #05240f; }
+.btn-wa:hover { background: #1fb855; color: #05240f; }
+
+.rep-note {
+  margin: 0 0 26px; font-size: 13px; color: var(--ink-soft);
+}
+.sent-rep { margin: 0 0 16px; font-size: 14px; }

@@ -2,6 +2,7 @@
 const express = require('express');
 const users = require('../../lib/users');
 const roles = require('../../lib/roles');
+const staff = require('../../lib/staff');
 
 const router = express.Router();
 const MIN_PASSWORD = 8;
@@ -21,6 +22,8 @@ function view(req, res, status, error) {
     roleLabels: roles.ROLE_LABELS,
     allRoles: roles.ROLES,
     canAssignRoles: roles.isAdmin(req.user),
+    // Only an admin links a sales account to the card customers contact.
+    cards: roles.isAdmin(req.user) ? staff.q.listAll.all() : [],
   });
 }
 
@@ -51,6 +54,9 @@ router.post('/', (req, res) => {
     display_name: String(req.body.display_name || '').trim(),
     role,
     is_active: req.body.is_active ? 1 : 0,
+    // Recorded so the inquiry page can show this customer their own rep.
+    createdBy: req.user,
+    staff_id: role === 'sales' ? Number.parseInt(req.body.staff_id, 10) || null : null,
   });
   res.redirect(
     '/admin/users?ok=' +
@@ -84,6 +90,12 @@ router.post('/:id', (req, res, next) => {
     display_name: String(req.body.display_name || '').trim(),
     role,
     is_active,
+    staff_id:
+      roles.isAdmin(req.user) && role === 'sales'
+        ? Number.parseInt(req.body.staff_id, 10) || null
+        : role === 'sales'
+          ? target.staff_id
+          : null,
   });
   res.redirect('/admin/users?ok=' + encodeURIComponent('已更新账号 ' + target.username));
 });

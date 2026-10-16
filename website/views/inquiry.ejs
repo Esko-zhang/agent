@@ -10,6 +10,49 @@
 
     <% if (error) { %><p class="alert alert-error" role="alert"><%= error %></p><% } %>
 
+    <% if (rep) { %>
+      <section class="rep-panel">
+        <% if (rep.card && rep.card.photo_path) { %>
+          <img class="rep-photo" src="<%= rep.card.photo_path %>" alt="<%= rep.name %>">
+        <% } else { %>
+          <span class="rep-photo-empty" aria-hidden="true"><%= rep.name.trim().charAt(0).toUpperCase() %></span>
+        <% } %>
+        <div class="rep-body">
+          <p class="rep-label"><%= rep.owned ? 'Your account manager' : 'Sales contact' %></p>
+          <h2><%= rep.name %></h2>
+          <% if (rep.title) { %><p class="rep-title"><%= rep.title %></p><% } %>
+          <% if (rep.card && rep.card.whatsapp) { %>
+            <p class="rep-number"><%= rep.card.whatsapp %></p>
+          <% } %>
+        </div>
+        <div class="rep-actions">
+          <% if (waInquiry) { %>
+            <a class="btn btn-wa" href="<%= waInquiry %>" target="_blank" rel="noopener noreferrer"
+               data-wa-inquiry
+               data-wa-base="https://wa.me/<%= rep.card.whatsapp.replace(/\D/g, '') %>"
+               data-wa-greeting="Hello<%= currentUser.display_name ? ', this is ' + currentUser.display_name : '' %>."
+               data-wa-account="<%= currentUser.username %>">
+              Send this list on WhatsApp
+            </a>
+          <% } %>
+          <% if (waChat) { %>
+            <a class="btn btn-ghost" href="<%= waChat %>" target="_blank" rel="noopener noreferrer">
+              Chat on WhatsApp
+            </a>
+          <% } %>
+          <% if (rep.card && rep.card.email) { %>
+            <span class="rep-email"><%= rep.card.email %></span>
+          <% } %>
+        </div>
+      </section>
+      <% if (waInquiry) { %>
+        <p class="rep-note">
+          WhatsApp opens with your product list already written out. Prefer email?
+          Fill in the form below instead — both reach the same person.
+        </p>
+      <% } %>
+    <% } %>
+
     <% if (!rows.length) { %>
       <div class="empty-panel">
         <p>Your inquiry list is empty.</p>
@@ -33,7 +76,7 @@
               </thead>
               <tbody>
                 <% rows.forEach(function (p) { %>
-                  <tr>
+                  <tr data-rfq-row data-product-name="<%= p.name_en %>">
                     <td class="col-name"><span class="name"><%= p.name_en %></span></td>
                     <td>
                       <input name="qty_<%= p.id %>" value="<%= quantities[p.id] || '' %>"
@@ -108,5 +151,6 @@
   </main>
 
   <%- include('partials/footer') %>
+  <script src="/js/inquiry.js"></script>
 </body>
 </html>

@@ -11,6 +11,13 @@ router.get('/', (req, res) => {
   const days = WINDOWS.includes(Number(req.query.days)) ? Number(req.query.days) : 30;
   const tz = settings.get('log_timezone') || 'UTC';
   const rows = intent.overview(days);
+  // Who issued each account, so a sales lead can see their own customers.
+  const byName = {};
+  require('../../lib/users').q.list.all().forEach((u) => { byName[u.username.toLowerCase()] = u; });
+  rows.forEach((r) => {
+    const u = byName[r.username.toLowerCase()];
+    r.created_by_name = u ? u.created_by_name : '';
+  });
   res.render('admin/intent', {
     nav: 'intent',
     rows,
