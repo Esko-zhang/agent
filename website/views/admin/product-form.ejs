@@ -73,7 +73,13 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
     <span>产品图片 <span class="hint">（JPG / PNG / WebP / GIF）</span></span>
     <% if (product.image_path) { %>
       <div class="image-preview">
-        <img src="<%= product.image_path %>" alt="">
+        <%# 点开看大图，确认上传的是不是想要的那张。 %>
+        <a class="thumb-link" href="<%= product.image_path %>"
+           data-view="<%= product.image_path %>" data-view-kind="image"
+           data-view-title="<%= product.name_en || '产品图片' %>"
+           aria-label="查看大图">
+          <img src="<%= product.image_path %>" alt="" width="76" height="76">
+        </a>
         <label class="check-row">
           <input type="checkbox" name="remove_image" value="1">
           <span>删除当前图片</span>
@@ -109,7 +115,8 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
 
 <div class="card">
   <h2>产品文档
-    <span class="hint">TDS / COA / MSDS 等。客户登录后可在产品列表页下载，下载行为会记入访问记录。</span>
+    <span class="hint">TDS / COA / MSDS 等。客户登录后可在产品列表页直接预览（PDF 和图片）或下载；
+      Word / Excel 没有浏览器预览，只能下载。查看和下载都会记入访问记录。</span>
   </h2>
 
   <% if (isNew) { %>
@@ -130,6 +137,13 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
                 <td><%= d.created_at %></td>
                 <td>
                   <div class="row-actions">
+                    <% var kind = docPreview(d); var look = docPreviewUrl(d, product); %>
+                    <% if (kind) { %>
+                      <a class="btn btn-ghost btn-sm" href="<%= look %>"
+                         data-view="<%= look %>" data-view-kind="<%= kind %>"
+                         data-view-download="/docs/<%= d.id %>"
+                         data-view-title="<%= product.name_en || '产品' %> · <%= d.label %>">预览</a>
+                    <% } %>
                     <a class="btn btn-ghost btn-sm" href="/docs/<%= d.id %>">下载</a>
                     <% if (canDelete) { %>
                       <form class="inline-form" method="post"

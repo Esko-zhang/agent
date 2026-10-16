@@ -111,6 +111,10 @@ router.get('/products', requireAuth, (req, res) => {
     fieldLabels: config.FIELD_LABELS,
     docsByProduct: docs.byProduct(allIds),
     humanSize: docs.humanSize,
+    // '' for a Word or Excel file, so the template can tell a sheet that can
+    // be read in place from one that can only be downloaded.
+    docPreview: docs.previewKind,
+    docPreviewUrl: docs.previewUrl,
     basket: inquiry.readBasket(req),
     currentUrl: req.originalUrl,
     flash: String(req.query.ok || '').slice(0, 120),
@@ -129,17 +133,74 @@ router.get('/contact', requireAuth, (_req, res) => {
  * Spec sheets. Stored outside public/, so this route is the only way to them
  * and every download is attributable.
  * ------------------------------------------------------------------------- */
-router.get('/docs/:id', requireAuth, (req, res, next) => {
+/** Both routes need the file on disk and the product it belongs to. */
+function loadDoc(req) {
   const doc = docs.q.byId.get(req.params.id);
-  if (!doc) return next();
+  if (!doc) return null;
   const full = docs.filePath(doc.filename);
-  if (!full || !fs.existsSync(full)) return next();
+  if (!full || !fs.existsSync(full)) return null;
+  return { doc, full, product: products.q.byId.get(doc.product_id) };
+}
 
-  const product = products.q.byId.get(doc.product_id);
-  accesslog.record(req, 'doc_download', {
-    path: `/docs/${doc.id} (${product ? product.name_en : '已删除产品'} · ${doc.label || '文档'})`,
+/** "/docs/3 (Vitamin C 1000mg Tablets · TDS)" — readable in the access log. */
+function docLogPath(doc, product, suffix = '') {
+  const name = product ? product.name_en : '已删除产品';
+  return `/docs/${doc.id}${suffix} (${name} · ${doc.label || '文档'})`;
+}
+
+/**
+ * Reading a spec sheet in place.
+ *
+ * A buyer comparing six products should not have to collect six files in a
+ * downloads folder to look at them. PDFs and images are therefore served
+ * inline here, and the viewer shows them over the catalogue; Word and Excel
+ * have no browser renderer, so they are not served by this route at all and
+ * the viewer offers the download instead.
+ *
+ * It is the same gate as the download: signed in, and recorded — opening a
+ * TDS is a buying signal whether or not the file ends up on disk.
+ */
+function sendPreview(req, res, next) {
+  const found = loadDoc(req);
+  if (!found) return next();
+  const kind = docs.previewOf(found.doc);
+  if (!kind) return next();
+
+  accesslog.record(req, 'doc_preview', {
+    path: docLogPath(found.doc, found.product, '/preview'),
   });
-  res.download(full, docs.downloadName(doc, product));
+
+  res.type(kind.type);
+  // inline, not attachment: this response is meant to be rendered, not saved.
+  // The filename still travels, so "save as" from the viewer names it properly.
+  res.setHeader(
+    'Content-Disposition',
+    `inline; filename*=UTF-8''${encodeURIComponent(docs.downloadName(found.doc, found.product))}`
+  );
+  // The site frames nothing but itself, and the global DENY would stop even
+  // that — a same-origin PDF needs its own frame rules to render in place.
+  // Only the framing rule is relaxed: a stricter default-src on a PDF response
+  // is a known way to break Firefox's built-in reader, and buys nothing here
+  // because the type is one this module chose and nosniff is already set.
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  res.sendFile(found.full);
+}
+
+// The trailing name is ignored by the handler and read by nobody but the
+// browser's own PDF reader, which puts the last path segment in its title bar:
+// without it a buyer looking at a spec sheet sees the word "preview" there.
+router.get('/docs/:id/preview', requireAuth, sendPreview);
+router.get('/docs/:id/preview/:name', requireAuth, sendPreview);
+
+router.get('/docs/:id', requireAuth, (req, res, next) => {
+  const found = loadDoc(req);
+  if (!found) return next();
+
+  accesslog.record(req, 'doc_download', {
+    path: docLogPath(found.doc, found.product),
+  });
+  res.download(found.full, docs.downloadName(found.doc, found.product));
 });
 
 /* ---------------------------------------------------------------------------

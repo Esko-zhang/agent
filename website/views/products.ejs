@@ -107,8 +107,14 @@
                   <% if (hasImages) { %>
                     <td class="col-img">
                       <% if (p.image_path) { %>
-                        <a href="#img-<%= p.id %>">
-                          <img class="thumb" src="<%= p.image_path %>" alt="<%= p.name_en %>" loading="lazy">
+                        <%# href is the image itself, so a blocked script still
+                            opens the picture rather than nothing. %>
+                        <a class="thumb-link" href="<%= p.image_path %>"
+                           data-view="<%= p.image_path %>" data-view-kind="image"
+                           data-view-title="<%= p.name_en %>"
+                           aria-label="View <%= p.name_en %>">
+                          <img class="thumb" src="<%= p.image_path %>" alt="<%= p.name_en %>"
+                               width="56" height="56" loading="lazy">
                         </a>
                       <% } %>
                     </td>
@@ -133,8 +139,17 @@
                   <td class="col-act">
                     <span class="row-act">
                       <% pdocs.forEach(function (d) { %>
-                        <a class="doc-link" href="/docs/<%= d.id %>"
-                           title="<%= d.original %> · <%= humanSize(d.size_bytes) %>">
+                        <% var kind = docPreview(d); var look = docPreviewUrl(d, p); %>
+                        <%# A PDF or an image is read in place; Word and Excel
+                            have no browser renderer, so those stay downloads
+                            and the link says which it is. %>
+                        <a class="doc-link" href="<%= look || ('/docs/' + d.id) %>"
+                           <% if (kind) { %>
+                             data-view="<%= look %>" data-view-kind="<%= kind %>"
+                             data-view-download="/docs/<%= d.id %>"
+                             data-view-title="<%= p.name_en %> · <%= d.label || 'Document' %>"
+                           <% } %>
+                           title="<%= d.original %> · <%= humanSize(d.size_bytes) %><%= kind ? '' : ' · download' %>">
                           <%= d.label || 'Document' %>
                         </a>
                       <% }); %>
@@ -169,18 +184,6 @@
   <%- include('partials/footer') %>
 
   <script src="<%= assetUrl('/js/site.js') %>"></script>
-
-  <!-- CSS-only image lightboxes, so no inline script is needed under our CSP. -->
-  <% sections.forEach(function (s) { s.rows.forEach(function (p) { %>
-    <% if (p.image_path) { %>
-      <div class="lightbox" id="img-<%= p.id %>">
-        <a class="close" href="#" aria-label="Close"></a>
-        <figure>
-          <img src="<%= p.image_path %>" alt="<%= p.name_en %>">
-          <figcaption><%= p.name_en %></figcaption>
-        </figure>
-      </div>
-    <% } %>
-  <% }); }); %>
+  <script src="<%= assetUrl('/js/viewer.js') %>"></script>
 </body>
 </html>

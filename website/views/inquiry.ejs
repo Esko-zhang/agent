@@ -34,7 +34,13 @@
     <% if (rep) { %>
       <section class="rep-panel">
         <% if (rep.card && rep.card.photo_path) { %>
-          <img class="rep-photo" src="<%= rep.card.photo_path %>" alt="<%= rep.name %>">
+          <a class="thumb-link" href="<%= rep.card.photo_path %>"
+             data-view="<%= rep.card.photo_path %>" data-view-kind="image"
+             data-view-title="<%= rep.name %><%= rep.title ? ' · ' + rep.title : '' %>"
+             aria-label="View photo of <%= rep.name %>">
+            <img class="rep-photo" src="<%= rep.card.photo_path %>" alt="<%= rep.name %>"
+                 width="56" height="56">
+          </a>
         <% } else { %>
           <span class="rep-photo-empty" aria-hidden="true"><%= rep.name.trim().charAt(0).toUpperCase() %></span>
         <% } %>
@@ -177,5 +183,6 @@
 
   <%- include('partials/footer') %>
   <script src="<%= assetUrl('/js/inquiry.js') %>"></script>
+  <script src="<%= assetUrl('/js/viewer.js') %>"></script>
 </body>
 </html>

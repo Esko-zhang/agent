@@ -27,7 +27,10 @@ function overview(days = 30) {
          COUNT(*)                                                     AS events,
          COUNT(DISTINCT date(occurred_at))                            AS active_days,
          SUM(CASE WHEN event = 'page_view'     THEN 1 ELSE 0 END)     AS views,
-         SUM(CASE WHEN event = 'doc_download'  THEN 1 ELSE 0 END)     AS downloads,
+         -- Opening a spec sheet in the viewer is the same buying signal as
+         -- saving it, so both count here.
+         SUM(CASE WHEN event IN ('doc_download', 'doc_preview')
+                  THEN 1 ELSE 0 END)                                 AS downloads,
          SUM(CASE WHEN event = 'login_success' THEN 1 ELSE 0 END)     AS logins,
          COUNT(DISTINCT ip)                                           AS ips
        FROM access_log
@@ -116,14 +119,16 @@ function forAccount(username, days = 90) {
   const downloads = db
     .prepare(
       `SELECT path, occurred_at FROM access_log
-       WHERE username = ? COLLATE NOCASE AND event = 'doc_download'
+       WHERE username = ? COLLATE NOCASE AND event IN ('doc_download', 'doc_preview')
          AND occurred_at >= ${WINDOW_SQL}
        ORDER BY occurred_at DESC LIMIT 100`
     )
     .all(username, w)
     .map((r) => ({
-      // Logged as "/docs/3 (Product · LABEL)" — show the readable part.
+      // Logged as "/docs/3 (Product · LABEL)", or "/docs/3/preview (…)" when it
+      // was read in place — either way the readable half is in the brackets.
       label: (String(r.path).match(/\(([^)]*)\)/) || [, r.path])[1],
+      read: String(r.path).includes('/preview'),
       at: r.occurred_at,
     }));
 

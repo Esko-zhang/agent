@@ -44,7 +44,11 @@
     <span>照片 <span class="hint">（建议正方形头像，JPG / PNG / WebP）</span></span>
     <% if (member.photo_path) { %>
       <div class="image-preview">
-        <img src="<%= member.photo_path %>" alt="">
+        <a class="thumb-link" href="<%= member.photo_path %>"
+           data-view="<%= member.photo_path %>" data-view-kind="image"
+           data-view-title="<%= member.name || '业务员照片' %>" aria-label="查看大图">
+          <img src="<%= member.photo_path %>" alt="" width="76" height="76">
+        </a>
         <label class="check-row">
           <input type="checkbox" name="remove_photo" value="1">
           <span>删除当前照片</span>

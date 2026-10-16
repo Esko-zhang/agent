@@ -38,6 +38,9 @@ function formContext(req, product, isNew, error, productDocs) {
     error,
     productDocs,
     humanSize: docs.humanSize,
+    // '' for Word and Excel, which no browser renders.
+    docPreview: docs.previewKind,
+    docPreviewUrl: docs.previewUrl,
     canPublish: roles.canPublishProducts(req.user),
     canDelete: roles.canDeleteProducts(req.user),
     // The history belongs to the administrators who review these edits.

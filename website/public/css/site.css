@@ -710,6 +710,9 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
     border-color: var(--brand); color: var(--brand-dark);
   }
   table.products tbody tr .row-act .btn-sm { padding: 9px 14px; }
+  /* 43x27 is not a thumb target: on a phone the spec-sheet buttons get the
+     same height as every other control. */
+  .col-act .doc-link { min-height: 44px; padding: 0 14px; }
   .empty-row { padding: var(--s6) 0; text-align: left; }
 }
 
@@ -729,7 +732,7 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
   letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft);
 }
 .thumb {
-  display: block; width: 56px; height: 56px; object-fit: cover;
+  display: block; width: 56px; height: 56px; aspect-ratio: 1; object-fit: cover;
   border: 1px solid var(--line); border-radius: var(--radius-sm);
   background: var(--bg);
 }
@@ -747,7 +750,7 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 .empty-row { padding: var(--s7) var(--s4); text-align: center; color: var(--ink-faint); }
 
 .doc-link {
-  display: inline-block; padding: 4px 10px;
+  display: inline-flex; align-items: center; padding: 4px 10px;
   border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
   color: var(--ink-soft); text-decoration: none;
   font-family: var(--mono); font-size: 10.5px;
@@ -761,23 +764,131 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 }
 .muted { color: var(--ink-soft); }
 
-/* ---------- Image lightbox (CSS only, no inline script under our CSP) ---- */
-.lightbox {
-  display: none; position: fixed; inset: 0; z-index: 50;
-  background: rgba(16, 19, 20, .92); place-items: center; padding: var(--s5);
+/* ---------- Viewer ----------
+   Looking at a photograph, a product shot or a spec sheet without leaving the
+   page. It is the same drawing office as everything else: the dark panel from
+   the sign-in page, a ruled bar across the top, monospaced controls. The
+   picture itself sits on paper, because a specification photograph is a plate
+   in a book, not a slide in a gallery.
+
+   The trigger is always a real link to the real file, so none of this is
+   load-bearing: with the script blocked, clicking opens the file in a tab. */
+.viewer {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  /* Opaque enough that the page behind stops competing for attention: at .94
+     the headings and the table were still readable through it. */
+  background: rgba(11, 14, 15, .985);
 }
-.lightbox:target { display: grid; }
-.lightbox img {
-  max-width: min(900px, 92vw); max-height: 80vh; object-fit: contain;
-  background: var(--surface);
+.viewer[hidden] { display: none; }
+/* The page behind must not scroll under an open viewer. */
+.viewer-open, .viewer-open body { overflow: hidden; }
+
+.viewer-bar {
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
 }
-.lightbox .close { position: absolute; inset: 0; cursor: zoom-out; }
-.lightbox figure { margin: 0; text-align: center; position: relative; }
-.lightbox figcaption {
-  margin-top: var(--s3); color: #fff;
+.viewer-title {
+  margin: 0; min-width: 0; flex: 1 1 auto;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-family: var(--mono); font-size: var(--t-xs);
-  letter-spacing: .1em; text-transform: uppercase;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255, 255, 255, .88);
 }
+.viewer-tools { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0; }
+.viewer-zoom {
+  min-width: 56px; margin-right: var(--s2); text-align: right;
+  font-family: var(--mono); font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, .7);
+}
+.viewer-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; height: 44px; padding: 0 var(--s3);
+  border: 1px solid rgba(255, 255, 255, .28); border-radius: var(--radius-sm);
+  background: transparent; color: #fff; text-decoration: none;
+  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+  letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.viewer-btn:hover { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .55); }
+.viewer-btn:active { transform: translateY(1px); }
+.viewer-btn[disabled] { opacity: .35; cursor: not-allowed; }
+.viewer-btn[hidden] { display: none; }
+.viewer-btn-wide { letter-spacing: .1em; }
+.viewer-btn-close { border-color: rgba(255, 255, 255, .5); font-size: var(--t-sm); }
+.viewer :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.viewer-stage {
+  position: relative; overflow: hidden;
+  display: grid; place-items: center;
+  padding: var(--s4);
+  touch-action: none;   /* we handle pinch and drag ourselves */
+}
+.viewer-image {
+  max-width: 100%; max-height: 100%;
+  background: var(--surface);
+  transform-origin: center center;
+  transition: transform var(--dur) var(--ease);
+  cursor: zoom-in; user-select: none; -webkit-user-drag: none;
+}
+.viewer-stage.is-zoomed .viewer-image { cursor: grab; }
+.viewer-stage.is-zoomed .viewer-image:active { cursor: grabbing; }
+/* Dragging a zoomed picture must track the finger exactly, so the easing that
+   makes a button press feel considered is wrong here. */
+.viewer-stage.is-zoomed .viewer-image { transition: none; }
+.viewer-frame {
+  width: 100%; height: 100%; border: 0;
+  background: var(--surface); border-radius: var(--radius-sm);
+}
+.viewer-frame[hidden], .viewer-image[hidden] { display: none; }
+
+.viewer-hint {
+  margin: 0; padding: var(--s3) var(--s4);
+  border-top: 1px solid rgba(255, 255, 255, .14);
+  font-family: var(--mono); font-size: var(--t-xs);
+  letter-spacing: .08em; color: rgba(255, 255, 255, .62);
+  text-align: center;
+}
+.viewer.is-still .viewer-image { transition: none; }
+
+@media (max-width: 640px) {
+  .viewer-bar { flex-wrap: wrap; gap: var(--s2); padding-inline: var(--s3); }
+  .viewer-title { flex: 1 0 100%; }
+  .viewer-tools { width: 100%; justify-content: flex-end; flex-wrap: nowrap; }
+  .viewer-zoom { margin-right: auto; min-width: 0; text-align: left; }
+  /* Six controls will not fit one row on a phone, and two rows of buttons
+     over the picture is worse than one control fewer: "open in a new tab"
+     goes, because Download already gets the file out of here. */
+  .viewer-btn-wide:not([download]):not(.viewer-btn-close) { display: none; }
+  .viewer-btn { min-width: 46px; padding: 0 var(--s2); }
+  .viewer-hint { font-size: 10.5px; letter-spacing: .04em; }
+}
+
+/* ---------- Things that open the viewer ---------- */
+/* A thumbnail is a door, so it says so on hover and on focus. */
+.thumb-link {
+  display: inline-block; position: relative;
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur) var(--ease);
+}
+.thumb-link .thumb, .thumb-link .staff-photo, .thumb-link .rep-photo,
+.thumb-link .mini-thumb {
+  transition: opacity var(--dur) var(--ease);
+}
+.thumb-link:hover .thumb, .thumb-link:hover .staff-photo,
+.thumb-link:hover .rep-photo, .thumb-link:hover .mini-thumb {
+  border-color: var(--brand); opacity: .88;
+}
+.thumb-link::after {
+  content: "⤢";
+  position: absolute; right: 3px; bottom: 3px;
+  width: 18px; height: 18px; line-height: 17px; text-align: center;
+  border-radius: var(--radius-sm);
+  background: var(--ink); color: #fff; font-size: 10px;
+  opacity: 0; transition: opacity var(--dur) var(--ease);
+}
+.thumb-link:hover::after, .thumb-link:focus-visible::after { opacity: 1; }
 
 /* ---------- Contact ---------- */
 .staff-grid {
@@ -794,7 +905,8 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   border-bottom: 1px solid var(--line-strong);
 }
 .staff-photo, .staff-photo-empty {
-  width: 72px; height: 72px; flex-shrink: 0; border-radius: var(--radius-sm);
+  width: 72px; height: 72px; aspect-ratio: 1; flex-shrink: 0;
+  border-radius: var(--radius-sm);
 }
 .staff-photo { object-fit: cover; border: 1px solid var(--line); }
 .staff-photo-empty {
@@ -966,7 +1078,8 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   border-radius: var(--radius);
 }
 .rep-photo, .rep-photo-empty {
-  width: 56px; height: 56px; flex-shrink: 0; border-radius: var(--radius-sm);
+  width: 56px; height: 56px; aspect-ratio: 1; flex-shrink: 0;
+  border-radius: var(--radius-sm);
 }
 .rep-photo { object-fit: cover; border: 1px solid var(--line); }
 .rep-photo-empty {

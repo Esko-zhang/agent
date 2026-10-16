@@ -65,7 +65,11 @@
             <td><%= p.sort_order %></td>
             <td>
               <% if (p.image_path) { %>
-                <img class="mini-thumb" src="<%= p.image_path %>" alt="">
+                <a class="thumb-link" href="<%= p.image_path %>"
+                   data-view="<%= p.image_path %>" data-view-kind="image"
+                   data-view-title="<%= p.name_en %>" aria-label="查看大图">
+                  <img class="mini-thumb" src="<%= p.image_path %>" alt="" width="46" height="46" loading="lazy">
+                </a>
               <% } else { %>—<% } %>
             </td>
             <td><strong><%= p.name_en %></strong></td>

@@ -71,6 +71,34 @@ function byProduct(productIds) {
   return map;
 }
 
+/**
+ * What a browser can render itself, and the type to declare when it does.
+ *
+ * A PDF and an image can be shown in place; Word and Excel cannot, and no
+ * amount of wishing changes that — those stay downloads, and the viewer says
+ * so rather than opening an empty frame. The type is read from the stored
+ * extension, which this module chose itself from the upload's MIME type, so it
+ * is never a client-supplied string.
+ */
+const PREVIEWABLE = new Map([
+  ['.pdf', { type: 'application/pdf', kind: 'pdf' }],
+  ['.jpg', { type: 'image/jpeg', kind: 'image' }],
+  ['.jpeg', { type: 'image/jpeg', kind: 'image' }],
+  ['.png', { type: 'image/png', kind: 'image' }],
+]);
+
+/** `{ type, kind }` for a document a browser can display, else null. */
+function previewOf(doc) {
+  if (!doc) return null;
+  return PREVIEWABLE.get(path.extname(String(doc.filename || '')).toLowerCase()) || null;
+}
+
+/** 'pdf' | 'image' | '' — what the viewer should do with this document. */
+function previewKind(doc) {
+  const p = previewOf(doc);
+  return p ? p.kind : '';
+}
+
 /** Absolute path of a stored document, or null if it escapes the doc directory. */
 function filePath(filename) {
   const base = path.resolve(config.docDir);
@@ -99,6 +127,17 @@ function humanSize(bytes) {
   return (n / 1024 / 1024).toFixed(1) + ' MB';
 }
 
+/**
+ * Where to read this document in place, with its own name as the last segment
+ * — the browser's PDF reader shows that segment in its title bar, so without
+ * it a buyer opening a spec sheet is looking at a document called "preview".
+ * Returns '' for a file no browser can render.
+ */
+function previewUrl(doc, product) {
+  if (!doc || !previewOf(doc)) return '';
+  return `/docs/${doc.id}/preview/${encodeURIComponent(downloadName(doc, product))}`;
+}
+
 /** A download filename a browser will accept, derived from the product name. */
 function downloadName(doc, product) {
   const ext = path.extname(doc.filename) || '';
@@ -109,6 +148,10 @@ function downloadName(doc, product) {
 
 module.exports = {
   ALLOWED,
+  PREVIEWABLE,
+  previewOf,
+  previewKind,
+  previewUrl,
   uploadDoc,
   q,
   byProduct,

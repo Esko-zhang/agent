@@ -18,7 +18,7 @@
 <% if (summary) { %>
   <div class="stat-grid">
     <div class="stat"><div class="n"><%= summary.inquiries %></div><div class="k">询盘</div></div>
-    <div class="stat"><div class="n"><%= summary.downloads %></div><div class="k">下载文档</div></div>
+    <div class="stat"><div class="n"><%= summary.downloads %></div><div class="k">查看 / 下载文档</div></div>
     <div class="stat"><div class="n"><%= summary.searches %></div><div class="k">搜索</div></div>
     <div class="stat"><div class="n"><%= summary.views %></div><div class="k">浏览页面</div></div>
     <div class="stat"><div class="n"><%= summary.active_days %></div><div class="k">活跃天数</div></div>
@@ -48,17 +48,19 @@
 </div>
 
 <div class="card">
-  <h2>下载过的文档 <span class="hint">采购前通常先要 TDS / COA</span></h2>
+  <h2>看过 / 下载过的文档 <span class="hint">采购前通常先要 TDS / COA</span></h2>
   <% if (!data.downloads.length) { %>
-    <p class="hint">这段时间没有下载过文档。</p>
+    <p class="hint">这段时间没有看过文档。</p>
   <% } else { %>
     <div class="table-wrap">
       <table class="data">
-        <thead><tr><th>文档</th><th>时间</th></tr></thead>
+        <thead><tr><th>文档</th><th>方式</th><th>时间</th></tr></thead>
         <tbody>
           <% data.downloads.forEach(function (d) { %>
             <tr>
               <td><strong><%= d.label %></strong></td>
+              <%# 在线看过和真的存到本地，对判断意向不是一回事。 %>
+              <td><span class="badge <%= d.read ? 'badge-off' : 'badge-on' %>"><%= d.read ? '在线查看' : '下载' %></span></td>
               <td class="nowrap"><%= fmt(d.at) %></td>
             </tr>
           <% }); %>

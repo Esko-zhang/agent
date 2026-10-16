@@ -26,7 +26,9 @@
           <tr>
             <td><%= m.sort_order %></td>
             <td>
-              <% if (m.photo_path) { %><img class="mini-thumb" src="<%= m.photo_path %>" alt="">
+              <% if (m.photo_path) { %><a class="thumb-link" href="<%= m.photo_path %>"
+                   data-view="<%= m.photo_path %>" data-view-kind="image"
+                   data-view-title="<%= m.name %>" aria-label="查看大图"><img class="mini-thumb" src="<%= m.photo_path %>" alt="" width="46" height="46" loading="lazy"></a>
               <% } else { %>—<% } %>
             </td>
             <td><strong><%= m.name %></strong></td>

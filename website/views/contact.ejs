@@ -37,7 +37,13 @@
       <% team.forEach(function (m) { %>
         <article class="staff-card">
           <% if (m.photo_path) { %>
-            <img class="staff-photo" src="<%= m.photo_path %>" alt="<%= m.name %>" loading="lazy">
+            <a class="thumb-link" href="<%= m.photo_path %>"
+               data-view="<%= m.photo_path %>" data-view-kind="image"
+               data-view-title="<%= m.name %><%= m.title ? ' · ' + m.title : '' %>"
+               aria-label="View photo of <%= m.name %>">
+              <img class="staff-photo" src="<%= m.photo_path %>" alt="<%= m.name %>"
+                   width="72" height="72" loading="lazy">
+            </a>
           <% } else { %>
             <span class="staff-photo-empty" aria-hidden="true"><%= m.name.trim().charAt(0).toUpperCase() %></span>
           <% } %>
@@ -71,5 +77,7 @@
   </main>
 
   <%- include('partials/footer') %>
+
+  <script src="<%= assetUrl('/js/viewer.js') %>"></script>
 </body>
 </html>
