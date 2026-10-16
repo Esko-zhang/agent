@@ -38,11 +38,13 @@ if (isProd && sessionSecret.length < 32) {
 }
 
 /**
- * The three product categories come straight from the requirement spreadsheet
- * ("产品列表页"). Each one has its own set of columns, so the field list is
- * declared once here and drives both the public table headers and the admin form.
+ * The three categories the site launched with, straight from the requirement
+ * spreadsheet ("产品列表页"). They are only the seed now: on first run they are
+ * copied into the `categories` table, and from then on the administrator adds,
+ * renames and removes categories in 品类管理. Nothing at runtime reads this
+ * list — see src/lib/categories.js.
  */
-const CATEGORIES = [
+const CATEGORY_SEED = [
   {
     key: 'oem',
     anchor: 'oem',
@@ -83,7 +85,6 @@ const FIELD_LABELS = {
   remark: { zh: '备注', en: 'Remarks' },
 };
 
-const CATEGORY_KEYS = CATEGORIES.map((c) => c.key);
 const ALL_PRODUCT_FIELDS = Object.keys(FIELD_LABELS);
 
 module.exports = {
@@ -110,8 +111,7 @@ module.exports = {
     username: process.env.ADMIN_USERNAME || 'admin',
     password: process.env.ADMIN_PASSWORD || '',
   },
-  CATEGORIES,
-  CATEGORY_KEYS,
+  CATEGORY_SEED,
   FIELD_LABELS,
   ALL_PRODUCT_FIELDS,
 };

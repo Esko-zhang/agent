@@ -134,7 +134,7 @@ var hasFilter = filter.product || filter.actor || filter.action || filter.q
               <span class="badge badge-act-<%= r.action %>"><%= actionLabels[r.action] || r.action %></span>
             </td>
             <td>
-              <% if (r.action === 'reorder') { %>
+              <% if (r.action === 'reorder' || r.action === 'category') { %>
                 <span class="hint">整个分类</span>
               <% } else { %>
                 <strong><%= r.product_name || '（已删除）' %></strong>

@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const ExcelJS = require('exceljs');
 const { db } = require('../db');
 const config = require('../config');
+const categories = require('./categories');
 const products = require('./products');
 
 /**
@@ -27,11 +28,12 @@ const COLUMNS = [
 function parseCategory(value) {
   const v = String(value || '').trim().toLowerCase();
   if (!v) return '';
-  for (const c of config.CATEGORIES) {
+  const known = categories.all();
+  for (const c of known) {
     if (v === c.key || v === c.zh.toLowerCase() || v === c.en.toLowerCase()) return c.key;
   }
   // Tolerate partial names like "OEM" or "添加剂".
-  for (const c of config.CATEGORIES) {
+  for (const c of known) {
     if (c.zh.toLowerCase().includes(v) || v.includes(c.zh.toLowerCase())) return c.key;
     if (c.en.toLowerCase().includes(v) || v.includes(c.key)) return c.key;
   }

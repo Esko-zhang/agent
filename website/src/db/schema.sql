@@ -29,9 +29,30 @@ CREATE TABLE IF NOT EXISTS users (
   country         TEXT   NOT NULL DEFAULT ''   -- ISO 3166-1 alpha-2, '' if unknown
 );
 
+-- Product categories. They started as three fixed entries in src/config.js;
+-- they live here so an administrator can add, rename, reorder, hide or remove
+-- one without a deploy. `key` is what products.category stores and what the
+-- public page uses as its anchor, so it is a slug and never changes once rows
+-- point at it.
+CREATE TABLE IF NOT EXISTS categories (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  key        TEXT    NOT NULL UNIQUE,
+  zh         TEXT    NOT NULL,              -- 后台显示名
+  en         TEXT    NOT NULL,              -- 前台导航名
+  title      TEXT    NOT NULL DEFAULT '',   -- 前台区块标题，空则用 en
+  fields     TEXT    NOT NULL DEFAULT '',   -- 这个品类显示哪些属性列，逗号分隔
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_active  INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_categories_order ON categories (sort_order, id);
+
 CREATE TABLE IF NOT EXISTS products (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  category    TEXT    NOT NULL CHECK (category IN ('oem', 'extract', 'additive')),
+  -- No CHECK constraint: the valid set lives in `categories`, which the admin
+  -- edits at runtime.
+  category    TEXT    NOT NULL,
   name_en     TEXT    NOT NULL,
   image_path  TEXT,
   dosage_form TEXT    NOT NULL DEFAULT '',

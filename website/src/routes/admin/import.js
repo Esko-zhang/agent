@@ -7,6 +7,7 @@ const multer = require('multer');
 const express = require('express');
 const imp = require('../../lib/import');
 const config = require('../../config');
+const categories = require('../../lib/categories');
 const { verifyCsrf } = require('../../lib/csrf');
 
 const router = express.Router();
@@ -43,7 +44,7 @@ router.get('/', (_req, res) => {
     stage: 'upload',
     error: null,
     columns: imp.COLUMNS,
-    categories: config.CATEGORIES,
+    categories: categories.all(),
   });
 });
 
@@ -68,7 +69,7 @@ router.post('/', uploader.single('sheet'), verifyCsrf, async (req, res, next) =>
       stage: 'upload',
       error: '请选择要导入的 Excel 或 CSV 文件。',
       columns: imp.COLUMNS,
-      categories: config.CATEGORIES,
+      categories: categories.all(),
     });
   }
 
@@ -80,7 +81,7 @@ router.post('/', uploader.single('sheet'), verifyCsrf, async (req, res, next) =>
         stage: 'upload',
         error: '文件里没有数据行（第一行应是表头，从第二行开始填产品）。',
         columns: imp.COLUMNS,
-        categories: config.CATEGORIES,
+        categories: categories.all(),
       });
     }
 
@@ -95,7 +96,7 @@ router.post('/', uploader.single('sheet'), verifyCsrf, async (req, res, next) =>
       stage: 'preview',
       error: null,
       columns: imp.COLUMNS,
-      categories: config.CATEGORIES,
+      categories: categories.all(),
       analysed,
       token,
       meta: { filename: req.file.originalname, rows: raw.length },
@@ -106,7 +107,7 @@ router.post('/', uploader.single('sheet'), verifyCsrf, async (req, res, next) =>
       stage: 'upload',
       error: '无法读取这个文件：' + err.message,
       columns: imp.COLUMNS,
-      categories: config.CATEGORIES,
+      categories: categories.all(),
     });
   } finally {
     fs.promises.unlink(req.file.path).catch(() => {});
@@ -121,7 +122,7 @@ router.post('/confirm', (req, res) => {
       stage: 'upload',
       error: '这次导入已过期或已经执行过，请重新上传文件。',
       columns: imp.COLUMNS,
-      categories: config.CATEGORIES,
+      categories: categories.all(),
     });
   }
   const { created, updated } = imp.apply(entry.analysed);

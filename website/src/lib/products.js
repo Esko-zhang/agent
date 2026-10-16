@@ -1,6 +1,7 @@
 'use strict';
 const { db } = require('../db');
-const { CATEGORY_KEYS, ALL_PRODUCT_FIELDS } = require('../config');
+const { ALL_PRODUCT_FIELDS } = require('../config');
+const categories = require('./categories');
 
 const q = {
   byId: db.prepare('SELECT * FROM products WHERE id = ?'),
@@ -50,7 +51,8 @@ function publicList(category, search) {
 
 /** Normalises a submitted admin form into a row for insert/update. */
 function fromForm(body) {
-  const category = CATEGORY_KEYS.includes(body.category) ? body.category : CATEGORY_KEYS[0];
+  const known = categories.keys();
+  const category = known.includes(body.category) ? body.category : known[0] || '';
   const row = {
     category,
     name_en: String(body.name_en || '').trim(),

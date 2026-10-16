@@ -5,6 +5,7 @@ const products = require('../../lib/products');
 const { uploadSingle, publicPath, removeUpload } = require('../../lib/upload');
 const docs = require('../../lib/docs');
 const roles = require('../../lib/roles');
+const categories = require('../../lib/categories');
 const productlog = require('../../lib/productlog');
 const accesslog = require('../../lib/accesslog');
 const settings = require('../../lib/settings');
@@ -49,7 +50,7 @@ function formContext(req, product, isNew, error, productDocs) {
 }
 
 router.get('/', (req, res) => {
-  const category = config.CATEGORY_KEYS.includes(req.query.category) ? req.query.category : null;
+  const category = categories.keys().includes(req.query.category) ? req.query.category : null;
   const rows = category
     ? products.q.listByCategoryAdmin.all(category)
     : products.q.listAll.all();
@@ -64,9 +65,8 @@ router.get('/', (req, res) => {
 });
 
 router.get('/new', (req, res) => {
-  const category = config.CATEGORY_KEYS.includes(req.query.category)
-    ? req.query.category
-    : config.CATEGORY_KEYS[0];
+  const known = categories.activeKeys();
+  const category = known.includes(req.query.category) ? req.query.category : known[0] || '';
   res.render(
     'admin/product-form',
     formContext(
@@ -118,14 +118,14 @@ router.post('/', uploadSingle('image'), (req, res) => {
  */
 router.post('/renumber', (req, res) => {
   if (denyUnlessAdmin(req, res, '只有管理员可以重新编号。')) return;
-  const one = config.CATEGORY_KEYS.includes(req.body.category) ? req.body.category : null;
-  const keys = one ? [one] : config.CATEGORY_KEYS;
+  const one = categories.keys().includes(req.body.category) ? req.body.category : null;
+  const keys = one ? [one] : categories.keys();
   let total = 0;
   for (const key of keys) {
     const n = products.renumber(key);
     total += n;
     if (!n) continue;
-    const zh = (config.CATEGORIES.find((c) => c.key === key) || {}).zh || key;
+    const zh = categories.nameOf(key);
     productlog.record(req, {
       action: 'reorder',
       category: key,

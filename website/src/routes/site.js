@@ -9,6 +9,7 @@ const docs = require('../lib/docs');
 const inquiry = require('../lib/inquiry');
 const accesslog = require('../lib/accesslog');
 const mailer = require('../lib/mailer');
+const categories = require('../lib/categories');
 const { requireAuth } = require('../lib/auth');
 const usersLib = require('../lib/users');
 
@@ -90,10 +91,10 @@ function inquiryText(user, rows, quantities, notes) {
 // Product list page: one page, three anchored category sections, one search box.
 router.get('/products', requireAuth, (req, res) => {
   const search = String(req.query.q || '').trim().slice(0, 80);
-  const sectionTitles = settings.sectionTitles();
-  const sections = config.CATEGORIES.map((cat) => ({
+  // Categories are rows now, so the public page simply follows whatever the
+  // administrator has published, in their order.
+  const sections = categories.active().map((cat) => ({
     ...cat,
-    title: sectionTitles[cat.key],
     rows: products.publicList(cat.key, search),
   }));
 

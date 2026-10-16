@@ -1,0 +1,153 @@
+<%- include('_shell-top', { heading: '品类管理' }) %>
+
+<%
+var d = typeof draft === 'object' && draft ? draft : {};
+function keep(name) { return d[name] == null ? '' : String(d[name]); }
+function draftHas(f) { return d['field_' + f] ? 'checked' : ''; }
+%>
+
+<div class="admin-head">
+  <h1>品类管理</h1>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+<% if (error) { %><p class="alert alert-error"><%= error %></p><% } %>
+
+<p class="admin-hint">
+  品类决定前台产品页分成几个区块、每个区块叫什么、显示哪几列规格。
+  <strong>只有管理员能增删品类。</strong>
+  「英文标识」是产品数据里实际存的值，也是前台的锚点链接，<strong>创建后不可更改</strong>；
+  名称、英文名、显示字段、排序随时可改。
+  暂时不想展示某个品类时<strong>改成「隐藏」</strong>即可，它下面的产品会从前台消失但不会丢。
+</p>
+
+<div class="card">
+  <h2>新增品类</h2>
+  <form method="post" action="/admin/categories">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-grid">
+      <label class="field">
+        <span>品类名称（中文）*<span class="hint">（后台显示，如：植物粉）</span></span>
+        <input name="zh" required maxlength="40" value="<%= keep('zh') %>">
+      </label>
+      <label class="field">
+        <span>前台英文名 *<span class="hint">（客户看到的导航名，如：Herbal Powders）</span></span>
+        <input name="en" required maxlength="60" value="<%= keep('en') %>">
+      </label>
+      <label class="field">
+        <span>英文标识 <span class="hint">（留空则自动从英文名生成；只能用小写字母、数字和连字符）</span></span>
+        <input name="key" maxlength="32" pattern="[a-z0-9][a-z0-9-]*" autocapitalize="none"
+               spellcheck="false" placeholder="herbal-powders" value="<%= keep('key') %>">
+      </label>
+      <label class="field">
+        <span>排序值 <span class="hint">（数字越小越靠前）</span></span>
+        <input name="sort_order" type="number" step="1" min="0" value="<%= keep('sort_order') || nextSort %>">
+      </label>
+      <label class="field span-2">
+        <span>前台区块标题 <span class="hint">（产品页上这一段的大标题，留空则用英文名）</span></span>
+        <input name="title" maxlength="150" placeholder="Durlevel Herbal Powders" value="<%= keep('title') %>">
+      </label>
+    </div>
+
+    <fieldset class="contact-set">
+      <legend>显示哪些规格列 *<span class="hint">（前台表格里这个品类要显示的字段）</span></legend>
+      <div class="field-check-grid">
+        <% allFields.forEach(function (f) { %>
+          <label class="check-row">
+            <input type="checkbox" name="field_<%= f %>" value="1" <%= draftHas(f) %>>
+            <span><%= fieldLabels[f].zh %> <span class="hint"><%= fieldLabels[f].en %></span></span>
+          </label>
+        <% }); %>
+      </div>
+    </fieldset>
+
+    <label class="check-row">
+      <input type="checkbox" name="is_active" value="1" checked>
+      <span>在前台显示</span>
+    </label>
+
+    <div class="form-actions">
+      <button class="btn" type="submit">新增品类</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>现有品类（<%= rows.length %>）</h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>排序</th><th>名称</th><th>英文标识</th><th>显示字段</th>
+          <th>产品数</th><th>状态</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="7" class="empty-row">还没有品类，先在上面新增一个。</td></tr>
+        <% } %>
+        <% rows.forEach(function (c) { %>
+          <tr>
+            <td>
+              <input name="sort_order" form="c-<%= c.id %>" type="number" step="1" min="0"
+                     class="num-input" value="<%= c.sort_order %>">
+            </td>
+            <td>
+              <form method="post" action="/admin/categories/<%= c.id %>" id="c-<%= c.id %>">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input name="zh" value="<%= c.zh %>" maxlength="40" required
+                       title="品类名称（中文，后台显示）" placeholder="中文名">
+              </form>
+              <input name="en" form="c-<%= c.id %>" value="<%= c.en %>" maxlength="60" required
+                     title="前台英文名（客户看到的导航名）" placeholder="英文名">
+              <input name="title" form="c-<%= c.id %>" value="<%= c.title %>" maxlength="150"
+                     title="前台区块标题" placeholder="前台区块标题">
+            </td>
+            <td class="mono"><%= c.key %></td>
+            <td class="cat-fields">
+              <div class="field-check-grid tight">
+                <% allFields.forEach(function (f) { %>
+                  <label class="check-row">
+                    <input type="checkbox" name="field_<%= f %>" value="1" form="c-<%= c.id %>"
+                           <%= c.fields.indexOf(f) !== -1 ? 'checked' : '' %>>
+                    <span><%= fieldLabels[f].zh %></span>
+                  </label>
+                <% }); %>
+              </div>
+            </td>
+            <td class="nowrap">
+              <% if (c.productCount) { %>
+                <a href="/admin/products?category=<%= c.key %>"><%= c.productCount %> 个</a>
+              <% } else { %>
+                <span class="hint">0 个</span>
+              <% } %>
+            </td>
+            <td>
+              <label class="check-row">
+                <input type="checkbox" name="is_active" value="1" form="c-<%= c.id %>"
+                       <%= c.is_active ? 'checked' : '' %>>
+                <span>显示</span>
+              </label>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="btn btn-ghost btn-sm" type="submit" form="c-<%= c.id %>">保存</button>
+                <% if (c.productCount) { %>
+                  <span class="hint" title="先把产品移走或删除">不可删除</span>
+                <% } else { %>
+                  <form method="post" action="/admin/categories/<%= c.id %>/delete"
+                        data-confirm="确定删除品类「<%= c.zh %>」？它下面没有产品，删除后前台不再显示这一段。">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                  </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('_shell-bottom') %>

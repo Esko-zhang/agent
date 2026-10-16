@@ -23,6 +23,7 @@ const ACTIONS = [
   { key: 'delete', zh: '删除产品' },
   { key: 'import', zh: '批量导入' },
   { key: 'reorder', zh: '重新编号' },
+  { key: 'category', zh: '品类变更' },
   { key: 'doc_add', zh: '上传文档' },
   { key: 'doc_remove', zh: '删除文档' },
 ];
@@ -39,7 +40,7 @@ const TRACKED = [
   { field: 'is_active', label: '上架状态' },
 ];
 
-const CATEGORY_ZH = Object.fromEntries(config.CATEGORIES.map((c) => [c.key, c.zh]));
+const categories = require('./categories');
 
 const q = {
   insert: db.prepare(
@@ -75,7 +76,7 @@ const q = {
 /** Renders a stored value the way the log should read it. */
 function show(field, value) {
   if (field === 'is_active') return value ? '上架' : '下架';
-  if (field === 'category') return CATEGORY_ZH[value] || value || '（空）';
+  if (field === 'category') return value ? categories.nameOf(value) : '（空）';
   const v = value == null ? '' : String(value);
   if (!v) return '（空）';
   return v.length > 60 ? v.slice(0, 60) + '…' : v;

@@ -31,6 +31,9 @@ const SECTIONS = [
   // Sales may draft and edit products; only an administrator publishes one,
   // deletes one, or runs the Excel import. See canPublishProducts below.
   { key: 'products', path: '/admin/products', zh: '产品管理', roles: ['admin', 'sales'] },
+  // A category labels a whole section of the public catalogue and decides its
+  // columns, so only an administrator may add or remove one.
+  { key: 'categories', path: '/admin/categories', zh: '品类管理', roles: ['admin'] },
   { key: 'inquiries', path: '/admin/inquiries', zh: '询盘管理', roles: ['admin', 'sales'] },
   { key: 'staff', path: '/admin/staff', zh: '业务员名片', roles: ['admin'] },
   { key: 'users', path: '/admin/users', zh: '账号管理', roles: ['admin', 'sales'] },

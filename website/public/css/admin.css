@@ -314,3 +314,17 @@ dl.kv dd.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-weig
 .change-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13.5px; }
 .change-body { margin-top: 4px; font-size: 13.5px; }
 .badge-act-reorder { background: #eef1f4; color: #4a5560; }
+.badge-act-category { background: #e9eef3; color: #395268; }
+
+/* ---------- 品类管理 ---------- */
+.field-check-grid {
+  display: grid; gap: 2px 18px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+.field-check-grid .check-row { margin-bottom: 4px; font-size: 13px; }
+.field-check-grid.tight { grid-template-columns: repeat(2, minmax(92px, 1fr)); gap: 0 10px; }
+table.data td.cat-fields { min-width: 220px; }
+.field-check-grid.tight .check-row { font-size: 12.5px; }
+.field-check-grid.tight .check-row input { width: 14px; height: 14px; }
+table.data .num-input { width: 64px; }
+table.data td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }

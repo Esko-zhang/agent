@@ -66,17 +66,9 @@
     </div>
   </div>
 
-  <div class="card">
-    <h2>产品区块标题 <span class="hint">（产品列表页三个区块的英文大标题）</span></h2>
-    <div class="form-grid">
-      <% categories.forEach(function (c) { %>
-        <label class="field">
-          <span><%= c.zh %> <span class="hint">（<%= c.en %>）</span></span>
-          <input name="<%= c.settingKey %>" value="<%= settings[c.settingKey] %>" maxlength="150">
-        </label>
-      <% }); %>
-    </div>
-  </div>
+  <p class="admin-hint">
+    产品区块的标题跟着品类走，在「<a href="/admin/categories">品类管理</a>」里改。
+  </p>
 
   <div class="card">
     <h2>访问记录 <span class="hint">（「访问记录」页的时间显示与日志保留期）</span></h2>

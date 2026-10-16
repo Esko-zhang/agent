@@ -6,6 +6,7 @@ const products = require('../../lib/products');
 const staff = require('../../lib/staff');
 const { q: userQ } = require('../../lib/users');
 const settings = require('../../lib/settings');
+const categories = require('../../lib/categories');
 const config = require('../../config');
 
 const router = express.Router();
@@ -31,7 +32,9 @@ router.use((req, res, next) => {
   res.locals.pendingProducts = roles.isAdmin(req.user)
     ? require('../../lib/productlog').pendingReview()
     : 0;
-  res.locals.categories = config.CATEGORIES;
+  // The backend lists every category, including hidden ones; the public page
+  // only shows the active ones.
+  res.locals.categories = categories.all();
   res.locals.fieldLabels = config.FIELD_LABELS;
   res.locals.flash = req.query.ok || null;
   res.locals.roles = roles;
@@ -57,6 +60,7 @@ router.get('/', (req, res) => {
 // administrators even though 产品管理 itself is now open to sales.
 router.use('/products/import', requireAdmin, require('./import'));
 router.use('/products', requireSection('products'), require('./products'));
+router.use('/categories', requireSection('categories'), require('./categories'));
 router.use('/staff', requireSection('staff'), require('./staff'));
 router.use('/users', requireSection('users'), require('./users'));
 router.use('/inquiries', requireSection('inquiries'), require('./inquiries'));

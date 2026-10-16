@@ -1,6 +1,5 @@
 'use strict';
 const { db } = require('../db');
-const { CATEGORIES } = require('../config');
 
 /**
  * Site-wide settings live in a simple key/value table so the admin can change
@@ -19,7 +18,6 @@ const DEFAULTS = {
   // kept. IP addresses are personal data, so the log is not kept indefinitely.
   log_timezone: 'Asia/Shanghai',
   log_retention_days: '180',
-  ...Object.fromEntries(CATEGORIES.map((c) => [c.settingKey, c.defaultTitle])),
 };
 
 const selectAll = db.prepare('SELECT key, value FROM settings');
@@ -45,10 +43,4 @@ function setMany(values) {
   tx(Object.entries(values));
 }
 
-/** Resolved section headings for the three product categories. */
-function sectionTitles() {
-  const s = all();
-  return Object.fromEntries(CATEGORIES.map((c) => [c.key, s[c.settingKey] || c.defaultTitle]));
-}
-
-module.exports = { DEFAULTS, all, get, setMany, sectionTitles };
+module.exports = { DEFAULTS, all, get, setMany };
