@@ -350,6 +350,10 @@ npm start                     # http://localhost:3000
 Nginx 反向代理、HTTPS 证书、管理员账号：
 
 ```bash
+# 网站代码在 claude/adoring-shannon-88sms1 分支上，clone 时要带 -b
+git clone -b claude/adoring-shannon-88sms1 \
+  https://github.com/Esko-zhang/agent.git && cd agent/website
+
 sudo DOMAIN=catalogue.你们的域名 WITH_TLS=1 TLS_EMAIL=you@yourdomain.com \
      bash deploy/install.sh
 ```

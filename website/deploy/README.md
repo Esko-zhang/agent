@@ -5,7 +5,9 @@ Nginx 反向代理、HTTPS 证书、管理员账号，全部到位。
 
 ```bash
 # 1. 把代码放到服务器上（二选一）
-git clone https://github.com/Esko-zhang/agent.git && cd agent/website
+#    注意 -b：网站代码在这个分支上，仓库默认分支里没有 website/ 目录。
+git clone -b claude/adoring-shannon-88sms1 \
+  https://github.com/Esko-zhang/agent.git && cd agent/website
 #   或者在本地打包上传：tar -czf site.tgz website/ && scp site.tgz root@服务器:/root/
 
 # 2. 装
