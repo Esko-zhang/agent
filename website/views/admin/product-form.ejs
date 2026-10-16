@@ -84,10 +84,21 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
     <p class="hint" id="image-file-name"></p>
   </div>
 
-  <label class="check-row">
-    <input type="checkbox" name="is_active" value="1" <%= product.is_active ? 'checked' : '' %>>
-    <span>上架（前台可见）</span>
-  </label>
+  <% if (canPublish) { %>
+    <label class="check-row">
+      <input type="checkbox" name="is_active" value="1" <%= product.is_active ? 'checked' : '' %>>
+      <span>上架（前台可见）</span>
+    </label>
+  <% } else { %>
+    <p class="admin-hint">
+      <% if (isNew) { %>
+        保存后是<strong>下架</strong>状态，需要管理员确认后上架，客户才看得到。
+      <% } else { %>
+        当前状态：<strong><%= product.is_active ? '上架（客户可见）' : '下架（客户看不到）' %></strong>。
+        上下架由管理员操作，你的修改会直接生效在这条产品上。
+      <% } %>
+    </p>
+  <% } %>
 
   <div class="form-actions">
     <button class="btn" type="submit"><%= isNew ? '创建产品' : '保存修改' %></button>
@@ -119,12 +130,14 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
                 <td>
                   <div class="row-actions">
                     <a class="btn btn-ghost btn-sm" href="/docs/<%= d.id %>">下载</a>
-                    <form class="inline-form" method="post"
-                          action="/admin/products/<%= product.id %>/docs/<%= d.id %>/delete"
-                          data-confirm="确定删除文档「<%= d.label %> · <%= d.original %>」？">
-                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                      <button class="btn btn-danger btn-sm" type="submit">删除</button>
-                    </form>
+                    <% if (canDelete) { %>
+                      <form class="inline-form" method="post"
+                            action="/admin/products/<%= product.id %>/docs/<%= d.id %>/delete"
+                            data-confirm="确定删除文档「<%= d.label %> · <%= d.original %>」？">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                      </form>
+                    <% } %>
                   </div>
                 </td>
               </tr>
@@ -163,5 +176,35 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
     </form>
   <% } %>
 </div>
+
+<% if (history && history.length) { %>
+  <div class="card">
+    <h2>最近变更
+      <span class="hint">这条产品的改动记录，只有管理员看得到；完整记录在「产品变更记录」里。</span>
+    </h2>
+    <ul class="change-feed">
+      <% history.forEach(function (h) { %>
+        <li>
+          <div class="change-head">
+            <span class="badge badge-act-<%= h.action %>"><%= actionLabels[h.action] || h.action %></span>
+            <strong><%= h.actor_name || '—' %></strong>
+            <span class="hint"><%= fmt(h.occurred_at) %></span>
+          </div>
+          <% var ds = parseDetail(h.detail); %>
+          <% if (!ds.length) { %><div class="change-body"><%= h.summary %></div><% } %>
+          <% if (ds.length) { %>
+            <div class="change-body hint">改了 <%= ds.length %> 项</div>
+            <ul class="change-detail">
+              <% ds.forEach(function (d) { %>
+                <li><span class="hint"><%= d.label %>：</span><s><%= d.from %></s> → <strong><%= d.to %></strong></li>
+              <% }); %>
+            </ul>
+          <% } %>
+        </li>
+      <% }); %>
+    </ul>
+    <p class="hint"><a href="/admin/changes?product=<%= encodeURIComponent(product.name_en) %>">查看这条产品的全部记录 →</a></p>
+  </div>
+<% } %>
 
 <%- include('_shell-bottom') %>

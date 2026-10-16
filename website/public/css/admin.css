@@ -291,3 +291,25 @@ dl.kv dd.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-weig
   .stat .n { font-size: 24px; }
   .stat .k { font-size: 12px; }
 }
+
+/* ---------- 产品变更记录 ---------- */
+.badge-act-create    { background: var(--brand-light); color: var(--brand-dark); }
+.badge-act-update    { background: #e4eefb; color: #1f5695; }
+.badge-act-publish   { background: #e2f3e8; color: #1c6b3a; }
+.badge-act-unpublish { background: #f0f0f0; color: #6b6b6b; }
+.badge-act-delete    { background: #fdf0ef; color: var(--danger); }
+.badge-act-import    { background: #fbf0dc; color: #8a6118; }
+.badge-act-doc_add,
+.badge-act-doc_remove { background: #ede7f6; color: #4a3b7a; }
+
+.change-table { min-width: 880px; }
+.change-table td { vertical-align: top; }
+/* Field-level diffs: old value struck through, new value in bold. */
+.change-detail { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.7; }
+.change-detail s { color: var(--ink-soft); }
+
+.change-feed { list-style: none; margin: 0; padding: 0; }
+.change-feed > li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.change-feed > li:last-child { border-bottom: 0; }
+.change-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13.5px; }
+.change-body { margin-top: 4px; font-size: 13.5px; }

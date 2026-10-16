@@ -35,6 +35,12 @@
       <div class="k">待处理询盘</div>
     </div>
   <% } %>
+  <% if (roles.isAdmin(currentUser) && inactiveProducts) { %>
+    <div class="stat">
+      <div class="n"><%= inactiveProducts %></div>
+      <div class="k">下架中的产品<% if (pendingProducts) { %>（<%= pendingProducts %> 个待审核）<% } %></div>
+    </div>
+  <% } %>
 </div>
 
 <div class="card">

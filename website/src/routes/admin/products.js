@@ -4,60 +4,111 @@ const config = require('../../config');
 const products = require('../../lib/products');
 const { uploadSingle, publicPath, removeUpload } = require('../../lib/upload');
 const docs = require('../../lib/docs');
+const roles = require('../../lib/roles');
+const productlog = require('../../lib/productlog');
+const accesslog = require('../../lib/accesslog');
+const settings = require('../../lib/settings');
 
 const router = express.Router();
+
+/**
+ * A sales account drafts and edits; only an administrator publishes, deletes,
+ * or removes an attached document. Everything a sales account creates starts
+ * 下架 and waits for review, and a save from one can never flip that bit —
+ * the form hides the checkbox, and this strips it again on the way in.
+ */
+function applyPublishRules(req, row, existing) {
+  if (roles.canPublishProducts(req.user)) return row;
+  return { ...row, is_active: existing ? existing.is_active : 0 };
+}
+
+function denyUnlessAdmin(req, res, what) {
+  if (roles.canDeleteProducts(req.user)) return false;
+  res.status(403).render('error', { title: 'Forbidden', message: what });
+  return true;
+}
+
+/** Shared context for both renders of the product form. */
+function formContext(req, product, isNew, error, productDocs) {
+  return {
+    nav: 'products',
+    product,
+    isNew,
+    error,
+    productDocs,
+    humanSize: docs.humanSize,
+    canPublish: roles.canPublishProducts(req.user),
+    canDelete: roles.canDeleteProducts(req.user),
+    // The history belongs to the administrators who review these edits.
+    history: !isNew && roles.isAdmin(req.user) ? productlog.forProduct(product.id, 8) : [],
+    parseDetail: productlog.parseDetail,
+    actionLabels: productlog.ACTION_LABELS,
+    // Same clock as 访问记录 and 产品变更记录, so timestamps can be compared.
+    fmt: (t) => accesslog.formatTime(t, settings.get('log_timezone') || 'UTC'),
+  };
+}
 
 router.get('/', (req, res) => {
   const category = config.CATEGORY_KEYS.includes(req.query.category) ? req.query.category : null;
   const rows = category
     ? products.q.listByCategoryAdmin.all(category)
     : products.q.listAll.all();
-  res.render('admin/products', { nav: 'products', rows, category });
+  res.render('admin/products', {
+    nav: 'products',
+    rows,
+    category,
+    canPublish: roles.canPublishProducts(req.user),
+    canDelete: roles.canDeleteProducts(req.user),
+    canImport: roles.canImportProducts(req.user),
+  });
 });
 
 router.get('/new', (req, res) => {
   const category = config.CATEGORY_KEYS.includes(req.query.category)
     ? req.query.category
     : config.CATEGORY_KEYS[0];
-  res.render('admin/product-form', {
-    nav: 'products',
-    product: { category, is_active: 1, sort_order: products.nextSortOrder(category) },
-    isNew: true,
-    error: null,
-    productDocs: [],
-    humanSize: docs.humanSize,
-  });
+  res.render(
+    'admin/product-form',
+    formContext(
+      req,
+      {
+        category,
+        // A draft from a sales account is never live on save.
+        is_active: roles.canPublishProducts(req.user) ? 1 : 0,
+        sort_order: products.nextSortOrder(category),
+      },
+      true,
+      null,
+      []
+    )
+  );
 });
 
 router.get('/:id/edit', (req, res, next) => {
   const product = products.q.byId.get(req.params.id);
   if (!product) return next();
-  res.render('admin/product-form', {
-    nav: 'products',
-    product,
-    isNew: false,
-    error: null,
-    productDocs: docs.q.forProduct.all(product.id),
-    humanSize: docs.humanSize,
-  });
+  res.render(
+    'admin/product-form',
+    formContext(req, product, false, null, docs.q.forProduct.all(product.id))
+  );
 });
 
 router.post('/', uploadSingle('image'), (req, res) => {
-  const row = products.fromForm(req.body);
+  const row = applyPublishRules(req, products.fromForm(req.body), null);
   if (!row.name_en) {
     removeUpload(publicPath(req.file?.filename));
-    return res.status(400).render('admin/product-form', {
-      nav: 'products',
-      product: { ...row, is_active: row.is_active },
-      isNew: true,
-      error: '产品英文名字为必填项。',
-      productDocs: [],
-      humanSize: docs.humanSize,
-    });
+    return res
+      .status(400)
+      .render('admin/product-form', formContext(req, row, true, '产品英文名字为必填项。', []));
   }
   row.image_path = req.file ? publicPath(req.file.filename) : '';
   const info = products.q.insert.run(row);
-  res.redirect(`/admin/products?category=${row.category}&ok=${encodeURIComponent('已新增产品 #' + info.lastInsertRowid)}`);
+  const id = Number(info.lastInsertRowid);
+  productlog.record(req, { action: 'create', product: { ...row, id } });
+  const note = row.is_active
+    ? '已新增产品 #' + id
+    : '已新增产品 #' + id + '（下架状态，需管理员上架后客户才看得到）';
+  res.redirect(`/admin/products?category=${row.category}&ok=${encodeURIComponent(note)}`);
 });
 
 router.post('/:id', uploadSingle('image'), (req, res, next) => {
@@ -66,17 +117,21 @@ router.post('/:id', uploadSingle('image'), (req, res, next) => {
     removeUpload(publicPath(req.file?.filename));
     return next();
   }
-  const row = products.fromForm(req.body);
+  const row = applyPublishRules(req, products.fromForm(req.body), existing);
   if (!row.name_en) {
     removeUpload(publicPath(req.file?.filename));
-    return res.status(400).render('admin/product-form', {
-      nav: 'products',
-      product: { ...existing, ...row },
-      isNew: false,
-      error: '产品英文名字为必填项。',
-      productDocs: docs.q.forProduct.all(existing.id),
-      humanSize: docs.humanSize,
-    });
+    return res
+      .status(400)
+      .render(
+        'admin/product-form',
+        formContext(
+          req,
+          { ...existing, ...row },
+          false,
+          '产品英文名字为必填项。',
+          docs.q.forProduct.all(existing.id)
+        )
+      );
   }
 
   if (req.file) {
@@ -90,14 +145,20 @@ router.post('/:id', uploadSingle('image'), (req, res, next) => {
   }
 
   products.q.update.run({ ...row, id: existing.id });
-  res.redirect(`/admin/products?category=${row.category}&ok=${encodeURIComponent('已保存产品 #' + existing.id)}`);
+  const changes = productlog.recordUpdate(req, existing, { ...row, id: existing.id });
+  const note = changes.length
+    ? '已保存产品 #' + existing.id + '（改了 ' + changes.length + ' 项）'
+    : '产品 #' + existing.id + ' 没有变化';
+  res.redirect(`/admin/products?category=${row.category}&ok=${encodeURIComponent(note)}`);
 });
 
 router.post('/:id/delete', (req, res, next) => {
+  if (denyUnlessAdmin(req, res, '只有管理员可以删除产品。业务员可以修改产品，或请管理员下架。')) return;
   const existing = products.q.byId.get(req.params.id);
   if (!existing) return next();
   // Delete the files too; the rows go with the product via ON DELETE CASCADE.
   for (const d of docs.q.forProduct.all(existing.id)) docs.removeFile(d.filename);
+  productlog.record(req, { action: 'delete', product: existing });
   products.q.remove.run(existing.id);
   removeUpload(existing.image_path);
   res.redirect(`/admin/products?category=${existing.category}&ok=${encodeURIComponent('已删除产品 #' + existing.id)}`);
@@ -116,20 +177,32 @@ router.post('/:id/docs', docs.uploadDoc('doc'), (req, res, next) => {
       `/admin/products/${product.id}/edit?ok=` + encodeURIComponent('请先选择要上传的文件')
     );
   }
+  const label = String(req.body.label || '').trim().slice(0, 40) || '文档';
   docs.q.insert.run({
     product_id: product.id,
-    label: String(req.body.label || '').trim().slice(0, 40) || '文档',
+    label,
     filename: req.file.filename,
     original: String(req.file.originalname || '').slice(0, 150),
     size_bytes: req.file.size,
+  });
+  productlog.record(req, {
+    action: 'doc_add',
+    product,
+    note: `上传文档：${label} · ${String(req.file.originalname || '').slice(0, 80)}`,
   });
   res.redirect(`/admin/products/${product.id}/edit?ok=` + encodeURIComponent('文档已上传'));
 });
 
 router.post('/:id/docs/:docId/delete', (req, res, next) => {
+  if (denyUnlessAdmin(req, res, '只有管理员可以删除产品文档。')) return;
   const product = products.q.byId.get(req.params.id);
   const doc = docs.q.byId.get(req.params.docId);
   if (!product || !doc || doc.product_id !== product.id) return next();
+  productlog.record(req, {
+    action: 'doc_remove',
+    product,
+    note: `删除文档：${doc.label} · ${doc.original}`,
+  });
   docs.remove(doc.id);
   res.redirect(`/admin/products/${product.id}/edit?ok=` + encodeURIComponent('文档已删除'));
 });

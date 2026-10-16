@@ -103,6 +103,28 @@ CREATE TABLE IF NOT EXISTS product_docs (
 
 CREATE INDEX IF NOT EXISTS idx_product_docs_product ON product_docs (product_id, id);
 
+-- Every change made to a product, and by whom. Written by lib/productlog.js.
+-- product_id goes NULL when the product is deleted, so the name and category
+-- are copied in: the history has to outlive the row it describes.
+CREATE TABLE IF NOT EXISTS product_changes (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  occurred_at  TEXT    NOT NULL DEFAULT (datetime('now')),   -- UTC
+  product_id   INTEGER,
+  product_name TEXT    NOT NULL DEFAULT '',
+  category     TEXT    NOT NULL DEFAULT '',
+  action       TEXT    NOT NULL,                             -- see ACTIONS in lib/productlog.js
+  actor_id     INTEGER,
+  actor_name   TEXT    NOT NULL DEFAULT '',
+  actor_role   TEXT    NOT NULL DEFAULT '',
+  summary      TEXT    NOT NULL DEFAULT '',   -- one line, already in Chinese
+  detail       TEXT    NOT NULL DEFAULT ''    -- JSON: [{field, label, from, to}]
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_changes_time
+  ON product_changes (occurred_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_product_changes_product
+  ON product_changes (product_id, occurred_at DESC);
+
 -- Quote requests raised from the catalogue.
 CREATE TABLE IF NOT EXISTS inquiries (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,

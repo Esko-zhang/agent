@@ -9,7 +9,7 @@
       <nav>
         <% visibleSections.forEach(function (sec) { %>
           <a href="<%= sec.path %>" class="<%= nav === sec.key ? 'active' : '' %>">
-            <%= sec.zh %><% if (sec.key === 'inquiries' && newInquiries) { %><span class="side-badge"><%= newInquiries %></span><% } %>
+            <%= sec.zh %><% if (sec.key === 'inquiries' && newInquiries) { %><span class="side-badge"><%= newInquiries %></span><% } %><% if (sec.key === 'products' && pendingProducts) { %><span class="side-badge" title="业务员录入、等待上架"><%= pendingProducts %></span><% } %>
           </a>
         <% }); %>
       </nav>

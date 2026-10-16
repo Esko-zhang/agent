@@ -1,0 +1,173 @@
+<%- include('_shell-top', { heading: '产品变更记录' }) %>
+
+<%
+// Carries the current filter into pagination links and the CSV export.
+function qs(overrides) {
+  var p = new URLSearchParams();
+  var base = {
+    product: filter.product, actor: filter.actor, action: filter.action,
+    q: filter.q, from: filter.from, to: filter.to, page: page,
+  };
+  Object.keys(base).forEach(function (k) {
+    var v = (overrides && k in overrides) ? overrides[k] : base[k];
+    if (v) p.set(k, v);
+  });
+  var s = p.toString();
+  return s ? '?' + s : '';
+}
+var hasFilter = filter.product || filter.actor || filter.action || filter.q
+  || filter.from || filter.to;
+%>
+
+<div class="admin-head">
+  <h1>产品变更记录</h1>
+  <div class="spacer"></div>
+  <div class="actions">
+    <a class="btn btn-ghost" href="/admin/changes/export.csv<%= qs({ page: '' }) %>">导出 CSV</a>
+  </div>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<p class="admin-hint">
+  产品目录的每一次改动都记在这里：<strong>谁、什么时候、改了哪个字段、改之前是什么</strong>。
+  只有管理员看得到。业务员新增的产品默认<strong>下架</strong>，你在「产品管理」里确认后上架。
+  记录会一直保留，产品被删掉之后它的历史也还在。
+</p>
+
+<div class="stat-grid">
+  <div class="stat">
+    <div class="n"><%= stats.pending %></div>
+    <div class="k">待上架（业务员录入）</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.week %></div>
+    <div class="k">近 7 天改动</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.bySales %></div>
+    <div class="k">近 7 天业务员改动</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.total %></div>
+    <div class="k">全部记录</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>筛选 <span class="hint">时间按「<%= tz %>」显示，可在「网站设置」里调整时区</span></h2>
+  <form method="get" action="/admin/changes">
+    <div class="form-grid">
+      <label class="field">
+        <span>产品</span>
+        <select name="product">
+          <option value="">全部产品</option>
+          <% names.forEach(function (n) { %>
+            <option value="<%= n.name %>" <%= filter.product === n.name ? 'selected' : '' %>>
+              <%= n.name %>（<%= n.n %>）
+            </option>
+          <% }); %>
+        </select>
+      </label>
+      <label class="field">
+        <span>操作人</span>
+        <select name="actor">
+          <option value="">全部操作人</option>
+          <% actors.forEach(function (a) { %>
+            <option value="<%= a.name %>" <%= filter.actor === a.name ? 'selected' : '' %>>
+              <%= a.name %>（<%= roleLabels[a.role] || a.role %>，<%= a.n %>）
+            </option>
+          <% }); %>
+        </select>
+      </label>
+      <label class="field">
+        <span>操作类型</span>
+        <select name="action">
+          <option value="">全部操作</option>
+          <% actions.forEach(function (a) { %>
+            <option value="<%= a.key %>" <%= filter.action === a.key ? 'selected' : '' %>><%= a.zh %></option>
+          <% }); %>
+        </select>
+      </label>
+      <label class="field">
+        <span>关键词 <span class="hint">（产品名 / 操作人 / 变更说明）</span></span>
+        <input name="q" value="<%= filter.q %>" maxlength="80" placeholder="例如 Vitamin 或 规格">
+      </label>
+      <label class="field">
+        <span>起始日期</span>
+        <input type="date" name="from" value="<%= filter.from %>">
+      </label>
+      <label class="field">
+        <span>结束日期</span>
+        <input type="date" name="to" value="<%= filter.to %>">
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn" type="submit">筛选</button>
+      <% if (hasFilter) { %><a class="btn btn-ghost" href="/admin/changes">清空条件</a><% } %>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>变更记录
+    <span class="hint">共 <%= total %> 条<% if (pages > 1) { %>，第 <%= page %> / <%= pages %> 页<% } %></span>
+  </h2>
+  <p class="scroll-hint">表格可左右滑动查看全部字段。</p>
+  <div class="table-wrap">
+    <table class="data change-table">
+      <thead>
+        <tr>
+          <th>时间</th><th>操作</th><th>产品</th><th>操作人</th><th>改了什么</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="5" class="empty-row">
+            <%= hasFilter ? '没有符合条件的记录。' : '还没有产品改动记录。' %>
+          </td></tr>
+        <% } %>
+        <% rows.forEach(function (r) { %>
+          <tr>
+            <td class="nowrap"><%= fmt(r.occurred_at) %></td>
+            <td class="nowrap">
+              <span class="badge badge-act-<%= r.action %>"><%= actionLabels[r.action] || r.action %></span>
+            </td>
+            <td>
+              <strong><%= r.product_name || '（已删除）' %></strong>
+              <% if (!r.product_id) { %><div class="hint">产品已删除</div><% } %>
+            </td>
+            <td class="nowrap">
+              <%= r.actor_name || '—' %>
+              <% if (r.actor_role) { %>
+                <div><span class="badge badge-role-<%= r.actor_role %>"><%= roleLabels[r.actor_role] || r.actor_role %></span></div>
+              <% } %>
+            </td>
+            <td>
+              <% var ds = parseDetail(r.detail); %>
+              <% if (!ds.length) { %><div><%= r.summary %></div><% } %>
+              <% if (ds.length) { %>
+                <div class="hint">改了 <%= ds.length %> 项</div>
+                <ul class="change-detail">
+                  <% ds.forEach(function (d) { %>
+                    <li><span class="hint"><%= d.label %>：</span><s><%= d.from %></s> → <strong><%= d.to %></strong></li>
+                  <% }); %>
+                </ul>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (pages > 1) { %>
+    <div class="pager">
+      <% if (page > 1) { %><a class="btn btn-ghost btn-sm" href="<%= qs({ page: page - 1 }) %>">← 上一页</a><% } %>
+      <span class="hint">第 <%= page %> / <%= pages %> 页</span>
+      <% if (page < pages) { %><a class="btn btn-ghost btn-sm" href="<%= qs({ page: page + 1 }) %>">下一页 →</a><% } %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('_shell-bottom') %>

@@ -4,12 +4,27 @@
   <h1>产品管理</h1>
   <div class="spacer"></div>
   <div class="actions">
-    <a class="btn btn-ghost" href="/admin/products/import">批量导入</a>
+    <% if (canImport) { %>
+      <a class="btn btn-ghost" href="/admin/products/import">批量导入</a>
+    <% } %>
     <a class="btn" href="/admin/products/new<%= category ? '?category=' + category : '' %>">+ 新增产品</a>
   </div>
 </div>
 
 <% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<% if (!canPublish) { %>
+  <p class="admin-hint">
+    你可以<strong>新增和修改产品</strong>。新增的产品保存后是<strong>下架</strong>状态，
+    <strong>等管理员上架后客户才看得到</strong>；上下架和删除由管理员操作。
+    每次改动都会记进「产品变更记录」。
+  </p>
+<% } else if (typeof pendingProducts !== 'undefined' && pendingProducts) { %>
+  <p class="admin-hint">
+    有 <strong><%= pendingProducts %></strong> 个业务员录入的产品还没上架。
+    在下方列表里打开它，确认无误后勾选「上架」保存即可。
+  </p>
+<% } %>
 
 <div class="filter-tabs">
   <a href="/admin/products" class="<%= category ? '' : 'active' %>">全部</a>
@@ -59,16 +74,21 @@
             <td><%= p.remark || '—' %></td>
             <td>
               <% if (p.is_active) { %><span class="badge badge-on">上架</span>
-              <% } else { %><span class="badge badge-off">下架</span><% } %>
+              <% } else { %>
+                <span class="badge badge-off">下架</span>
+                <% if (canPublish) { %><div class="hint">客户看不到</div><% } %>
+              <% } %>
             </td>
             <td>
               <div class="row-actions">
                 <a class="btn btn-ghost btn-sm" href="/admin/products/<%= p.id %>/edit">编辑</a>
-                <form class="inline-form" method="post" action="/admin/products/<%= p.id %>/delete"
-                      data-confirm="确定删除产品「<%= p.name_en %>」？此操作不可撤销。">
-                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                  <button class="btn btn-danger btn-sm" type="submit">删除</button>
-                </form>
+                <% if (canDelete) { %>
+                  <form class="inline-form" method="post" action="/admin/products/<%= p.id %>/delete"
+                        data-confirm="确定删除产品「<%= p.name_en %>」？此操作不可撤销。">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                  </form>
+                <% } %>
               </div>
             </td>
           </tr>

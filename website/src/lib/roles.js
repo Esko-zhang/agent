@@ -28,7 +28,9 @@ const ROLE_LABELS = Object.fromEntries(ROLES.map((r) => [r.key, r.zh]));
 /** Backend sections, and which roles may open each one. */
 const SECTIONS = [
   { key: 'dashboard', path: '/admin', zh: '概览', roles: ['admin', 'sales'] },
-  { key: 'products', path: '/admin/products', zh: '产品管理', roles: ['admin'] },
+  // Sales may draft and edit products; only an administrator publishes one,
+  // deletes one, or runs the Excel import. See canPublishProducts below.
+  { key: 'products', path: '/admin/products', zh: '产品管理', roles: ['admin', 'sales'] },
   { key: 'inquiries', path: '/admin/inquiries', zh: '询盘管理', roles: ['admin', 'sales'] },
   { key: 'staff', path: '/admin/staff', zh: '业务员名片', roles: ['admin'] },
   { key: 'users', path: '/admin/users', zh: '账号管理', roles: ['admin', 'sales'] },
@@ -39,10 +41,23 @@ const SECTIONS = [
   // The whole customer book in one place, so it is administrators only: a
   // sales account must not read another rep's customers' contact details.
   { key: 'contacts', path: '/admin/contacts', zh: '联系方式汇总', roles: ['admin'] },
+  // Who changed which product, and what it said before. Administrators only:
+  // it is the record used to review what the sales accounts did.
+  { key: 'changes', path: '/admin/changes', zh: '产品变更记录', roles: ['admin'] },
   { key: 'settings', path: '/admin/settings', zh: '网站设置', roles: ['admin'] },
 ];
 
 const isAdmin = (user) => !!user && user.role === 'admin';
+/**
+ * The catalogue is one shared list facing every customer, so the irreversible
+ * half of product management stays with administrators: putting a product in
+ * front of customers, removing one for good, deleting an attached document,
+ * and the bulk Excel import that can rewrite many rows at once. A sales
+ * account drafts and edits; the administrator reviews and publishes.
+ */
+const canPublishProducts = (user) => isAdmin(user);
+const canDeleteProducts = (user) => isAdmin(user);
+const canImportProducts = (user) => isAdmin(user);
 const isSales = (user) => !!user && user.role === 'sales';
 /** Anyone who may open the backend at all. */
 const hasBackend = (user) => isAdmin(user) || isSales(user);
@@ -103,6 +118,9 @@ function canSeeCustomer(actor, username, accountsByName) {
 }
 
 module.exports = {
+  canPublishProducts,
+  canDeleteProducts,
+  canImportProducts,
   ROLES,
   ROLE_KEYS,
   ROLE_LABELS,
