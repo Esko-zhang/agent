@@ -9,7 +9,9 @@
 # pick up new dependencies — or use deploy/update.sh, which also takes a backup.
 #
 # Settings (all optional except DOMAIN, which may also be a bare IP):
-#   DOMAIN=        hostname Nginx answers on; the server's IP if you have none
+#   DOMAIN=        hostname(s) Nginx answers on, space- or comma-separated —
+#                  e.g. "example.com www.example.com"; the server's IP if you
+#                  have no domain yet
 #   APP_DIR=       where the app lives            (default /opt/durlevel)
 #   APP_USER=      system user it runs as         (default durlevel)
 #   PORT=          loopback port for Node         (default 3000)
@@ -25,6 +27,9 @@ APP_USER="${APP_USER:-durlevel}"
 PORT="${PORT:-3000}"
 DOMAIN="${DOMAIN:-}"
 WITH_TLS="${WITH_TLS:-0}"
+# "a.com, www.a.com" -> "a.com www.a.com"; the first name is the canonical one.
+DOMAIN="$(echo "$DOMAIN" | tr ',' ' ' | tr -s ' ' | sed 's/^ //; s/ $//')"
+PRIMARY_DOMAIN="${DOMAIN%% *}"
 SKIP_NGINX="${SKIP_NGINX:-0}"
 NODE_MAJOR=20
 
@@ -43,7 +48,7 @@ if [ "$SKIP_NGINX" != "1" ] && [ -z "$DOMAIN" ]; then
 fi
 if [ "$WITH_TLS" = "1" ]; then
   [ -n "${TLS_EMAIL:-}" ] || die "WITH_TLS=1 时必须给 TLS_EMAIL（证书到期提醒邮箱）。"
-  case "$DOMAIN" in
+  case "$PRIMARY_DOMAIN" in
     ''|*[!0-9.]*) : ;;
     *) die "Let's Encrypt 不给 IP 地址签证书，WITH_TLS=1 需要一个解析到本机的域名。" ;;
   esac
@@ -176,7 +181,10 @@ else
   if [ "$WITH_TLS" = "1" ]; then
     say "申请 HTTPS 证书"
     apt-get install -y -qq certbot python3-certbot-nginx >/dev/null
-    certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$TLS_EMAIL" --redirect
+    # One certificate covering every name, and a -d flag for each.
+    CERTBOT_NAMES=()
+    for d in $DOMAIN; do CERTBOT_NAMES+=(-d "$d"); done
+    certbot --nginx "${CERTBOT_NAMES[@]}" --non-interactive --agree-tos -m "$TLS_EMAIL" --redirect
     sed -i 's/^COOKIE_SECURE=0/COOKIE_SECURE=1/' "$APP_DIR/.env"
     systemctl restart durlevel
   fi
@@ -186,7 +194,7 @@ say "装好了"
 SCHEME="http"; [ "$WITH_TLS" = "1" ] && SCHEME="https"
 cat <<SUMMARY
 
-  访问地址     ${SCHEME}://${DOMAIN:-127.0.0.1:$PORT}
+  访问地址     ${SCHEME}://${PRIMARY_DOMAIN:-127.0.0.1:$PORT}
   代码目录     ${APP_DIR}
   配置文件     ${APP_DIR}/.env      （密码都在这里，权限 600）
   数据目录     ${APP_DIR}/data      （site.db 和产品文档，备份只需要这个和 public/uploads）
@@ -200,5 +208,6 @@ cat <<SUMMARY
   接下来：
    1. 用上面打印的管理员密码登录，立刻在「账号管理」里改掉；
    2. 填 .env 里的 SMTP_* 再跑 (cd ${APP_DIR} && npm run mail-test) 验证邮件；
-   3. 安全组 / 防火墙只放行 80、443 和你的 SSH 端口，不要放行 ${PORT}。
+   3. 安全组 / 防火墙只放行 80、443 和你的 SSH 端口，不要放行 ${PORT}；
+   4. 证书由 certbot 自动续期（systemctl list-timers | grep certbot 可以确认）。
 SUMMARY

@@ -17,6 +17,11 @@ sudo DOMAIN=catalogue.你们的域名 WITH_TLS=1 TLS_EMAIL=you@yourdomain.com \
 
 ## 动手之前先确认四件事
 
+**0. 域名实名认证。** 在阿里云等国内注册商注册的域名（.com 也算）**必须完成实名认证**，
+否则会被注册局置为 `serverHold`，解析根本不生效——这和备案是两回事，境外服务器也躲不掉。
+认证通过后状态还要 1–3 个工作日才恢复，所以**这一步要最先去查**
+（[阿里云：解析不生效怎么办](https://help.aliyun.com/zh/dns/why-does-domain-name-resolution-not-take-effect)）。
+
 **1. 域名和备案。** 服务器在**中国大陆**的话，未备案域名走 80 端口会被运营商拦截，
 显示备案提示页（[阿里云排查文档](https://help.aliyun.com/zh/ecs/support/what-do-i-do-if-i-cannot-access-a-website-hosted-on-an-instance)）。备案一般要一到三周。
 
@@ -40,7 +45,7 @@ sudo DOMAIN=catalogue.你们的域名 WITH_TLS=1 TLS_EMAIL=you@yourdomain.com \
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
-| `DOMAIN` | 必填 | Nginx 对外响应的域名；没有域名可以先填服务器公网 IP |
+| `DOMAIN` | 必填 | Nginx 对外响应的域名。**可以写多个**，空格或逗号分隔（`a.com www.a.com`），证书会一次性覆盖全部；没有域名可以先填服务器公网 IP |
 | `WITH_TLS` | `0` | 设 `1` 顺带申请 Let's Encrypt 证书（需要域名） |
 | `TLS_EMAIL` | — | `WITH_TLS=1` 时必填，用于证书到期提醒 |
 | `APP_DIR` | `/opt/durlevel` | 代码、数据库、上传文件都在这里 |
