@@ -77,13 +77,18 @@
         </div>
 
         <div class="table-scroll">
-          <table class="products">
+          <%# The spec columns share a budget: how wide each can be depends on
+              how many this category shows, which only the template knows. %>
+          <table class="products cols-<%= Math.min(cols.length, 5) %>">
             <thead>
               <tr>
+                <%# table-layout: fixed sizes the columns from THIS row and no
+                    other, so every width has to live on the header cell: the
+                    same class on a <td> below does nothing at all. %>
                 <% if (hasImages) { %><th class="col-img"><span class="visually-hidden">Image</span></th><% } %>
-                <th>Product</th>
+                <th class="col-name">Product</th>
                 <% cols.forEach(function (f) { %>
-                  <th><%= fieldLabels[f].en %></th>
+                  <th class="col-spec"><%= fieldLabels[f].en %></th>
                 <% }); %>
                 <th class="col-act"><span class="visually-hidden">Actions</span></th>
               </tr>

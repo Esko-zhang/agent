@@ -640,7 +640,40 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
   font-variant-numeric: tabular-nums; color: var(--ink-soft);
 }
 .col-img { width: 76px; }
-.col-act { width: 108px; text-align: right; white-space: nowrap; }
+
+/* A specification value is short — a ratio, a percentage, a CAS number — so
+   its column is capped instead of taking an equal share of the table. Before
+   this, "10:1" sat in a 293px column while the buttons beside it were being
+   cut in half. The percentage keeps the cap from crowding out the product
+   name on a narrow laptop, where 14% is the smaller of the two. */
+.col-spec { width: 168px; }
+/* Two spec columns can afford to be wide enough that "Rosmarinic acid 5%"
+   stays on one line; five cannot, or the product name is left with nothing.
+   The class comes from the template, which is the only place the count is
+   known. */
+.products.cols-1 .col-spec { width: 240px; }
+.products.cols-2 .col-spec { width: 204px; }
+.products.cols-3 .col-spec { width: 184px; }
+.products.cols-4 .col-spec { width: 160px; }
+.products.cols-5 .col-spec { width: 140px; }
+
+/* On a laptop every cap has to give, so they go back to a share of the table.
+   A percentage rather than min(168px, 13%): a math function containing a
+   percentage is ignored for a column in a fixed table layout, which is how
+   "10:1" came to sit in a 354px column in the first place. */
+@media (max-width: 1180px) {
+  .col-spec,
+  .products.cols-1 .col-spec, .products.cols-2 .col-spec,
+  .products.cols-3 .col-spec, .products.cols-4 .col-spec,
+  .products.cols-5 .col-spec { width: 15%; }
+  .products.cols-4 .col-spec { width: 13%; }
+  .products.cols-5 .col-spec { width: 11%; }
+}
+
+/* Wide enough for a spec-sheet button and "+ Inquiry" side by side. A product
+   with several documents wraps onto a second line rather than overflowing:
+   a taller row beats a button sliced down the middle. */
+.col-act { width: 176px; text-align: right; }
 
 /* ---------- The table, re-composed for a phone ----------
    A specification table does not survive being shrunk, and asking a buyer to
@@ -716,7 +749,10 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
   .empty-row { padding: var(--s6) 0; text-align: left; }
 }
 
-.col-name { width: 44%; min-width: 200px; }
+/* No width of its own: in a fixed layout the unsized column takes whatever is
+   left over, and the product name is the one thing in this table that is
+   genuinely long. */
+.col-name { min-width: 200px; }
 .col-name .name {
   display: block; font-size: var(--t-md); font-weight: 600; letter-spacing: -.01em;
 }
@@ -736,7 +772,14 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
   border: 1px solid var(--line); border-radius: var(--radius-sm);
   background: var(--bg);
 }
-.row-act { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.row-act {
+  display: inline-flex; flex-wrap: wrap; align-items: center;
+  gap: 8px; justify-content: flex-end;
+}
+/* The group wraps; the individual buttons never do. Dropping nowrap from the
+   column is what lets a second document move to its own line, and this is what
+   stops "+ Inquiry" breaking across two in the process. */
+.row-act > * { white-space: nowrap; }
 .row-act .btn-sm {
   font-family: var(--mono); font-size: 10.5px;
   letter-spacing: .08em; text-transform: uppercase;
