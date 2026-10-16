@@ -29,6 +29,13 @@ var hasFilter = filter.username || filter.event || filter.q || filter.country
 
 <% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
 
+<% if (scoped) { %>
+  <p class="admin-hint">
+    这里只显示<strong>你自己创建的客户</strong>的访问记录。
+    其他业务员的客户、以及针对未知账号的登录尝试，属于全站安全信息，只有管理员看得到。
+  </p>
+<% } %>
+
 <div class="stat-grid">
   <div class="stat">
     <div class="n"><%= stats.loginsToday %></div>
@@ -53,7 +60,11 @@ var hasFilter = filter.username || filter.event || filter.q || filter.country
 </div>
 
 <div class="card">
-  <h2>筛选 <span class="hint">时间按「<%= tz %>」显示；日志保留 <%= retentionDays %> 天，可在「网站设置」里调整。</span></h2>
+  <h2>筛选
+    <span class="hint">
+      时间按「<%= tz %>」显示；日志保留 <%= retentionDays %> 天<% if (!scoped) { %>，可在「网站设置」里调整<% } %>。
+    </span>
+  </h2>
   <form method="get" action="/admin/logs">
     <div class="form-grid">
       <label class="field">

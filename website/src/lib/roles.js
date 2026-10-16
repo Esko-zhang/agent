@@ -19,7 +19,7 @@
  */
 const ROLES = [
   { key: 'admin', zh: '管理员', hint: '可进入全部后台功能，并管理业务员账号' },
-  { key: 'sales', zh: '业务员', hint: '可管理自己创建的用户账号，并查看这些客户的询盘与意向' },
+  { key: 'sales', zh: '业务员', hint: '可管理自己创建的用户账号，并查看这些客户的询盘、意向与访问记录' },
   { key: 'user', zh: '用户', hint: '仅浏览前台产品，看不到管理后台' },
 ];
 const ROLE_KEYS = ROLES.map((r) => r.key);
@@ -33,7 +33,9 @@ const SECTIONS = [
   { key: 'staff', path: '/admin/staff', zh: '业务员名片', roles: ['admin'] },
   { key: 'users', path: '/admin/users', zh: '账号管理', roles: ['admin', 'sales'] },
   { key: 'intent', path: '/admin/intent', zh: '客户意向', roles: ['admin', 'sales'] },
-  { key: 'logs', path: '/admin/logs', zh: '访问记录', roles: ['admin'] },
+  // Sales may read the log, but only rows belonging to their own customers;
+  // the scoping lives in routes/admin/logs.js.
+  { key: 'logs', path: '/admin/logs', zh: '访问记录', roles: ['admin', 'sales'] },
   { key: 'settings', path: '/admin/settings', zh: '网站设置', roles: ['admin'] },
 ];
 

@@ -63,10 +63,36 @@ function record(req, event, extra = {}) {
   }
 }
 
+/**
+ * Restricts a query to a set of accounts. `null` means no restriction (an
+ * administrator); an empty array means "nothing", which is the correct answer
+ * for a sales account with no customers yet.
+ */
+function scopeParts(usernames) {
+  if (!usernames) return { sql: '', params: [] };
+  if (!usernames.length) return { sql: ' AND 1 = 0', params: [] };
+  const lowered = usernames.map((u) => String(u).toLowerCase());
+  return {
+    sql: ` AND lower(username) IN (${lowered.map(() => '?').join(',')})`,
+    params: lowered,
+  };
+}
+
 /** Builds the shared WHERE clause for the admin list and the CSV export. */
 function buildFilter(filter = {}) {
   const where = [];
   const params = [];
+
+  // Applied first so it cannot be widened by anything the viewer types.
+  if (filter.scope) {
+    if (!filter.scope.length) {
+      where.push('1 = 0');
+    } else {
+      const lowered = filter.scope.map((u) => String(u).toLowerCase());
+      where.push(`lower(username) IN (${lowered.map(() => '?').join(',')})`);
+      params.push(...lowered);
+    }
+  }
 
   if (filter.username) {
     where.push('username = ? COLLATE NOCASE');
@@ -165,46 +191,69 @@ function listAll(filter, cap = 20000) {
     .all(...params, cap);
 }
 
-/** Headline numbers for the last 24 hours and the last 7 days. */
-function stats() {
+/** Headline numbers for the last 24 hours and the last 7 days, within scope. */
+function stats(scope = null) {
   const day = "datetime('now', '-1 day')";
   const week = "datetime('now', '-7 days')";
+  const sc = scopeParts(scope);
   const one = (sql, ...p) => db.prepare(sql).get(...p);
   return {
     loginsToday: one(
-      `SELECT COUNT(*) AS n FROM access_log WHERE event = 'login_success' AND occurred_at >= ${day}`
+      `SELECT COUNT(*) AS n FROM access_log
+       WHERE event = 'login_success' AND occurred_at >= ${day}${sc.sql}`,
+      ...sc.params
     ).n,
     activeAccountsToday: one(
       `SELECT COUNT(DISTINCT username) AS n FROM access_log
-       WHERE username <> '' AND occurred_at >= ${day}`
+       WHERE username <> '' AND occurred_at >= ${day}${sc.sql}`,
+      ...sc.params
     ).n,
     uniqueIpsToday: one(
-      `SELECT COUNT(DISTINCT ip) AS n FROM access_log WHERE ip <> '' AND occurred_at >= ${day}`
+      `SELECT COUNT(DISTINCT ip) AS n FROM access_log
+       WHERE ip <> '' AND occurred_at >= ${day}${sc.sql}`,
+      ...sc.params
     ).n,
     countriesToday: one(
       `SELECT COUNT(DISTINCT country) AS n FROM access_log
-       WHERE country <> '' AND occurred_at >= ${day}`
+       WHERE country <> '' AND occurred_at >= ${day}${sc.sql}`,
+      ...sc.params
     ).n,
     failedWeek: one(
-      `SELECT COUNT(*) AS n FROM access_log WHERE event = 'login_failed' AND occurred_at >= ${week}`
+      `SELECT COUNT(*) AS n FROM access_log
+       WHERE event = 'login_failed' AND occurred_at >= ${week}${sc.sql}`,
+      ...sc.params
     ).n,
-    total: q.total.get().n,
-    oldest: q.oldest.get().t,
+    total: one(`SELECT COUNT(*) AS n FROM access_log WHERE 1 = 1${sc.sql}`, ...sc.params).n,
+    oldest: one(`SELECT MIN(occurred_at) AS t FROM access_log WHERE 1 = 1${sc.sql}`, ...sc.params).t,
   };
 }
 
-function usernames() {
-  return q.distinctUsers.all().map((r) => r.username);
+function usernames(scope = null) {
+  const sc = scopeParts(scope);
+  return db
+    .prepare(
+      `SELECT DISTINCT username FROM access_log
+       WHERE username <> ''${sc.sql} ORDER BY username COLLATE NOCASE`
+    )
+    .all(...sc.params)
+    .map((r) => r.username);
 }
 
 /** Countries seen in the log, most frequent first, for the filter dropdown. */
-function countries() {
-  return q.distinctCountries.all().map((r) => ({
-    code: r.country,
-    name: geo.nameOf(r.country),
-    flag: geo.flagOf(r.country),
-    count: r.n,
-  }));
+function countries(scope = null) {
+  const sc = scopeParts(scope);
+  return db
+    .prepare(
+      `SELECT country, COUNT(*) AS n FROM access_log
+       WHERE country <> ''${sc.sql} GROUP BY country ORDER BY n DESC`
+    )
+    .all(...sc.params)
+    .map((r) => ({
+      code: r.country,
+      name: geo.nameOf(r.country),
+      flag: geo.flagOf(r.country),
+      count: r.n,
+    }));
 }
 
 /** Drops rows older than the retention window. Returns how many were removed. */
