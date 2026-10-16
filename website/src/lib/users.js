@@ -1,6 +1,7 @@
 'use strict';
 const bcrypt = require('bcryptjs');
 const { db } = require('../db');
+const { ROLE_KEYS } = require('./roles');
 
 const BCRYPT_ROUNDS = 12;
 
@@ -46,7 +47,10 @@ function create({ username, password, display_name = '', role = 'user', is_activ
     username: String(username).trim(),
     password_hash: hashPassword(password),
     display_name: display_name || '',
-    role: role === 'admin' ? 'admin' : 'user',
+    // Validate against the role list rather than a hardcoded pair — the old
+    // `role === 'admin' ? 'admin' : 'user'` silently downgraded every sales
+    // account to a customer.
+    role: ROLE_KEYS.includes(role) ? role : 'user',
     is_active: is_active ? 1 : 0,
   });
 }

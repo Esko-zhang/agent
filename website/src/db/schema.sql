@@ -6,7 +6,10 @@ CREATE TABLE IF NOT EXISTS users (
   username      TEXT    NOT NULL UNIQUE,
   password_hash TEXT    NOT NULL,
   display_name  TEXT    NOT NULL DEFAULT '',
-  role          TEXT    NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
+  -- admin: the whole backend, including creating sales accounts
+  -- sales: inquiries, customer intent, and creating customer accounts
+  -- user:  the catalogue only, no backend
+  role          TEXT    NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'sales', 'user')),
   is_active     INTEGER NOT NULL DEFAULT 1,
   created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
   last_login_at TEXT

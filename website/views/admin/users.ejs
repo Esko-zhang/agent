@@ -7,10 +7,18 @@
 <% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
 <% if (error) { %><p class="alert alert-error"><%= error %></p><% } %>
 
+<p class="admin-hint">
+  <% if (canAssignRoles) { %>
+    管理员可以创建<strong>业务员</strong>和<strong>用户</strong>账号；业务员只能创建<strong>用户</strong>账号。
+  <% } else { %>
+    你是<strong>业务员</strong>账号，可以创建和管理<strong>用户</strong>账号。
+    业务员和管理员账号由管理员负责，这里不会显示。
+  <% } %>
+  网站前台没有注册入口，账号只能在这里发放。
+</p>
+
 <div class="card">
-  <h2>新建账号
-    <span class="hint">用户账号只能在此创建，网站前台不提供自助注册入口。</span>
-  </h2>
+  <h2>新建账号</h2>
   <form method="post" action="/admin/users">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <div class="form-grid">
@@ -29,10 +37,20 @@
       </label>
       <label class="field">
         <span>角色</span>
-        <select name="role">
-          <option value="user">用户（仅浏览前台）</option>
-          <option value="admin">管理员（可进入后台）</option>
-        </select>
+        <% if (assignable.length > 1) { %>
+          <select name="role">
+            <% allRoles.forEach(function (r) { %>
+              <% if (assignable.indexOf(r.key) !== -1) { %>
+                <option value="<%= r.key %>" <%= r.key === 'user' ? 'selected' : '' %>>
+                  <%= r.zh %> —— <%= r.hint %>
+                </option>
+              <% } %>
+            <% }); %>
+          </select>
+        <% } else { %>
+          <input value="用户（仅浏览前台）" readonly>
+          <input type="hidden" name="role" value="<%= assignable[0] %>">
+        <% } %>
       </label>
     </div>
     <label class="check-row">
@@ -46,7 +64,7 @@
 </div>
 
 <div class="card">
-  <h2>现有账号（<%= rows.length %>）</h2>
+  <h2><%= canAssignRoles ? '现有账号' : '我可以管理的用户账号' %>（<%= rows.length %>）</h2>
   <div class="table-wrap">
     <table class="data">
       <thead>
@@ -56,6 +74,9 @@
         </tr>
       </thead>
       <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="6" class="empty-row">还没有可管理的账号。</td></tr>
+        <% } %>
         <% rows.forEach(function (u) { %>
           <tr>
             <td>
@@ -69,10 +90,15 @@
               </form>
             </td>
             <td>
-              <select name="role" form="u-<%= u.id %>">
-                <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>用户</option>
-                <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>管理员</option>
-              </select>
+              <% if (canAssignRoles) { %>
+                <select name="role" form="u-<%= u.id %>">
+                  <% allRoles.forEach(function (r) { %>
+                    <option value="<%= r.key %>" <%= u.role === r.key ? 'selected' : '' %>><%= r.zh %></option>
+                  <% }); %>
+                </select>
+              <% } else { %>
+                <span class="badge badge-role-<%= u.role %>"><%= roleLabels[u.role] %></span>
+              <% } %>
               <label class="check-row">
                 <input type="checkbox" name="is_active" value="1" form="u-<%= u.id %>"
                        <%= u.is_active ? 'checked' : '' %>>

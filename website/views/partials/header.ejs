@@ -13,7 +13,8 @@
       <a href="/inquiry" class="<%= nav === 'inquiry' ? 'active' : '' %>">
         Inquiry<% if (typeof basket !== 'undefined' && basket.length) { %><span class="nav-count"><%= basket.length %></span><% } %>
       </a>
-      <% if (currentUser && currentUser.role === 'admin') { %>
+      <%# The backend button is not rendered at all for customer accounts. %>
+      <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'sales')) { %>
         <a href="/admin">管理后台</a>
       <% } %>
       <span class="user-chip">

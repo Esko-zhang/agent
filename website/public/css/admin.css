@@ -1,11 +1,18 @@
 /* Admin backend — Chinese UI, built on the same tokens as the public site. */
 .admin-body { background: var(--bg); }
 
-.admin-shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+/* Fills the 1920px page set in site.css, so the sidebar runs the full height. */
+.admin-shell {
+  display: grid; grid-template-columns: 220px 1fr;
+  flex: 1 0 auto; min-height: var(--page-min-height);
+}
 
 .admin-side {
   background: var(--brand-dark); color: #fff; padding: 20px 0;
   display: flex; flex-direction: column;
+  /* Sticky, so navigation and "退出登录" stay reachable on a 1920px page
+     instead of sitting 1900px below the fold. */
+  position: sticky; top: 0; align-self: start; height: 100vh;
 }
 .admin-side .side-brand {
   padding: 0 20px 18px; margin-bottom: 10px; font-weight: 700; font-size: 17px;
@@ -127,8 +134,8 @@ table.data .mini-thumb {
 }
 
 @media (max-width: 860px) {
-  .admin-shell { grid-template-columns: 1fr; }
-  .admin-side { flex-direction: column; }
+  .admin-shell { grid-template-columns: 1fr; background: var(--bg); }
+  .admin-side { flex-direction: column; position: static; height: auto; }
   .admin-side nav { flex-direction: row; flex-wrap: wrap; padding: 0 12px; }
   .admin-side nav a { border-left: 0; border-bottom: 3px solid transparent; }
   .admin-side nav a.active { border-left: 0; border-bottom-color: var(--accent); }
@@ -213,3 +220,12 @@ dl.kv dd.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-weig
 .inq-block:last-child { border-bottom: 0; }
 .inq-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .inq-items { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; }
+
+/* ---------- 角色 ---------- */
+.badge-role-admin { background: #fbf0dc; color: #8a6118; }
+.badge-role-sales { background: #e4eefb; color: #1f5695; }
+.badge-role-user  { background: #f0f0f0; color: #666; }
+.side-role {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: rgba(255, 255, 255, .16); color: #fff; font-size: 10.5px; font-weight: 600;
+}

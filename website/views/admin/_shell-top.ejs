@@ -7,19 +7,17 @@
         <small>Admin Console</small>
       </div>
       <nav>
-        <a href="/admin" class="<%= nav === 'dashboard' ? 'active' : '' %>">概览</a>
-        <a href="/admin/products" class="<%= nav === 'products' ? 'active' : '' %>">产品管理</a>
-        <a href="/admin/inquiries" class="<%= nav === 'inquiries' ? 'active' : '' %>">
-          询盘管理<% if (newInquiries) { %><span class="side-badge"><%= newInquiries %></span><% } %>
-        </a>
-        <a href="/admin/staff" class="<%= nav === 'staff' ? 'active' : '' %>">业务员管理</a>
-        <a href="/admin/users" class="<%= nav === 'users' ? 'active' : '' %>">账号管理</a>
-        <a href="/admin/intent" class="<%= nav === 'intent' ? 'active' : '' %>">客户意向</a>
-        <a href="/admin/logs" class="<%= nav === 'logs' ? 'active' : '' %>">访问记录</a>
-        <a href="/admin/settings" class="<%= nav === 'settings' ? 'active' : '' %>">网站设置</a>
+        <% visibleSections.forEach(function (sec) { %>
+          <a href="<%= sec.path %>" class="<%= nav === sec.key ? 'active' : '' %>">
+            <%= sec.zh %><% if (sec.key === 'inquiries' && newInquiries) { %><span class="side-badge"><%= newInquiries %></span><% } %>
+          </a>
+        <% }); %>
       </nav>
       <div class="side-foot">
-        <div><%= currentUser.display_name || currentUser.username %></div>
+        <div>
+          <%= currentUser.display_name || currentUser.username %>
+          <span class="side-role"><%= roles.ROLE_LABELS[currentUser.role] %></span>
+        </div>
         <a href="/products">← 返回前台</a>
         <form method="post" action="/logout">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">

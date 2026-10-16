@@ -25,14 +25,28 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+/* Every page is at least 1920px tall, as specified. The page is a flex column
+   so the footer is pushed to the bottom of that height instead of floating
+   halfway down with empty background beneath it. */
+:root { --page-min-height: 1920px; }
+
+html { min-height: 100%; }
+
 body {
   margin: 0;
+  min-height: var(--page-min-height);
+  display: flex;
+  flex-direction: column;
   font-family: var(--font);
   font-size: 15px;
   line-height: 1.6;
   color: var(--ink);
   background: var(--bg);
 }
+
+/* The content area takes the slack, so the footer lands on the bottom edge. */
+body > main { flex: 1 0 auto; padding-bottom: 40px; }
+body > .site-footer { flex-shrink: 0; margin-top: 0; }
 
 a { color: var(--brand); }
 
@@ -81,7 +95,10 @@ img { max-width: 100%; }
 /* ---------- Login page ---------- */
 /* One centred card: the page has a single job, so nothing competes with it. */
 .login-body { background: var(--login-bg); }
+/* Centred in the first screenful rather than in the full 1920px page — at
+   1920px the midpoint is 960px down, which is below the fold on any laptop. */
 .login-shell {
+  flex: 0 0 auto;
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -300,6 +317,7 @@ table.products .col-act { width: 1%; white-space: nowrap; text-align: right; }
 
 /* ---------- Standalone message page ---------- */
 .message-page {
+  flex: 0 0 auto;
   min-height: 70vh; display: grid; place-items: center; text-align: center; padding: 40px 20px;
 }
 .message-page h1 { margin: 0 0 10px; font-size: 26px; }
