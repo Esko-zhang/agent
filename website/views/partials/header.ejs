@@ -17,13 +17,16 @@
       <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'sales')) { %>
         <a href="/admin">管理后台</a>
       <% } %>
-      <span class="user-chip">
-        <span><%= currentUser.display_name || currentUser.username %></span>
-        <form method="post" action="/logout">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button type="submit" class="logout-btn">Sign out</button>
-        </form>
-      </span>
     </nav>
+    <%# A sibling of the navigation rather than its last item: on a phone that
+        lets the account sit beside the wordmark on the first row, instead of
+        taking a third row of its own before the page starts. %>
+    <span class="user-chip">
+      <span><%= currentUser.display_name || currentUser.username %></span>
+      <form method="post" action="/logout">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="logout-btn">Sign out</button>
+      </form>
+    </span>
   </div>
 </header>

@@ -41,8 +41,8 @@
         <% if (search) { %><a class="btn btn-ghost" href="/products">Clear</a><% } %>
       </form>
       <nav class="cat-nav" aria-label="Product categories">
-        <% sections.forEach(function (s) { %>
-          <a href="#<%= s.anchor %>"><%= s.en %> <span class="count"><%= s.rows.length %></span></a>
+        <% sections.forEach(function (s, i) { %>
+          <a href="#<%= s.anchor %>"><span class="n"><%= ('0' + (i + 1)).slice(-2) %></span><%= s.en %> <span class="count"><%= s.rows.length %></span></a>
         <% }); %>
       </nav>
     </div>

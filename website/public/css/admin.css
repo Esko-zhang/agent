@@ -61,6 +61,7 @@
   color: rgba(255, 255, 255, .62);
 }
 
+.admin-nav-scroll { min-width: 0; }
 .admin-side nav { display: flex; flex-direction: column; }
 .admin-side nav a {
   display: flex; align-items: center; gap: var(--s2);
@@ -296,13 +297,41 @@ table.data .num-input { width: 64px; }
 }
 
 .search-row { display: flex; gap: var(--s2); flex-wrap: wrap; }
-.search-row input {
+.search-row input, .search-row select {
   flex: 1 1 240px; min-width: 0; padding: 10px 12px; font: inherit;
   font-size: var(--t-sm);
   border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink);
+}
+.search-row input:focus, .search-row select:focus {
+  outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light);
+}
+/* The filter controls were the one place the browser's own chrome showed
+   through a system built entirely from hairlines. */
+.admin-main select,
+.admin-main input[type="date"],
+.admin-main input[type="search"] {
+  appearance: none; -webkit-appearance: none;
+  padding: 9px 12px; font: inherit; font-size: var(--t-sm); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
   background: var(--surface);
 }
-.search-row input:focus {
+.admin-main select {
+  /* The caret is drawn, not inherited: a hairline chevron in ink. */
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.admin-main input[type="date"] {
+  font-family: var(--mono); font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+.admin-main select:focus,
+.admin-main input[type="date"]:focus {
   outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light);
 }
 
@@ -462,10 +491,21 @@ table.data td.cat-fields { min-width: 220px; }
     position: static; height: auto; padding: var(--s4) 0 0;
   }
   .admin-side .side-brand { padding-bottom: var(--s3); margin-bottom: var(--s2); }
+  /* The strip scrolls; the fade at its right edge is what says so. */
+  .admin-nav-scroll { position: relative; min-width: 0; }
+  .admin-nav-scroll::after {
+    content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 44px;
+    background: linear-gradient(to left, var(--ink), rgba(21, 25, 26, 0));
+    pointer-events: none;
+  }
   .admin-side nav {
     flex-direction: row; flex-wrap: nowrap;
     min-width: 0; overflow-x: auto; padding: 0 var(--s4);
     scrollbar-width: thin;
+  }
+  .admin-side nav::after {
+    /* A tail, so the last section can scroll clear of the fade. */
+    content: ""; flex: 0 0 var(--s6);
   }
   .admin-side .side-brand, .admin-side .side-foot { min-width: 0; }
   .admin-side nav a {

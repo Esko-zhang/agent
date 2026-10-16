@@ -356,9 +356,12 @@ img { max-width: 100%; }
 
 @media (max-width: 860px) {
   .site-header { position: static; }
-  .site-header .bar { flex-wrap: wrap; padding: var(--s3) 0; gap: var(--s2); }
-  .site-nav { margin-left: 0; width: 100%; flex-wrap: wrap; }
-  .user-chip { border-left: 0; padding-left: 0; margin-left: auto; }
+  .site-header .bar { flex-wrap: wrap; padding: var(--s2) 0; gap: 0 var(--s2); min-height: 0; }
+  /* The account sits beside the wordmark on the first row and the links take
+     the second, instead of each taking a row of its own. */
+  .brand-link { order: 1; }
+  .user-chip { order: 2; margin-left: auto; padding-left: 0; border-left: 0; }
+  .site-nav { order: 3; margin-left: -10px; width: 100%; flex-wrap: wrap; }
 }
 
 /* ---------- Title block ----------
@@ -407,7 +410,7 @@ img { max-width: 100%; }
   border-left: 1px solid var(--line-strong);
 }
 .title-block > div {
-  padding: var(--s3) var(--s4);
+  padding: var(--s4);
   border-right: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-strong);
   min-width: 0;
@@ -418,9 +421,10 @@ img { max-width: 100%; }
   letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint);
 }
 .title-block dd {
-  margin: 6px 0 0;
-  font-family: var(--mono); font-size: var(--t-sm); font-weight: 500;
-  font-variant-numeric: tabular-nums; letter-spacing: .01em; color: var(--ink);
+  margin: 8px 0 0;
+  font-family: var(--mono); font-size: clamp(16px, 1.5vw, var(--t-lg));
+  font-weight: 500; line-height: 1.2;
+  font-variant-numeric: tabular-nums; letter-spacing: -.01em; color: var(--ink);
   overflow-wrap: anywhere;
 }
 @media (min-width: 680px) { .title-block { grid-template-columns: repeat(4, 1fr); } }
@@ -434,8 +438,31 @@ img { max-width: 100%; }
    Desktop only — the same information is in every section header, so a phone
    loses nothing by not showing it. */
 .sheet-counter { display: none; }
-/* Only where the container leaves a real margin beside it: at 1440 the gutter
-   is 100px and the counter would sit on top of the table. */
+
+/* A 1440 screen leaves a 100px gutter — too narrow for the category name, but
+   not too narrow for the sheet number, which is the half that matters. */
+@media (min-width: 1360px) and (max-width: 1559px) {
+  .sheet-counter {
+    display: block; position: fixed; z-index: 15;
+    left: calc((100vw - 1240px) / 2 - 76px);
+    top: 50%; transform: translateY(-50%);
+    width: 56px; text-align: right;
+    padding-right: var(--s3);
+    border-right: 1px solid var(--line-strong);
+    font-family: var(--mono); font-size: var(--t-xs);
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint);
+    pointer-events: none;
+  }
+  .sheet-counter .num {
+    display: block; margin-bottom: 3px;
+    font-size: var(--t-lg); font-weight: 500; line-height: 1;
+    font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: 0;
+  }
+  .sheet-counter .of { display: block; }
+  /* No room for the name at this width; the section heading carries it. */
+  .sheet-counter .label { display: none; }
+}
+
 @media (min-width: 1560px) {
   .sheet-counter {
     display: block; position: fixed; z-index: 15;
@@ -480,17 +507,25 @@ img { max-width: 100%; }
   outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light);
 }
 
-.cat-nav { display: flex; flex-wrap: wrap; gap: var(--s1); }
+.cat-nav { display: flex; flex-wrap: wrap; gap: 0 var(--s5); }
 .cat-nav a {
+  position: relative;
   display: inline-flex; align-items: baseline; gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid transparent; border-radius: var(--radius);
-  color: var(--ink-soft); text-decoration: none;
+  padding: 10px 0; min-height: 44px;
+  color: var(--ink); text-decoration: none;
   font-family: var(--mono); font-size: var(--t-xs);
   letter-spacing: .1em; text-transform: uppercase;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.cat-nav a:hover { color: var(--ink); border-color: var(--line-strong); }
+/* The rule grows from the left on hover, the same gesture as a sheet's rule
+   drawing itself — so the index behaves like the thing it indexes. */
+.cat-nav a::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 6px; height: 1px;
+  background: var(--brand);
+  transform: scaleX(0); transform-origin: left center;
+  transition: transform var(--dur) var(--ease);
+}
+.cat-nav a:hover::after, .cat-nav a:focus-visible::after { transform: scaleX(1); }
+.cat-nav .n { color: var(--ink-faint); letter-spacing: .06em; }
 .cat-nav .count { color: var(--ink-faint); }
 
 .search-summary {
@@ -689,7 +724,7 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
 }
 .tag {
   display: inline-block; padding: 2px 8px;
-  border: 1px solid var(--line-strong); border-radius: 999px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
   font-family: var(--mono); font-size: 10.5px;
   letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft);
 }
@@ -746,14 +781,17 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 
 /* ---------- Contact ---------- */
 .staff-grid {
-  display: grid; gap: var(--s4);
+  display: grid; gap: 0;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  border-top: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line-strong);
 }
 .staff-card {
   display: flex; gap: var(--s4);
   padding: var(--s5);
   background: var(--surface);
-  border: 1px solid var(--line); border-radius: var(--radius);
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
 }
 .staff-photo, .staff-photo-empty {
   width: 72px; height: 72px; flex-shrink: 0; border-radius: var(--radius-sm);
@@ -782,8 +820,24 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   font-family: var(--mono); font-size: var(--t-xs);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint);
 }
-.staff-contact a { text-decoration: none; font-weight: 500; overflow-wrap: anywhere; }
+.staff-contact a { text-decoration: none; font-weight: 500; }
 .staff-contact a:hover { text-decoration: underline; }
+/* Numbers are figures: they line up and they never break mid-number. */
+.staff-contact li a[href^="tel:"], .staff-contact li a[href*="wa.me"] {
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* An address may wrap, but only where an address has joints. */
+.staff-contact a[href^="mailto:"] { word-break: break-word; overflow-wrap: break-word; }
+
+/* Narrow screens: the label sits above its value on its own line, so a 250px
+   column can no longer split "+86 138 0000 1111" across two. */
+@media (max-width: 520px) {
+  .staff-card { display: block; }
+  .staff-photo, .staff-photo-empty { margin-bottom: var(--s4); }
+  .staff-contact li { display: block; padding: 7px 0; }
+  .staff-contact .label { display: block; margin-bottom: 3px; min-width: 0; }
+}
 
 /* ---------- Footer ---------- */
 /* The back cover. A judge scrolls to the bottom, so it is built the same way
@@ -829,8 +883,8 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   color: rgba(255, 255, 255, .6);
 }
 @media (min-width: 720px) {
-  .site-footer .wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--s7); }
-  .site-footer .foot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s6); }
+  .site-footer .wrap { grid-template-columns: minmax(0, .5fr) minmax(0, 2fr); gap: var(--s7); }
+  .site-footer .foot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--s6); }
 }
 
 /* ---------- Message pages (404, errors, empty states) ---------- */
@@ -881,8 +935,8 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 .clear-form { padding-bottom: var(--s5); }
 
 .empty-panel, .sent-panel {
-  margin: var(--s7) auto; padding: var(--s8) var(--s6);
-  max-width: 620px; text-align: center;
+  margin: var(--s7) 0; padding: var(--s8) var(--s6);
+  text-align: center;
   background: var(--surface);
   border: 1px solid var(--line); border-radius: var(--radius);
 }

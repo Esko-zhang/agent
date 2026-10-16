@@ -6,6 +6,9 @@
         <%= settings.brand_name %>
         <small>Admin Console</small>
       </div>
+      <%# The wrapper exists only so the fade marking "this strip scrolls" can
+          sit above the scroller on a narrow screen. %>
+      <div class="admin-nav-scroll">
       <nav>
         <% visibleSections.forEach(function (sec) { %>
           <a href="<%= sec.path %>" class="<%= nav === sec.key ? 'active' : '' %>">
@@ -13,6 +16,7 @@
           </a>
         <% }); %>
       </nav>
+      </div>
       <div class="side-foot">
         <div>
           <%= currentUser.display_name || currentUser.username %>
