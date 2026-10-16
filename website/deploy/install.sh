@@ -175,6 +175,19 @@ else
   rm -f /etc/nginx/sites-enabled/default
   nginx -t
   systemctl reload nginx
+
+  # If a host firewall is running, let 80/443 through — otherwise certbot's
+  # validation and every visitor are blocked by it. The cloud provider's own
+  # firewall / security group is a separate thing, set in their web console.
+  if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q '^Status: active'; then
+    ufw allow 80/tcp >/dev/null && ufw allow 443/tcp >/dev/null
+    echo "    ufw 已放行 80 / 443"
+  elif command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
+    firewall-cmd --permanent --add-service=http >/dev/null
+    firewall-cmd --permanent --add-service=https >/dev/null
+    firewall-cmd --reload >/dev/null
+    echo "    firewalld 已放行 80 / 443"
+  fi
   # Nginx needs to traverse the app directory to serve /uploads/ off disk.
   chmod o+x "$APP_DIR" "$APP_DIR/public" "$APP_DIR/public/uploads"
 
@@ -208,6 +221,7 @@ cat <<SUMMARY
   接下来：
    1. 用上面打印的管理员密码登录，立刻在「账号管理」里改掉；
    2. 填 .env 里的 SMTP_* 再跑 (cd ${APP_DIR} && npm run mail-test) 验证邮件；
-   3. 安全组 / 防火墙只放行 80、443 和你的 SSH 端口，不要放行 ${PORT}；
+   3. 云厂商控制台的「防火墙 / 安全组」要放行 80、443 和 SSH，不要放行 ${PORT}
+      —— 那一层在网页控制台上设，服务器里的命令改不到它；
    4. 证书由 certbot 自动续期（systemctl list-timers | grep certbot 可以确认）。
 SUMMARY
