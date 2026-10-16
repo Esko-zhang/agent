@@ -8,11 +8,15 @@ const { csrfMiddleware } = require('./src/lib/csrf');
 const { loadUser } = require('./src/lib/auth');
 const accesslog = require('./src/lib/accesslog');
 const settings = require('./src/lib/settings');
+const { assetUrl } = require('./src/lib/assets');
 
 const app = express();
 
 // How many proxies to trust in front of us; see parseTrustProxy in config.js.
 if (config.trustProxy !== false) app.set('trust proxy', config.trustProxy);
+// Every template builds its asset URLs through this, so a deploy is never
+// hidden behind a stale browser cache.
+app.locals.assetUrl = assetUrl;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.disable('x-powered-by');
