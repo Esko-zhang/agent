@@ -4,8 +4,18 @@ const settings = require('../lib/settings');
 const { verifyLogin, q } = require('../lib/users');
 const ratelimit = require('../lib/ratelimit');
 const accesslog = require('../lib/accesslog');
+const categories = require('../lib/categories');
 
 const router = express.Router();
+
+/**
+ * What the sign-in panel lists down its side. It used to be three names typed
+ * into the template, which stopped being true the moment the administrator
+ * could add and remove categories — so it reads the published ones instead.
+ */
+function catalogueLines() {
+  return categories.active().map((c) => c.en).slice(0, 5);
+}
 
 /** Only allow redirects back into this site. */
 function safeNext(next) {
@@ -20,6 +30,7 @@ router.get('/', (req, res) => {
     settings: settings.all(),
     error: null,
     username: '',
+    lines: catalogueLines(),
     next: safeNext(req.query.next),
   });
 });
@@ -33,6 +44,7 @@ router.post('/login', (req, res) => {
       settings: settings.all(),
       error,
       username: String(username).slice(0, 64),
+      lines: catalogueLines(),
       next,
     });
 

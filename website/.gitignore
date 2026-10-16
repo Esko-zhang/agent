@@ -4,3 +4,5 @@ data/
 *.log
 public/uploads/*
 !public/uploads/.gitkeep
+# Static page snapshots taken while running the design audit locally.
+public/_preview/

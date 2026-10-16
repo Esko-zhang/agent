@@ -49,6 +49,19 @@ function publicList(category, search) {
   return db.prepare(sql).all(...params);
 }
 
+/**
+ * The date this catalogue last changed — the newest `updated_at` among the
+ * published products, as a plain YYYY-MM-DD. It fills the revision cell of the
+ * title block, which is the one piece of the page a returning buyer can use to
+ * tell whether anything is new since they last looked.
+ */
+function lastPublishedAt() {
+  const row = db
+    .prepare("SELECT MAX(updated_at) AS t FROM products WHERE is_active = 1")
+    .get();
+  return row && row.t ? String(row.t).slice(0, 10) : '';
+}
+
 /** Normalises a submitted admin form into a row for insert/update. */
 function fromForm(body) {
   const known = categories.keys();
@@ -80,4 +93,6 @@ const renumber = db.transaction((category) => {
   return rows.length;
 });
 
-module.exports = { q, publicList, fromForm, nextSortOrder, renumber, SEARCHABLE };
+module.exports = {
+  q, publicList, lastPublishedAt, fromForm, nextSortOrder, renumber, SEARCHABLE,
+};

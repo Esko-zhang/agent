@@ -102,6 +102,10 @@ router.get('/products', requireAuth, (req, res) => {
   res.render('products', {
     settings: settings.all(),
     sections,
+    // The title block's revision cell: when this catalogue last actually
+    // changed, not when the page was opened. A catalogue with nothing
+    // published in it has no revision to show.
+    catalogue: { revised: products.lastPublishedAt() || '—' },
     search,
     totalFound: sections.reduce((n, s) => n + s.rows.length, 0),
     fieldLabels: config.FIELD_LABELS,

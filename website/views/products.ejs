@@ -3,17 +3,33 @@
   <%- include('partials/header', { nav: 'products' }) %>
 
   <main class="wrap">
+    <%# The title block of a drawing: what the sheet is, who it was issued to,
+        and when. Every cell is this account's own, so no two customers are
+        looking at the same page. %>
     <div class="page-head">
-      <div>
-        <p class="eyebrow">Durlevel · Private catalogue</p>
+      <div class="title-main">
+        <p class="eyebrow"><%= settings.brand_name %> · Private catalogue</p>
         <h1>Product Catalogue</h1>
-        <p><%= settings.products_intro %></p>
       </div>
-      <p class="issued eyebrow">
-        Issued to
-        <strong><%= currentUser.display_name || currentUser.username %></strong>
-        <%= totalFound %> <%= totalFound === 1 ? 'item' : 'items' %> · <%= sections.length %> categories
-      </p>
+      <p class="lede"><%= settings.products_intro %></p>
+      <dl class="title-block">
+        <div>
+          <dt>Issued to</dt>
+          <dd><%= currentUser.display_name || currentUser.username %></dd>
+        </div>
+        <div>
+          <dt>Account</dt>
+          <dd><%= currentUser.username %></dd>
+        </div>
+        <div>
+          <dt>Items · sheets</dt>
+          <dd><%= totalFound %> · <%= sections.length %></dd>
+        </div>
+        <div>
+          <dt>Revision</dt>
+          <dd><%= catalogue.revised %></dd>
+        </div>
+      </dl>
     </div>
 
     <!-- Search box + in-page category jump links (per the spreadsheet note on A5). -->
@@ -51,14 +67,15 @@
       var hasImages = s.rows.some(function (p) { return p.image_path; });
       var colCount = cols.length + 2 + (hasImages ? 1 : 0);
       %>
-      <section class="product-section" id="<%= s.anchor %>">
+      <%# data-sheet is the short category name; the heading above the table
+          is the long form, which does not fit the counter in the margin. %>
+      <section class="product-section" id="<%= s.anchor %>" data-sheet="<%= s.en %>">
         <div class="section-head">
           <span class="index" aria-hidden="true"><%= ('0' + (sIndex + 1)).slice(-2) %></span>
           <h2><%= s.title %></h2>
           <span class="count"><%= s.rows.length %> <%= s.rows.length === 1 ? 'item' : 'items' %></span>
         </div>
 
-        <p class="scroll-hint" aria-hidden="true">Swipe the table sideways to see all columns</p>
         <div class="table-scroll">
           <table class="products">
             <thead>
@@ -108,7 +125,9 @@
                   </td>
 
                   <% cols.forEach(function (f) { %>
-                    <td><%= p[f] || '—' %></td>
+                    <%# data-label is what the cell calls itself once the table
+                        becomes a stack of cards on a narrow screen. %>
+                    <td data-label="<%= fieldLabels[f].en %>"><%= p[f] || '—' %></td>
                   <% }); %>
 
                   <td class="col-act">
@@ -140,7 +159,16 @@
     <% }); %>
   </main>
 
+  <%# The margin of the sheet you are reading. Filled in by /js/site.js, so it
+      stays empty and silent when the script is unavailable. %>
+  <% if (sections.length > 1) { %>
+    <aside class="sheet-counter" id="sheet-counter" aria-hidden="true"
+           data-total="<%= sections.length %>"></aside>
+  <% } %>
+
   <%- include('partials/footer') %>
+
+  <script src="<%= assetUrl('/js/site.js') %>"></script>
 
   <!-- CSS-only image lightboxes, so no inline script is needed under our CSP. -->
   <% sections.forEach(function (s) { s.rows.forEach(function (p) { %>

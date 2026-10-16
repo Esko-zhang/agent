@@ -1,330 +1,497 @@
-/* Admin backend — Chinese UI, built on the same tokens as the public site. */
+/* ============================================================================
+   Durlevel — the back office.
+
+   Same concept as the catalogue, same tokens: a spec book, drawn rather than
+   decorated. Where the customer's side is the finished book, this is the
+   drawing office it is produced in — so the sidebar is the ink-dark panel with
+   the drafting grid from the sign-in page, every figure is monospaced and
+   lines up, and structure is carried by hairlines instead of by cards floating
+   on shadows.
+
+   The interface is Chinese, so no display serif appears here: a Chinese
+   heading set in a Latin serif falls through to SimSun on Windows, which is
+   exactly the "looks like any other admin panel" this is trying to avoid. The
+   headings use the body face, large and tightly tracked; the character comes
+   from the mono layer and the rules.
+   ========================================================================= */
+
 .admin-body { background: var(--bg); }
 
-/* Fills the page height set in site.css; the dark band is painted on the grid
-   so it runs the full height while the sidebar stays put on screen. */
+/* ---------- Shell ---------- */
 .admin-shell {
-  display: grid; grid-template-columns: 220px 1fr;
+  display: grid; grid-template-columns: 236px 1fr;
   flex: 1 0 auto; min-height: var(--page-min-height);
-  /* The sidebar itself is only one screen tall so it can stick; this paints
-     its column for the whole page so no light gap shows below it. */
-  background: linear-gradient(to right, var(--brand-dark) 0 220px, var(--bg) 220px);
+  /* Paints the sidebar's column for the full page height, so no light gap
+     shows below a sidebar that is only one screen tall. */
+  background: linear-gradient(to right, var(--ink) 0 236px, var(--bg) 236px);
 }
 
 .admin-side {
-  background: var(--brand-dark); color: #fff; padding: 20px 0;
+  position: relative;
+  /* Without this the nav's no-wrap tab row sets the column's min-content
+     width, and the whole shell overflows a phone by 500px. */
+  min-width: 0;
+  background: var(--ink); color: #fff; padding: var(--s5) 0 var(--s4);
   display: flex; flex-direction: column;
-  /* Sticky, so navigation and "退出登录" stay on screen on a long page. */
+  /* Sticky, so the navigation and 退出登录 stay reachable on a long table. */
   position: sticky; top: 0; align-self: start; height: var(--page-min-height);
 }
+/* The same drafting grid as the sign-in panel — the two dark surfaces on the
+   site are the same surface. */
+.admin-side::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, .05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, .05) 1px, transparent 1px);
+  background-size: 34px 34px;
+  pointer-events: none;
+}
+.admin-side > * { position: relative; }
+
 .admin-side .side-brand {
-  padding: 0 20px 18px; margin-bottom: 10px; font-weight: 700; font-size: 17px;
-  letter-spacing: .04em; border-bottom: 1px solid rgba(255, 255, 255, .14);
+  padding: 0 var(--s5) var(--s4); margin-bottom: var(--s3);
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
+  font-size: var(--t-md); font-weight: 600; letter-spacing: .01em;
 }
 .admin-side .side-brand small {
-  display: block; font-weight: 400; font-size: 11.5px; letter-spacing: .1em;
-  text-transform: uppercase; color: rgba(255, 255, 255, .6); margin-top: 3px;
+  display: block; margin-top: 5px;
+  font-family: var(--mono); font-weight: 400; font-size: var(--t-xs);
+  letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(255, 255, 255, .62);
 }
+
 .admin-side nav { display: flex; flex-direction: column; }
 .admin-side nav a {
-  padding: 11px 20px; color: rgba(255, 255, 255, .8); text-decoration: none;
-  font-size: 14px; border-left: 3px solid transparent;
+  display: flex; align-items: center; gap: var(--s2);
+  padding: 10px var(--s5); min-height: 40px;
+  color: rgba(255, 255, 255, .82); text-decoration: none;
+  font-size: var(--t-sm);
+  border-left: 2px solid transparent;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
 }
 .admin-side nav a:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+/* The open sheet is marked in the margin, not filled in like a button. */
 .admin-side nav a.active {
-  background: rgba(255, 255, 255, .12); color: #fff; border-left-color: var(--accent);
-  font-weight: 600;
+  background: rgba(255, 255, 255, .09); color: #fff;
+  border-left-color: var(--accent); font-weight: 600;
 }
+.admin-side :focus-visible { outline-color: #fff; outline-offset: -2px; }
+
 .admin-side .side-foot {
-  margin-top: auto; padding: 16px 20px 0; font-size: 12px;
-  color: rgba(255, 255, 255, .6); border-top: 1px solid rgba(255, 255, 255, .14);
+  margin-top: auto; padding: var(--s4) var(--s5) 0;
+  border-top: 1px solid rgba(255, 255, 255, .18);
+  font-size: var(--t-xs); color: rgba(255, 255, 255, .72); line-height: 1.9;
 }
-.admin-side .side-foot a { color: #fff; }
-.admin-side .side-foot form { margin-top: 8px; }
+.admin-side .side-foot a { color: #fff; text-underline-offset: 3px; }
+.admin-side .side-foot form { margin-top: var(--s2); }
 .admin-side .side-foot button {
-  border: 0; background: none; padding: 0; font: inherit; font-size: 12px;
-  color: rgba(255, 255, 255, .85); text-decoration: underline; cursor: pointer;
+  border: 0; background: none; padding: 0; font: inherit; font-size: var(--t-xs);
+  color: rgba(255, 255, 255, .88); text-decoration: underline;
+  text-underline-offset: 3px; cursor: pointer;
+}
+.side-role {
+  display: inline-block; margin-left: 5px; padding: 1px 6px;
+  border: 1px solid rgba(255, 255, 255, .35); border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+  color: #fff;
+}
+.side-badge {
+  margin-left: auto; min-width: 20px; padding: 1px 6px;
+  border-radius: var(--radius-sm); background: var(--accent); color: #fff;
+  font-family: var(--mono); font-size: 10.5px; font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
-.admin-main { padding: 28px 32px 56px; min-width: 0; }
+/* ---------- Page head ---------- */
+.admin-main { padding: var(--s6) var(--s7) var(--s8); min-width: 0; }
 .admin-head {
-  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-  margin-bottom: 20px;
+  display: flex; flex-wrap: wrap; gap: var(--s3) var(--s4); align-items: center;
+  padding-bottom: var(--s4); margin-bottom: var(--s5);
+  border-bottom: 1px solid var(--ink);
 }
-.admin-head h1 { margin: 0; font-size: 23px; }
+.admin-head h1 {
+  margin: 0; font-size: var(--t-xl); font-weight: 600; letter-spacing: -.01em;
+}
 .admin-head .spacer { margin-left: auto; }
-.admin-head .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-head .actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.admin-hint {
+  margin: calc(var(--s4) * -1) 0 var(--s5);
+  max-width: 76ch; color: var(--ink-soft);
+  font-size: var(--t-sm); line-height: 1.75;
+}
+.admin-hint strong { color: var(--ink); }
+.scroll-hint {
+  margin: 0 0 var(--s2);
+  font-family: var(--mono); font-size: var(--t-xs);
+  letter-spacing: .1em; color: var(--ink-faint);
+}
 
+/* ---------- Panels ----------
+   Paper on paper: a hairline and a flat surface, no shadow. */
 .card {
   background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 22px; margin-bottom: 20px;
-  box-shadow: var(--shadow);
+  border-radius: var(--radius); padding: var(--s5); margin-bottom: var(--s5);
 }
-.card > h2 { margin: 0 0 16px; font-size: 16px; }
-.card > h2 .hint { font-weight: 400; font-size: 12.5px; color: var(--ink-soft); }
+.card > h2 {
+  margin: 0 0 var(--s4); padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-base); font-weight: 600;
+}
+.card > h2 .hint {
+  font-weight: 400; font-size: var(--t-xs); color: var(--ink-soft);
+}
 
+/* ---------- Figures ----------
+   The dashboard's numbers are the same ruled block as the catalogue's title
+   block: one grid, hairline cells, monospaced figures that line up. */
 .stat-grid {
-  display: grid; gap: 14px; margin-bottom: 22px;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  display: grid; gap: 0; margin-bottom: var(--s6);
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
+  border-top: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line-strong);
 }
+/* Each cell carries its own paper, so when the last row is short the block
+   ends where the figures end instead of trailing off into a ruled blank. */
 .stat {
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
+  background: var(--surface);
+  padding: var(--s4) var(--s5);
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  min-width: 0;
 }
-.stat .n { font-size: 30px; font-weight: 700; color: var(--brand); line-height: 1.1; }
-.stat .k { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+.stat .n {
+  font-family: var(--mono); font-size: var(--t-2xl); font-weight: 500;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  color: var(--ink); line-height: 1.05;
+}
+.stat .k {
+  margin-top: 6px;
+  font-family: var(--mono); font-size: var(--t-xs);
+  letter-spacing: .12em; color: var(--ink-faint);
+}
 
-table.data { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+/* ---------- Tables ---------- */
+table.data { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
 table.data th, table.data td {
-  padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line);
-  vertical-align: middle;
+  padding: 11px 12px; text-align: left;
+  border-bottom: 1px solid var(--line); vertical-align: middle;
 }
 table.data thead th {
-  background: #f2f6f4; font-size: 12px; color: var(--ink-soft); white-space: nowrap;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-strong);
+  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+  letter-spacing: .1em; color: var(--ink-faint); white-space: nowrap;
 }
-table.data tbody tr:hover { background: #fafcfb; }
+table.data tbody tr { transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+/* The row being read is marked the same way as a row in the catalogue. */
+table.data tbody tr:hover,
+table.data tbody tr:focus-within {
+  background: #fbfbf9; box-shadow: inset 2px 0 0 var(--brand);
+}
 table.data .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 table.data .mini-thumb {
-  width: 46px; height: 46px; object-fit: cover; border-radius: 6px;
-  border: 1px solid var(--line); display: block;
+  display: block; width: 46px; height: 46px; object-fit: cover;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
 }
 /* position:relative for the same reason as .table-scroll: keep absolutely
    positioned children from escaping the scroller and widening the page. */
-.table-wrap { position: relative; overflow-x: auto; }
-
-.badge {
-  display: inline-block; padding: 2px 9px; border-radius: 999px;
-  font-size: 11.5px; font-weight: 600; white-space: nowrap;
+.table-wrap {
+  position: relative; overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius);
 }
-.badge-on { background: var(--brand-light); color: var(--brand-dark); }
-.badge-off { background: #f0f0f0; color: #777; }
-.badge-admin { background: #fbf0dc; color: #8a6118; }
-
-.form-grid { display: grid; gap: 0 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.form-grid .span-2 { grid-column: 1 / -1; }
-@media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
-
-.check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 14px; }
-.check-row input { width: 16px; height: 16px; }
-
-.image-preview {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
-  padding: 12px; background: var(--bg); border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-.image-preview img {
-  width: 76px; height: 76px; object-fit: cover; border-radius: 8px;
-  border: 1px solid var(--line); background: #fff;
-}
-
-.form-actions {
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  padding-top: 8px; border-top: 1px solid var(--line); margin-top: 8px;
-}
-
-.filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-.filter-tabs a {
-  padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px;
-  background: var(--surface); text-decoration: none; color: var(--ink);
-  font-size: 13px; font-weight: 600;
-}
-.filter-tabs a.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-
-.inline-form { display: inline; }
-
-.field-note {
-  font-size: 12.5px; color: var(--ink-soft); margin: -8px 0 16px;
-}
-
-@media (max-width: 860px) {
-  .admin-shell { grid-template-columns: 1fr; background: var(--bg); }
-  .admin-side { flex-direction: column; position: static; height: auto; }
-  .admin-side nav { flex-direction: row; flex-wrap: wrap; padding: 0 12px; }
-  .admin-side nav a { border-left: 0; border-bottom: 3px solid transparent; }
-  .admin-side nav a.active { border-left: 0; border-bottom-color: var(--accent); }
-  .admin-side .side-foot { margin-top: 14px; }
-  .admin-main { padding: 20px; }
-}
-
-/* ---------- 访问记录 ---------- */
 table.data td.nowrap { white-space: nowrap; }
-table.data td.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12.5px;
+table.data td.mono, dl.kv dd.mono {
+  font-family: var(--mono); font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
 }
 table.data td.ua {
   max-width: 260px; overflow: hidden; text-overflow: ellipsis;
-  white-space: nowrap; color: var(--ink-soft); font-size: 12px;
+  white-space: nowrap; color: var(--ink-soft); font-size: var(--t-xs);
 }
-.badge-fail { background: #fdf0ef; color: var(--danger); }
-.pager {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+table.data .num-input { width: 64px; }
+.empty-row { padding: var(--s7) var(--s4); text-align: center; color: var(--ink-faint); }
+
+/* ---------- Annotations ----------
+   Badges are marks on a drawing, so they are squared and ruled, not pills.
+   Colour still separates them, but at annotation strength, not sticker. */
+.badge {
+  display: inline-block; padding: 2px 7px;
+  border: 1px solid currentColor; border-radius: var(--radius-sm);
+  background: none;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 400;
+  letter-spacing: .06em; white-space: nowrap;
+}
+.badge-on    { color: var(--brand); }
+.badge-off   { color: var(--ink-faint); }
+.badge-admin, .badge-new, .badge-role-admin { color: var(--accent); }
+.badge-fail  { color: var(--danger); }
+.badge-role-sales { color: #2a5c8f; }
+.badge-role-user  { color: var(--ink-faint); }
+
+.badge-act-create    { color: var(--brand); }
+.badge-act-update    { color: #2a5c8f; }
+.badge-act-publish   { color: var(--brand); }
+.badge-act-unpublish { color: var(--ink-faint); }
+.badge-act-delete    { color: var(--danger); }
+.badge-act-import    { color: var(--accent); }
+.badge-act-doc_add,
+.badge-act-doc_remove { color: #574a86; }
+.badge-act-reorder   { color: var(--ink-soft); }
+.badge-act-category  { color: #35566b; }
+
+/* ---------- Forms ---------- */
+.form-grid { display: grid; gap: 0 var(--s5); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.form-grid .span-2 { grid-column: 1 / -1; }
+@media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
+
+/* The whole row is the <label>, so the tap target is the row, not the 16px
+   box inside it — which is why it carries the height rather than the input. */
+.check-row {
+  display: flex; align-items: center; gap: var(--s2);
+  min-height: 40px; margin-bottom: var(--s3); font-size: var(--t-sm);
+  cursor: pointer;
+}
+.check-row input { width: 16px; height: 16px; accent-color: var(--brand); }
+
+.image-preview {
+  display: flex; align-items: center; gap: var(--s4);
+  margin-bottom: var(--s3); padding: var(--s3);
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.image-preview img {
+  width: 76px; height: 76px; object-fit: cover;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff;
 }
 
-/* ---------- 询盘 ---------- */
-.side-badge {
-  display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 6px;
-  border-radius: 999px; background: var(--accent); color: #fff;
-  font-size: 11px; font-weight: 700; text-align: center;
+.form-actions {
+  display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap;
+  margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line);
 }
-.badge-new { background: #fbf0dc; color: #8a6118; }
-.search-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.search-row input {
-  flex: 1 1 240px; min-width: 0; padding: 10px 12px; font: inherit;
-  border: 1px solid var(--line); border-radius: var(--radius);
-}
-dl.kv { display: grid; gap: 10px 24px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 0; }
-dl.kv > div { min-width: 0; }
-dl.kv dt { font-size: 12px; color: var(--ink-soft); margin-bottom: 2px; }
-dl.kv dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
-dl.kv dd.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 400; font-size: 13px; }
-.message-box {
-  margin-top: 18px; padding: 14px; background: var(--bg);
-  border: 1px solid var(--line); border-radius: var(--radius);
-}
-.message-box p { margin: 6px 0 0; white-space: pre-wrap; }
-.doc-upload { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-
-/* ---------- 批量导入 ---------- */
-.rule-list { margin: 0 0 14px; padding-left: 20px; font-size: 14px; }
-.rule-list li { margin-bottom: 6px; }
-.rule-list code, .admin-main code {
-  padding: 1px 6px; border-radius: 4px; background: var(--bg);
-  border: 1px solid var(--line); font-size: 12.5px;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-}
+.inline-form { display: inline; }
+.field-note { margin: -8px 0 var(--s4); font-size: var(--t-xs); color: var(--ink-soft); }
 .btn[disabled] { opacity: .5; cursor: not-allowed; }
 
-/* ---------- 客户意向 ---------- */
-.score-bar {
-  width: 72px; height: 7px; border-radius: 999px;
-  background: var(--line); overflow: hidden; margin-bottom: 3px;
+/* Filters read as an index of sheets, marked by a rule under the open one. */
+.filter-tabs {
+  display: flex; gap: var(--s4); flex-wrap: wrap;
+  margin-bottom: var(--s5);
+  border-bottom: 1px solid var(--line);
 }
-.score-fill { display: block; height: 100%; background: var(--brand); border-radius: 999px; }
+.filter-tabs a {
+  position: relative;
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0;
+  color: var(--ink-soft); text-decoration: none;
+  font-family: var(--mono); font-size: var(--t-xs);
+  letter-spacing: .1em; text-transform: uppercase;
+  transition: color var(--dur) var(--ease);
+}
+.filter-tabs a:hover { color: var(--ink); }
+.filter-tabs a.active { color: var(--ink); }
+.filter-tabs a.active::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px; background: var(--brand);
+}
+
+.search-row { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.search-row input {
+  flex: 1 1 240px; min-width: 0; padding: 10px 12px; font: inherit;
+  font-size: var(--t-sm);
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--surface);
+}
+.search-row input:focus {
+  outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light);
+}
+
+.pager {
+  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
+  margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line);
+  font-family: var(--mono); font-size: var(--t-xs); color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Detail pages ---------- */
+dl.kv {
+  display: grid; gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--line); border-left: 1px solid var(--line);
+}
+dl.kv > div {
+  min-width: 0; padding: var(--s3) var(--s4);
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+dl.kv dt {
+  margin-bottom: 4px;
+  font-family: var(--mono); font-size: var(--t-xs);
+  letter-spacing: .12em; color: var(--ink-faint);
+}
+dl.kv dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+dl.kv dd.mono { font-weight: 400; font-size: var(--t-sm); }
+
+.message-box {
+  margin-top: var(--s5); padding: var(--s4);
+  background: var(--bg); border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong); border-radius: var(--radius);
+}
+.message-box p { margin: 6px 0 0; white-space: pre-wrap; }
+.doc-upload { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--line); }
+
+.rule-list { margin: 0 0 var(--s4); padding-left: 20px; font-size: var(--t-sm); line-height: 1.8; }
+.rule-list li { margin-bottom: 5px; }
+.rule-list code, .admin-main code {
+  padding: 1px 6px; border-radius: var(--radius-sm);
+  background: var(--bg); border: 1px solid var(--line);
+  font-family: var(--mono); font-size: var(--t-xs);
+}
+
+/* ---------- 客户意向 ---------- */
+/* A square-ended bar reads as a gauge on an instrument, not a progress pill. */
+.score-bar {
+  width: 72px; height: 6px; margin-bottom: 3px;
+  background: var(--line); border-radius: 0; overflow: hidden;
+}
+.score-fill { display: block; height: 100%; background: var(--brand); }
 .score-w1 { width: 10%; } .score-w2 { width: 20%; } .score-w3 { width: 30%; }
 .score-w4 { width: 40%; } .score-w5 { width: 50%; } .score-w6 { width: 60%; }
 .score-w7 { width: 70%; } .score-w8 { width: 80%; } .score-w9 { width: 90%; }
 .score-w10 { width: 100%; }
 
-.term-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.term-list { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .term {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 5px 12px; border-radius: 999px;
-  background: var(--brand-light); color: var(--brand-dark);
-  font-size: 13px; font-weight: 600;
+  display: inline-flex; align-items: baseline; gap: 7px;
+  padding: 4px 10px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  font-size: var(--t-sm); color: var(--ink);
 }
 .term-n {
-  min-width: 18px; padding: 0 6px; border-radius: 999px;
-  background: var(--brand); color: #fff; font-size: 11px; text-align: center;
+  font-family: var(--mono); font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums; color: var(--ink-faint);
 }
 
-.inq-block { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.inq-block { padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
 .inq-block:last-child { border-bottom: 0; }
-.inq-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.inq-items { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; }
+.inq-head { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; font-size: var(--t-sm); }
+.inq-items { margin: 6px 0 0; padding-left: 20px; font-size: var(--t-sm); }
 
-/* ---------- 角色 ---------- */
-.badge-role-admin { background: #fbf0dc; color: #8a6118; }
-.badge-role-sales { background: #e4eefb; color: #1f5695; }
-.badge-role-user  { background: #f0f0f0; color: #666; }
-.side-role {
-  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
-  background: rgba(255, 255, 255, .16); color: #fff; font-size: 10.5px; font-weight: 600;
-}
-
-/* ---------- 联系方式汇总 ---------- */
-/* Each value carries the source it came from, so a confirmed detail reads
+/* ---------- 联系方式汇总 ----------
+   Each value carries the source it came from, so a confirmed detail reads
    differently from one a customer once typed into a form. */
 .contact-table { min-width: 920px; }
 /* Nine columns of contact data: a tighter gutter keeps them on one screen at
    a laptop width, and the wrapper still scrolls on anything narrower. */
-.contact-table th, .contact-table td { padding-inline: 8px; }
+.contact-table th, .contact-table td { padding-inline: 8px; vertical-align: top; }
 .contact-table th:nth-child(2), .contact-table td:nth-child(2) { min-width: 150px; }
 .contact-table th:nth-child(3), .contact-table td:nth-child(3) { min-width: 220px; }
 .contact-table .c-val { font-weight: 600; overflow-wrap: anywhere; }
 .contact-table a.c-val { color: var(--brand-dark); text-decoration: none; }
 .contact-table a.c-val:hover { text-decoration: underline; }
-.contact-table .c-sub { color: var(--ink-soft); font-size: 12.5px; margin-top: 2px; }
+.contact-table .c-sub { margin-top: 2px; color: var(--ink-soft); font-size: var(--t-xs); }
 .contact-table .wa-line { margin-top: 3px; }
+.contact-table .c-none, .c-none { color: var(--ink-faint); }
 .wa-tag {
-  display: inline-block; margin-right: 4px; padding: 0 5px; border-radius: 4px;
-  background: #25d366; color: #05240f; font-size: 10px; font-weight: 700;
+  display: inline-block; margin-right: 4px; padding: 0 5px;
+  border-radius: var(--radius-sm); background: #25d366; color: #05240f;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
 }
-.contact-table .c-none { color: #b3bfb9; }
-.contact-table td { vertical-align: top; }
 .src {
-  display: inline-block; margin-left: 5px; padding: 1px 6px; border-radius: 999px;
-  font-size: 10.5px; font-weight: 600; white-space: nowrap; vertical-align: 1px;
+  display: inline-block; margin-left: 5px; padding: 0 5px; vertical-align: 1px;
+  border: 1px solid currentColor; border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .04em;
+  white-space: nowrap;
 }
-.src-account { background: var(--brand-light); color: var(--brand-dark); }
-.src-inquiry { background: #e4eefb; color: #1f5695; }
-.src-card    { background: #fbf0dc; color: #8a6118; }
-.src-ip      { background: #f0f0f0; color: #6b6b6b; }
+.src-account { color: var(--brand); }
+.src-inquiry { color: #2a5c8f; }
+.src-card    { color: var(--accent); }
+.src-ip      { color: var(--ink-faint); }
 
 /* The account form's contact block, collapsed per row so the table stays
    readable; <details> needs no JavaScript, which the CSP would block anyway. */
 .contact-edit > summary {
-  cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--brand-dark);
-  padding: 2px 0;
+  cursor: pointer; padding: 2px 0;
+  font-family: var(--mono); font-size: var(--t-xs);
+  letter-spacing: .06em; color: var(--brand-dark);
 }
 .contact-edit[open] > summary { margin-bottom: 6px; }
-.contact-edit .field { margin-bottom: 8px; }
-.contact-edit .field input, .contact-edit .field select { font-size: 12.5px; padding: 5px 8px; }
+.contact-edit .field { margin-bottom: var(--s2); }
+.contact-edit .field input, .contact-edit .field select { font-size: var(--t-xs); padding: 5px 8px; }
 .contact-grid { min-width: 190px; }
 .contact-sum {
-  display: flex; flex-wrap: wrap; gap: 2px 10px;
-  font-size: 12px; color: var(--ink-soft); margin-bottom: 4px;
+  display: flex; flex-wrap: wrap; gap: 2px 10px; margin-bottom: 4px;
+  font-family: var(--mono); font-size: var(--t-xs); color: var(--ink-soft);
 }
-.contact-sum .ok { color: var(--brand); font-weight: 600; }
+.contact-sum .ok { color: var(--brand); }
 .contact-set {
+  margin: 4px 0 var(--s4); padding: var(--s4) var(--s4) 2px;
   border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 14px 16px 2px; margin: 4px 0 16px;
 }
-.contact-set > legend { padding: 0 6px; font-weight: 600; font-size: 13px; }
-
-/* Six one-per-row tiles push the table off a phone screen; two up keeps the
-   numbers readable and the table in reach. */
-@media (max-width: 560px) {
-  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .stat { padding: 14px; }
-  .stat .n { font-size: 24px; }
-  .stat .k { font-size: 12px; }
-}
+.contact-set > legend { padding: 0 6px; font-weight: 600; font-size: var(--t-sm); }
 
 /* ---------- 产品变更记录 ---------- */
-.badge-act-create    { background: var(--brand-light); color: var(--brand-dark); }
-.badge-act-update    { background: #e4eefb; color: #1f5695; }
-.badge-act-publish   { background: #e2f3e8; color: #1c6b3a; }
-.badge-act-unpublish { background: #f0f0f0; color: #6b6b6b; }
-.badge-act-delete    { background: #fdf0ef; color: var(--danger); }
-.badge-act-import    { background: #fbf0dc; color: #8a6118; }
-.badge-act-doc_add,
-.badge-act-doc_remove { background: #ede7f6; color: #4a3b7a; }
-
 .change-table { min-width: 880px; }
 .change-table td { vertical-align: top; }
 /* Field-level diffs: old value struck through, new value in bold. */
-.change-detail { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.7; }
-.change-detail s { color: var(--ink-soft); }
-
+.change-detail { margin: 6px 0 0; padding-left: 18px; font-size: var(--t-xs); line-height: 1.8; }
+.change-detail s { color: var(--ink-faint); }
 .change-feed { list-style: none; margin: 0; padding: 0; }
-.change-feed > li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.change-feed > li { padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
 .change-feed > li:last-child { border-bottom: 0; }
-.change-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13.5px; }
-.change-body { margin-top: 4px; font-size: 13.5px; }
-.badge-act-reorder { background: #eef1f4; color: #4a5560; }
-.badge-act-category { background: #e9eef3; color: #395268; }
+.change-head { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; font-size: var(--t-sm); }
+.change-body { margin-top: 4px; font-size: var(--t-sm); }
 
 /* ---------- 品类管理 ---------- */
 .field-check-grid {
-  display: grid; gap: 2px 18px;
+  display: grid; gap: 2px var(--s5);
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
 }
-.field-check-grid .check-row { margin-bottom: 4px; font-size: 13px; }
+.field-check-grid .check-row { min-height: 36px; margin-bottom: 0; font-size: var(--t-sm); }
 .field-check-grid.tight { grid-template-columns: repeat(2, minmax(92px, 1fr)); gap: 0 10px; }
-table.data td.cat-fields { min-width: 220px; }
-.field-check-grid.tight .check-row { font-size: 12.5px; }
+.field-check-grid.tight .check-row { min-height: 32px; font-size: var(--t-xs); }
 .field-check-grid.tight .check-row input { width: 14px; height: 14px; }
-table.data .num-input { width: 64px; }
-table.data td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+table.data td.cat-fields { min-width: 220px; }
+
+/* ---------- Narrow screens ----------
+   The sidebar becomes a row of tabs across the top rather than a column
+   squeezed into a phone's width. */
+@media (max-width: 960px) {
+  .admin-shell { grid-template-columns: 1fr; background: var(--bg); }
+  .admin-side {
+    position: static; height: auto; padding: var(--s4) 0 0;
+  }
+  .admin-side .side-brand { padding-bottom: var(--s3); margin-bottom: var(--s2); }
+  .admin-side nav {
+    flex-direction: row; flex-wrap: nowrap;
+    min-width: 0; overflow-x: auto; padding: 0 var(--s4);
+    scrollbar-width: thin;
+  }
+  .admin-side .side-brand, .admin-side .side-foot { min-width: 0; }
+  .admin-side nav a {
+    flex: 0 0 auto; padding: 10px var(--s3); white-space: nowrap;
+    border-left: 0; border-bottom: 2px solid transparent;
+  }
+  .admin-side nav a.active { border-left: 0; border-bottom-color: var(--accent); }
+  .side-badge { margin-left: 6px; }
+  .admin-side .side-foot {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--s4);
+    margin-top: var(--s4); padding-bottom: var(--s3); line-height: 1.5;
+  }
+  .admin-side .side-foot form { margin-top: 0; }
+  .admin-main { padding: var(--s5) var(--s4) var(--s7); }
+  .admin-head h1 { font-size: var(--t-lg); }
+  .check-row { min-height: 44px; }
+}
+
+/* Six one-per-row tiles push the table off a phone screen; two up keeps the
+   numbers readable and the table in reach. */
+@media (min-width: 961px) {
+  .admin-head h1 { font-size: var(--t-2xl); letter-spacing: -.02em; }
+}
+
+@media (max-width: 560px) {
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { padding: var(--s3) var(--s4); }
+  .stat .n { font-size: var(--t-xl); }
+}

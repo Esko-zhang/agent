@@ -4,15 +4,29 @@
 
   <main class="wrap">
     <div class="page-head">
-      <div>
-        <p class="eyebrow">Durlevel · Export team</p>
+      <div class="title-main">
+        <p class="eyebrow"><%= settings.brand_name %> · Export team</p>
         <h1>Contact Us</h1>
-        <p><%= settings.contact_intro %></p>
       </div>
-      <p class="issued eyebrow">
-        Signed in as
-        <strong><%= currentUser.display_name || currentUser.username %></strong>
-      </p>
+      <p class="lede"><%= settings.contact_intro %></p>
+      <dl class="title-block">
+        <div>
+          <dt>Signed in as</dt>
+          <dd><%= currentUser.display_name || currentUser.username %></dd>
+        </div>
+        <div>
+          <dt>Account</dt>
+          <dd><%= currentUser.username %></dd>
+        </div>
+        <div>
+          <dt>Contacts</dt>
+          <dd><%= team.length %></dd>
+        </div>
+        <div>
+          <dt>Reply within</dt>
+          <dd>1 business day</dd>
+        </div>
+      </dl>
     </div>
 
     <% if (!team.length) { %>

@@ -4,15 +4,29 @@
 
   <main class="wrap">
     <div class="page-head">
-      <div>
-        <p class="eyebrow">Durlevel · Quotation request</p>
+      <div class="title-main">
+        <p class="eyebrow"><%= settings.brand_name %> · Quotation request</p>
         <h1>Request a Quotation</h1>
-        <p>Tell us the quantities you need and our export team will reply with pricing.</p>
       </div>
-      <p class="issued eyebrow">
-        Requested by
-        <strong><%= currentUser.display_name || currentUser.username %></strong>
-      </p>
+      <p class="lede">Tell us the quantities you need and our export team will reply with pricing.</p>
+      <dl class="title-block">
+        <div>
+          <dt>Requested by</dt>
+          <dd><%= currentUser.display_name || currentUser.username %></dd>
+        </div>
+        <div>
+          <dt>Account</dt>
+          <dd><%= currentUser.username %></dd>
+        </div>
+        <div>
+          <dt>Lines</dt>
+          <dd><%= rows.length %></dd>
+        </div>
+        <div>
+          <dt>Reply within</dt>
+          <dd>1 business day</dd>
+        </div>
+      </dl>
     </div>
 
     <% if (error) { %><p class="alert alert-error" role="alert"><%= error %></p><% } %>
@@ -61,8 +75,12 @@
     <% } %>
 
     <% if (!rows.length) { %>
+      <%# A blank sheet, labelled like one: it says what the sheet is for and
+          exactly how a line gets onto it, rather than only that it is empty. %>
       <div class="empty-panel">
-        <p>Your inquiry list is empty.</p>
+        <p class="eyebrow">No lines on this sheet</p>
+        <p>Add products from the catalogue and they will be listed here with a
+          quantity field each. Nothing is sent until you submit the sheet.</p>
         <a class="btn" href="/products">Browse the catalogue</a>
       </div>
     <% } else { %>

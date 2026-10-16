@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "award-level-web-design": {
+      "source": {
+        "source": "github",
+        "repo": "abc-xiaoxuan/award-level-web-design"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "award-level-web-design@award-level-web-design": true
+  }
+}

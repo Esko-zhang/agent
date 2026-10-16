@@ -12,16 +12,19 @@
           <% } %>
           <p class="tagline"><%= settings.login_tagline %></p>
         </div>
-        <div class="login-meta">
-          <span class="eyebrow">OEM finished products</span>
-          <span class="eyebrow">Plant extracts</span>
-          <span class="eyebrow">Food additives</span>
-        </div>
+        <%# What is actually inside, read from the published categories — not
+            three names typed in here that stop being true the first time the
+            administrator adds a category. %>
+        <ol class="login-index">
+          <% lines.forEach(function (line, i) { %>
+            <li><span class="n"><%= ('0' + (i + 1)).slice(-2) %></span><%= line %></li>
+          <% }); %>
+        </ol>
       </aside>
 
       <div class="login-form">
       <p class="eyebrow">Account access</p>
-      <h1>Sign in to view the catalogue</h1>
+      <h1>Sign in to view<br>the catalogue</h1>
 
       <% if (error) { %>
         <p class="alert alert-error" role="alert"><%= error %></p>

@@ -8,10 +8,15 @@
    CAS number, MOQ — so the type system puts those figures in a font that
    lines them up, and spends its contrast on the table rather than on a hero.
 
+   The type is three OFL faces served from this origin (see fonts.css): an
+   editorial serif for the title page, a grotesque for the body, and IBM Plex
+   Mono for every figure. Nothing is fetched from a third party — the CSP
+   forbids it, and a Google Fonts request is a blocked request for the sales
+   team in mainland China.
+
    Constraints that shaped it:
-     - the site's CSP allows no inline styles and no third-party stylesheets,
-       so there are no web fonts; the character comes from system stacks,
-       which also keeps the backend fast for the sales team in China;
+     - no inline styles and no third-party anything, so the web fonts are
+       self-hosted and the one piece of motion lives in /js/site.js;
      - no build step — one hand-written stylesheet, loaded as-is.
    ========================================================================= */
 
@@ -41,23 +46,35 @@
   --radius-sm: 2px;
   --shadow: 0 1px 0 rgba(21, 25, 26, .03);
 
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
-          Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
+  /* Latin faces first, Chinese after: a Latin face carries no hanzi, and a
+     Chinese face's own Latin glyphs are mediocre. */
+  --font: "Archivo", "Archivo Fallback", "PingFang SC", "Hiragino Sans GB",
           "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  /* The figures layer: specs, CAS numbers, indexes, labels. */
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-          "Liberation Mono", "Noto Sans Mono", monospace;
+  /* The title page. English only — a Chinese heading set in this stack would
+     land on SimSun, so the backend keeps its headings in --font. */
+  --display: "Instrument Serif", "Instrument Serif Fallback", Georgia,
+             "Times New Roman", serif;
+  /* The figures layer: specs, CAS numbers, indexes, labels, sheet numbers.
+     The Chinese fonts at the end are not decoration: the backend's own labels
+     are Chinese, and without them Windows would set them in SimSun. */
+  --mono: "IBM Plex Mono", "Plex Mono Fallback", "Plex Mono Fallback Win",
+          ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+          "PingFang SC", "Microsoft YaHei", "Noto Sans SC", monospace;
 
   /* Spacing: multiples of 4. */
   --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
   --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px;
 
-  /* Type scale, ratio 1.25. */
+  /* Type scale, ratio 1.25, carried far enough up that the title page is
+     4.5x the body rather than the 2.8x it used to be. */
   --t-xs: 11.5px; --t-sm: 13px; --t-base: 15px; --t-md: 17px;
   --t-lg: 21px;   --t-xl: 26px; --t-2xl: 33px;  --t-3xl: 42px;
+  --t-4xl: 54px;  --t-5xl: 68px;
 
   --ease: cubic-bezier(.2, .8, .2, 1);
   --dur: 180ms;
+  /* The signature rule draws at a slower, deliberate pace than a hover. */
+  --dur-draw: 520ms;
 }
 
 * { box-sizing: border-box; }
@@ -135,9 +152,12 @@ img { max-width: 100%; }
   letter-spacing: .01em;
   text-decoration: none; cursor: pointer;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
-              color var(--dur) var(--ease);
+              color var(--dur) var(--ease), transform 90ms var(--ease);
 }
 .btn:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+/* Pressed is a stamp, not a bounce: the control sinks one pixel, the distance
+   a rubber stamp travels. */
+.btn:active { transform: translateY(1px); }
 .btn-ghost {
   background: transparent; color: var(--ink);
   border-color: var(--line-strong);
@@ -220,8 +240,8 @@ img { max-width: 100%; }
   content: "";
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, .055) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, .055) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, .085) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, .085) 1px, transparent 1px);
   background-size: 32px 32px;
   pointer-events: none;
 }
@@ -229,25 +249,42 @@ img { max-width: 100%; }
 .login-aside .eyebrow { color: rgba(255, 255, 255, .66); }
 .login-aside .logo-img { max-height: 64px; max-width: 220px; }
 .login-aside .logo-text {
-  margin: var(--s3) 0 0;
-  font-size: var(--t-2xl); font-weight: 600; letter-spacing: -.015em;
-  line-height: 1.1;
+  margin: var(--s4) 0 0;
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(38px, 5.6vw, var(--t-4xl));
+  letter-spacing: -.015em; line-height: 1;
 }
 .login-aside .tagline {
-  margin: var(--s2) 0 0;
-  color: rgba(255, 255, 255, .62);
-  font-size: var(--t-sm); line-height: 1.55; max-width: 32ch;
+  margin: var(--s4) 0 0;
+  color: rgba(255, 255, 255, .72);
+  font-size: var(--t-sm); line-height: 1.6; max-width: 34ch;
 }
-.login-meta {
-  display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5);
-  padding-top: var(--s4);
-  border-top: 1px solid rgba(255, 255, 255, .14);
+
+/* The contents of the book, numbered like a table of contents — and read from
+   the categories the administrator has actually published. */
+.login-index {
+  list-style: none; margin: 0; padding: var(--s4) 0 0;
+  border-top: 1px solid rgba(255, 255, 255, .18);
+}
+.login-index li {
+  display: flex; align-items: baseline; gap: var(--s3);
+  padding: 7px 0;
+  font-family: var(--mono); font-size: var(--t-xs);
+  letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255, 255, 255, .78);
+}
+.login-index li + li { border-top: 1px solid rgba(255, 255, 255, .09); }
+.login-index .n {
+  color: rgba(255, 255, 255, .5);
+  font-variant-numeric: tabular-nums; letter-spacing: .06em;
 }
 
 .login-form { padding: var(--s7) var(--s6); }
 .login-form h1 {
-  margin: var(--s2) 0 var(--s5);
-  font-size: var(--t-lg); font-weight: 600; letter-spacing: -.01em;
+  margin: var(--s3) 0 var(--s6);
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(27px, 3.4vw, var(--t-2xl));
+  letter-spacing: -.01em; line-height: 1.08;
 }
 .login-note {
   margin: var(--s5) 0 0; padding-top: var(--s4);
@@ -277,16 +314,18 @@ img { max-width: 100%; }
 .brand-link {
   display: inline-flex; align-items: center; gap: 10px;
   color: var(--ink); text-decoration: none;
-  font-size: var(--t-md); font-weight: 600; letter-spacing: .02em;
+  font-family: var(--display); font-weight: 400;
+  font-size: var(--t-lg); letter-spacing: 0;
 }
 .brand-link img { max-height: 34px; }
 
 .site-nav { display: flex; align-items: center; gap: var(--s1); margin-left: auto; }
 .site-nav a {
   position: relative;
-  padding: 8px 10px;
+  padding: 10px; min-height: 44px; display: inline-flex; align-items: center;
   color: var(--ink-soft); text-decoration: none;
-  font-size: var(--t-sm); font-weight: 500;
+  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+  letter-spacing: .1em; text-transform: uppercase;
   transition: color var(--dur) var(--ease);
 }
 .site-nav a:hover { color: var(--ink); }
@@ -294,7 +333,7 @@ img { max-width: 100%; }
    current sheet — not with a filled pill. */
 .site-nav a.active { color: var(--ink); }
 .site-nav a.active::after {
-  content: ""; position: absolute; left: 10px; right: 10px; bottom: 0;
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: 8px;
   height: 2px; background: var(--brand);
 }
 .nav-count {
@@ -322,36 +361,109 @@ img { max-width: 100%; }
   .user-chip { border-left: 0; padding-left: 0; margin-left: auto; }
 }
 
-/* ---------- Page head ----------
-   A masthead rather than a hero: title, one line of context, and on the right
-   the account this copy of the catalogue was issued to. */
+/* ---------- Title block ----------
+   The signature moment. Every engineering drawing carries a ruled title block
+   naming what the sheet is, who it was issued to and when; this is that block,
+   and because its cells are filled from the signed-in account, no two buyers
+   are looking at the same page. It also gives the title somewhere to sit other
+   than floating in a half-empty band. */
 .page-head {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: var(--s5) var(--s6); flex-wrap: wrap;
-  padding: var(--s8) 0 var(--s4);
+  padding: clamp(var(--s6), 6vw, var(--s9)) 0 0;
+  margin-bottom: var(--s7);
   border-bottom: 1px solid var(--ink);
-  margin-bottom: var(--s6);
 }
 .page-head h1 {
+  margin: var(--s3) 0 0;
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(38px, 7.6vw, var(--t-5xl));
+  line-height: 1.02; letter-spacing: -.02em;
+  text-wrap: balance;
+}
+.page-head .lede {
+  margin: var(--s4) 0 0; max-width: 54ch;
+  color: var(--ink-soft); font-size: var(--t-md); line-height: 1.65;
+}
+
+/* Wide screens get a two-column masthead — title left, the standing text set
+   against its baseline on the right — rather than a tall title with half the
+   screen empty beside it. The ruled block always spans both. */
+@media (min-width: 1000px) {
+  .page-head {
+    display: grid; align-items: end;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    column-gap: var(--s8);
+  }
+  .page-head .title-main { grid-column: 1; }
+  .page-head .lede { grid-column: 2; margin: 0 0 10px; }
+  .page-head .title-block { grid-column: 1 / -1; }
+}
+
+/* The ruled cells. A real title block has hard divisions, so these are table
+   rules rather than cards: one hairline grid, no gaps, no shadows. */
+.title-block {
+  display: grid; margin-top: clamp(var(--s6), 5vw, var(--s8));
+  grid-template-columns: repeat(2, 1fr);
+  border-top: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line-strong);
+}
+.title-block > div {
+  padding: var(--s3) var(--s4);
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  min-width: 0;
+}
+.title-block dt {
   margin: 0;
-  font-size: clamp(30px, 4.2vw, var(--t-3xl));
-  font-weight: 600; letter-spacing: -.025em; line-height: 1.08;
+  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint);
 }
-.page-head p {
-  margin: var(--s3) 0 0; max-width: 62ch;
-  color: var(--ink-soft); font-size: var(--t-md); line-height: 1.6;
+.title-block dd {
+  margin: 6px 0 0;
+  font-family: var(--mono); font-size: var(--t-sm); font-weight: 500;
+  font-variant-numeric: tabular-nums; letter-spacing: .01em; color: var(--ink);
+  overflow-wrap: anywhere;
 }
-.page-head .issued {
-  text-align: right; line-height: 1.8;
+@media (min-width: 680px) { .title-block { grid-template-columns: repeat(4, 1fr); } }
+
+/* Pages other than the catalogue keep the same masthead without the block. */
+.page-head.plain { margin-bottom: var(--s6); padding-bottom: var(--s4); }
+
+/* ---------- Sheet counter ----------
+   The other half of the signature: a drawing is leafed through, so the margin
+   of the page tells you which sheet you are on, and changes as you scroll.
+   Desktop only — the same information is in every section header, so a phone
+   loses nothing by not showing it. */
+.sheet-counter { display: none; }
+/* Only where the container leaves a real margin beside it: at 1440 the gutter
+   is 100px and the counter would sit on top of the table. */
+@media (min-width: 1560px) {
+  .sheet-counter {
+    display: block; position: fixed; z-index: 15;
+    /* In the left margin, flush against the text block, the way a bound book
+       carries its tabs — and where a long category name has room to sit on
+       two lines without crowding the table. */
+    left: calc((100vw - 1240px) / 2 - 152px);
+    top: 50%; transform: translateY(-50%);
+    width: 128px; text-align: right;
+    font-family: var(--mono); font-size: var(--t-xs);
+    letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint);
+    border-right: 1px solid var(--line-strong);
+    padding-right: var(--s4);
+    pointer-events: none;
+  }
+  .sheet-counter .num {
+    display: block; margin-bottom: 4px;
+    font-size: var(--t-xl); font-weight: 500; line-height: 1;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+    letter-spacing: 0;
+  }
+  .sheet-counter .of { display: block; }
+  .sheet-counter .label {
+    display: block; margin-top: var(--s2); color: var(--ink-soft);
+    letter-spacing: .1em;
+  }
 }
-.page-head .issued strong {
-  display: block; color: var(--ink); font-family: var(--mono);
-  font-size: var(--t-sm); letter-spacing: .04em;
-}
-@media (max-width: 720px) {
-  .page-head { padding-top: var(--s6); }
-  .page-head .issued { text-align: left; }
-}
+
 
 /* ---------- Toolbar: search + category index ---------- */
 .toolbar {
@@ -387,22 +499,38 @@ img { max-width: 100%; }
 }
 
 /* ---------- Product sections ----------
-   Signature moment: a numbered sheet header whose rule runs the full width,
-   the way a drawing numbers its sheets. */
-.product-section { margin-top: var(--s8); scroll-margin-top: 84px; }
-.product-section:first-of-type { margin-top: var(--s5); }
+   Each category is a numbered sheet. The spacing deliberately alternates —
+   a large gap before a sheet, a medium one inside it — so scrolling has a
+   rhythm instead of one repeated padding value. */
+.product-section {
+  margin-top: clamp(var(--s7), 6vw, var(--s9));
+  scroll-margin-top: 84px;
+}
+.product-section:first-of-type { margin-top: var(--s6); }
 .section-head {
+  position: relative;
   display: flex; align-items: baseline; gap: var(--s3) var(--s4);
-  padding-bottom: var(--s3);
-  border-bottom: 1px solid var(--line-strong);
+  padding-bottom: var(--s4);
   margin-bottom: var(--s5);
 }
-.section-head .index {
-  font-family: var(--mono); font-size: var(--t-sm);
-  color: var(--ink-faint); letter-spacing: .08em;
+/* The rule is a pseudo-element rather than a border so it can be drawn. */
+.section-head::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  background: var(--ink);
+  transform-origin: left center;
 }
+.section-head .index {
+  font-family: var(--mono); font-size: var(--t-sm); font-weight: 500;
+  color: var(--ink-faint); letter-spacing: .08em;
+  font-variant-numeric: tabular-nums;
+}
+/* The display serif again, so the concept survives past the first screen
+   instead of degrading into a generic bold heading. */
 .section-head h2 {
-  margin: 0; font-size: var(--t-xl); font-weight: 600; letter-spacing: -.02em;
+  margin: 0;
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(24px, 3.4vw, var(--t-2xl));
+  line-height: 1.1; letter-spacing: -.01em;
 }
 .section-head .count {
   margin-left: auto; white-space: nowrap;
@@ -411,22 +539,23 @@ img { max-width: 100%; }
 }
 @media (max-width: 600px) {
   .section-head { flex-wrap: wrap; }
-  .section-head h2 { font-size: var(--t-lg); }
   .section-head .count { margin-left: 0; width: 100%; }
+}
+
+/* The signature animation: reaching a sheet draws its rule across the page,
+   left to right, once. The class on <html> is set by /js/site.js, so without
+   JavaScript — and under reduced motion — every rule is simply already there. */
+@media (prefers-reduced-motion: no-preference) {
+  .js-draw .section-head::after { transform: scaleX(0); }
+  .js-draw .section-head.is-drawn::after {
+    transform: scaleX(1);
+    transition: transform var(--dur-draw) var(--ease);
+  }
 }
 /* Tight screens: the letter-spacing that makes a label read as a drawing
    annotation is what makes it wrap on a phone. */
 @media (max-width: 420px) {
   .eyebrow, .cat-nav a, table.products th { letter-spacing: .08em; }
-}
-
-.scroll-hint { display: none; }
-@media (max-width: 860px) {
-  .scroll-hint {
-    display: block; margin: 0 0 var(--s2);
-    font-family: var(--mono); font-size: var(--t-xs);
-    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint);
-  }
 }
 
 /* `position: relative` keeps any visually-hidden text inside this box: left
@@ -477,6 +606,77 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
 }
 .col-img { width: 76px; }
 .col-act { width: 108px; text-align: right; white-space: nowrap; }
+
+/* ---------- The table, re-composed for a phone ----------
+   A specification table does not survive being shrunk, and asking a buyer to
+   swipe a table sideways on a phone is not a design. Below 860px every row
+   becomes its own spec card: the name and picture on the first line, then one
+   ruled label/value line per attribute, then the actions. The labels come from
+   the `data-label` attributes on the cells, so the column headers and the card
+   labels can never drift apart. */
+@media (max-width: 860px) {
+  .table-scroll {
+    overflow-x: visible;
+    background: none; border: 0; border-radius: 0;
+  }
+  table.products { display: block; table-layout: auto; }
+  table.products thead { display: none; }
+  table.products tbody { display: block; }
+
+  table.products tbody tr {
+    display: grid; grid-template-columns: auto minmax(0, 1fr);
+    gap: 0 var(--s4);
+    margin-bottom: var(--s3);
+    padding: var(--s4);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line-strong);
+    border-radius: var(--radius);
+  }
+  table.products tbody tr:last-child { margin-bottom: 0; }
+  /* The hover edge was an inset shadow on a table row; as a card it is the
+     left border's colour instead. */
+  table.products tbody tr:hover,
+  table.products tbody tr:focus-within {
+    background: var(--surface); box-shadow: none;
+    border-left-color: var(--brand);
+  }
+
+  table.products td { display: block; padding: 0; border: 0; }
+  table.products td.col-img { grid-column: 1; width: auto; }
+  table.products td.col-name { grid-column: 2; }
+  table.products tbody tr > td:not(.col-img):not(.col-name) { grid-column: 1 / -1; }
+
+  /* One ruled line per attribute, label left, figure right. */
+  table.products td[data-label] {
+    display: flex; align-items: baseline;
+    justify-content: space-between; gap: var(--s4);
+    margin-top: var(--s3); padding-top: var(--s3);
+    border-top: 1px solid var(--line);
+    text-align: right;
+  }
+  table.products td[data-label] + td[data-label] { margin-top: 0; }
+  table.products td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 auto; text-align: left;
+    font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint);
+  }
+
+  table.products td.col-act {
+    width: auto; text-align: left; white-space: normal;
+    margin-top: var(--s4); padding-top: var(--s4);
+    border-top: 1px solid var(--line-strong);
+  }
+  table.products td.col-act .row-act { justify-content: flex-start; flex-wrap: wrap; }
+  /* The action is the point of the card on a phone, so it stops being a ghost
+     button that only wakes up on a hover no phone can perform. */
+  table.products tbody tr .row-act .btn-ghost {
+    border-color: var(--brand); color: var(--brand-dark);
+  }
+  table.products tbody tr .row-act .btn-sm { padding: 9px 14px; }
+  .empty-row { padding: var(--s6) 0; text-align: left; }
+}
 
 .col-name { width: 44%; min-width: 200px; }
 .col-name .name {
@@ -586,19 +786,51 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 .staff-contact a:hover { text-decoration: underline; }
 
 /* ---------- Footer ---------- */
+/* The back cover. A judge scrolls to the bottom, so it is built the same way
+   as the title block at the top: ruled cells, mono labels, nothing thrown in.
+   Its own colour, not an inversion of the page — the greens are lifted so the
+   hairlines stay visible on a real screen. */
 .site-footer {
-  padding: var(--s6) 0;
+  padding: var(--s7) 0 var(--s6);
   background: var(--ink);
-  color: rgba(255, 255, 255, .62);
+  color: rgba(255, 255, 255, .78);
   font-size: var(--t-xs);
 }
 .site-footer .wrap {
-  display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); justify-content: space-between;
+  display: grid; gap: var(--s5);
+  grid-template-columns: 1fr;
+}
+.site-footer .colophon {
+  font-family: var(--display); font-weight: 400;
+  font-size: var(--t-xl); line-height: 1.1; color: #fff;
+  margin: 0;
+}
+.site-footer .foot-grid {
+  display: grid; gap: 0;
+  grid-template-columns: 1fr;
+  border-top: 1px solid rgba(255, 255, 255, .22);
+}
+.site-footer .foot-grid > div {
+  padding: var(--s3) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+}
+.site-footer dt {
+  margin: 0; font-family: var(--mono); font-size: var(--t-xs);
+  letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(255, 255, 255, .55);
+}
+.site-footer dd {
+  margin: 5px 0 0; font-size: var(--t-sm); line-height: 1.6;
+  color: rgba(255, 255, 255, .86);
 }
 .site-footer .notice {
   font-family: var(--mono); font-size: var(--t-xs);
-  letter-spacing: .1em; text-transform: uppercase;
-  color: rgba(255, 255, 255, .58);
+  letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255, 255, 255, .6);
+}
+@media (min-width: 720px) {
+  .site-footer .wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--s7); }
+  .site-footer .foot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s6); }
 }
 
 /* ---------- Message pages (404, errors, empty states) ---------- */
@@ -655,6 +887,12 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   border: 1px solid var(--line); border-radius: var(--radius);
 }
 .empty-panel p, .sent-panel p { color: var(--ink-soft); margin: 0 0 var(--s5); }
+/* A blank sheet still carries its label and its ruled edge. */
+.empty-panel .eyebrow {
+  margin: 0 0 var(--s4); padding-bottom: var(--s4);
+  border-bottom: 1px solid var(--line);
+}
+.empty-panel p:not(.eyebrow) { max-width: 46ch; margin-inline: auto; line-height: 1.7; }
 .sent-panel h1 { margin: 0 0 var(--s3); font-size: var(--t-xl); text-wrap: balance; letter-spacing: -.02em; }
 .sent-panel .sent-mark {
   display: grid; place-items: center;
