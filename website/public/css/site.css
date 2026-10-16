@@ -8,11 +8,12 @@
    CAS number, MOQ — so the type system puts those figures in a font that
    lines them up, and spends its contrast on the table rather than on a hero.
 
-   The type is three OFL faces served from this origin (see fonts.css): an
-   editorial serif for the title page, a grotesque for the body, and IBM Plex
-   Mono for every figure. Nothing is fetched from a third party — the CSP
-   forbids it, and a Google Fonts request is a blocked request for the sales
-   team in mainland China.
+   The type is one OFL face served from this origin, Archivo (see fonts.css),
+   across its full 100–900 weight axis. Nothing is fetched from a third party —
+   the CSP forbids it, and a Google Fonts request is a blocked request for the
+   sales team in mainland China. With a single family, the title page, the body
+   and the figures are told apart by weight, size, case and letter-spacing, not
+   by a change of typeface.
 
    Constraints that shaped it:
      - no inline styles and no third-party anything, so the web fonts are
@@ -46,20 +47,21 @@
   --radius-sm: 2px;
   --shadow: 0 1px 0 rgba(21, 25, 26, .03);
 
-  /* Latin faces first, Chinese after: a Latin face carries no hanzi, and a
-     Chinese face's own Latin glyphs are mediocre. */
+  /* One family for the whole site. Latin first, Chinese after: a Latin face
+     carries no hanzi, and a Chinese face's own Latin glyphs are mediocre. */
   --font: "Archivo", "Archivo Fallback", "PingFang SC", "Hiragino Sans GB",
           "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  /* The title page. English only — a Chinese heading set in this stack would
-     land on SimSun, so the backend keeps its headings in --font. */
-  --display: "Instrument Serif", "Instrument Serif Fallback", Georgia,
-             "Times New Roman", serif;
-  /* The figures layer: specs, CAS numbers, indexes, labels, sheet numbers.
-     The Chinese fonts at the end are not decoration: the backend's own labels
-     are Chinese, and without them Windows would set them in SimSun. */
-  --mono: "IBM Plex Mono", "Plex Mono Fallback", "Plex Mono Fallback Win",
-          ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
-          "PingFang SC", "Microsoft YaHei", "Noto Sans SC", monospace;
+
+  /* These two name a ROLE, not a second face — both resolve to the family
+     above. They are kept because the roles are real and every size, weight and
+     letter-spacing decision below hangs off them:
+       --display  the title page: the largest sizes, tightest tracking
+       --label    the figures and annotations: specs, CAS numbers, indexes,
+                  sheet numbers, column headers, small capitalised labels
+     With a single family, the difference between them has to be carried by
+     weight, size, case and tracking instead of by changing typeface. */
+  --display: var(--font);
+  --label: var(--font);
 
   /* Spacing: multiples of 4. */
   --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
@@ -134,7 +136,7 @@ img { max-width: 100%; }
 
 /* A small uppercase monospaced label — the voice of the drawing. */
 .eyebrow {
-  font-family: var(--mono);
+  font-family: var(--label); font-weight: 500;
   font-size: var(--t-xs);
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -172,7 +174,7 @@ img { max-width: 100%; }
 .field { display: block; margin-bottom: var(--s4); }
 .field > span {
   display: block; margin-bottom: 6px;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft);
 }
 .field input, .field select, .field textarea {
@@ -250,9 +252,9 @@ img { max-width: 100%; }
 .login-aside .logo-img { max-height: 64px; max-width: 220px; }
 .login-aside .logo-text {
   margin: var(--s4) 0 0;
-  font-family: var(--display); font-weight: 400;
-  font-size: clamp(38px, 5.6vw, var(--t-4xl));
-  letter-spacing: -.015em; line-height: 1;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(31px, 4.4vw, var(--t-3xl));
+  letter-spacing: -.03em; line-height: 1;
 }
 .login-aside .tagline {
   margin: var(--s4) 0 0;
@@ -269,7 +271,7 @@ img { max-width: 100%; }
 .login-index li {
   display: flex; align-items: baseline; gap: var(--s3);
   padding: 7px 0;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .12em; text-transform: uppercase;
   color: rgba(255, 255, 255, .78);
 }
@@ -282,9 +284,9 @@ img { max-width: 100%; }
 .login-form { padding: var(--s7) var(--s6); }
 .login-form h1 {
   margin: var(--s3) 0 var(--s6);
-  font-family: var(--display); font-weight: 400;
-  font-size: clamp(27px, 3.4vw, var(--t-2xl));
-  letter-spacing: -.01em; line-height: 1.08;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(21px, 2.6vw, var(--t-xl));
+  letter-spacing: -.02em; line-height: 1.12;
 }
 .login-note {
   margin: var(--s5) 0 0; padding-top: var(--s4);
@@ -314,8 +316,8 @@ img { max-width: 100%; }
 .brand-link {
   display: inline-flex; align-items: center; gap: 10px;
   color: var(--ink); text-decoration: none;
-  font-family: var(--display); font-weight: 400;
-  font-size: var(--t-lg); letter-spacing: 0;
+  font-family: var(--display); font-weight: 600;
+  font-size: var(--t-md); letter-spacing: -.01em;
 }
 .brand-link img { max-height: 34px; }
 
@@ -324,7 +326,7 @@ img { max-width: 100%; }
   position: relative;
   padding: 10px; min-height: 44px; display: inline-flex; align-items: center;
   color: var(--ink-soft); text-decoration: none;
-  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+  font-family: var(--label); font-size: var(--t-xs); font-weight: 400;
   letter-spacing: .1em; text-transform: uppercase;
   transition: color var(--dur) var(--ease);
 }
@@ -339,7 +341,7 @@ img { max-width: 100%; }
 .nav-count {
   display: inline-block; min-width: 18px; margin-left: 6px; padding: 0 5px;
   border-radius: 999px; background: var(--brand); color: #fff;
-  font-family: var(--mono); font-size: 10.5px; line-height: 18px; text-align: center;
+  font-family: var(--label); font-size: 10.5px; line-height: 18px; text-align: center;
 }
 .user-chip {
   display: inline-flex; align-items: center; gap: var(--s3);
@@ -377,9 +379,9 @@ img { max-width: 100%; }
 }
 .page-head h1 {
   margin: var(--s3) 0 0;
-  font-family: var(--display); font-weight: 400;
-  font-size: clamp(38px, 7.6vw, var(--t-5xl));
-  line-height: 1.02; letter-spacing: -.02em;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(31px, 5.4vw, var(--t-4xl));
+  line-height: 1.04; letter-spacing: -.035em;
   text-wrap: balance;
 }
 .page-head .lede {
@@ -417,12 +419,12 @@ img { max-width: 100%; }
 }
 .title-block dt {
   margin: 0;
-  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+  font-family: var(--label); font-size: var(--t-xs); font-weight: 400;
   letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint);
 }
 .title-block dd {
   margin: 8px 0 0;
-  font-family: var(--mono); font-size: clamp(16px, 1.5vw, var(--t-lg));
+  font-family: var(--label); font-size: clamp(16px, 1.5vw, var(--t-lg));
   font-weight: 500; line-height: 1.2;
   font-variant-numeric: tabular-nums; letter-spacing: -.01em; color: var(--ink);
   overflow-wrap: anywhere;
@@ -449,7 +451,7 @@ img { max-width: 100%; }
     width: 56px; text-align: right;
     padding-right: var(--s3);
     border-right: 1px solid var(--line-strong);
-    font-family: var(--mono); font-size: var(--t-xs);
+    font-family: var(--label); font-size: var(--t-xs);
     letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint);
     pointer-events: none;
   }
@@ -472,7 +474,7 @@ img { max-width: 100%; }
     left: calc((100vw - 1240px) / 2 - 152px);
     top: 50%; transform: translateY(-50%);
     width: 128px; text-align: right;
-    font-family: var(--mono); font-size: var(--t-xs);
+    font-family: var(--label); font-size: var(--t-xs);
     letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint);
     border-right: 1px solid var(--line-strong);
     padding-right: var(--s4);
@@ -513,7 +515,7 @@ img { max-width: 100%; }
   display: inline-flex; align-items: baseline; gap: 8px;
   padding: 10px 0; min-height: 44px;
   color: var(--ink); text-decoration: none;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .1em; text-transform: uppercase;
 }
 /* The rule grows from the left on hover, the same gesture as a sheet's rule
@@ -555,7 +557,7 @@ img { max-width: 100%; }
   transform-origin: left center;
 }
 .section-head .index {
-  font-family: var(--mono); font-size: var(--t-sm); font-weight: 500;
+  font-family: var(--label); font-size: var(--t-sm); font-weight: 500;
   color: var(--ink-faint); letter-spacing: .08em;
   font-variant-numeric: tabular-nums;
 }
@@ -563,13 +565,13 @@ img { max-width: 100%; }
    instead of degrading into a generic bold heading. */
 .section-head h2 {
   margin: 0;
-  font-family: var(--display); font-weight: 400;
-  font-size: clamp(24px, 3.4vw, var(--t-2xl));
-  line-height: 1.1; letter-spacing: -.01em;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(20px, 2.6vw, var(--t-xl));
+  line-height: 1.15; letter-spacing: -.025em;
 }
 .section-head .count {
   margin-left: auto; white-space: nowrap;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint);
 }
 @media (max-width: 600px) {
@@ -614,7 +616,7 @@ table.products th {
   border-bottom: 1px solid var(--line-strong);
   background: var(--surface);
   text-align: left; vertical-align: bottom;
-  font-family: var(--mono); font-size: var(--t-xs); font-weight: 500;
+  font-family: var(--label); font-size: var(--t-xs); font-weight: 500;
   letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint);
   white-space: nowrap;
 }
@@ -636,7 +638,7 @@ table.products tbody tr:focus-within {
 }
 /* Spec values are figures, so they get the figure font. */
 table.products td:not(.col-name):not(.col-act):not(.col-img) {
-  font-family: var(--mono); font-size: var(--t-sm);
+  font-family: var(--label); font-size: var(--t-sm);
   font-variant-numeric: tabular-nums; color: var(--ink-soft);
 }
 .col-img { width: 76px; }
@@ -727,7 +729,7 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
   table.products td[data-label]::before {
     content: attr(data-label);
     flex: 0 0 auto; text-align: left;
-    font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+    font-family: var(--label); font-size: var(--t-xs); font-weight: 400;
     letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint);
   }
 
@@ -764,7 +766,7 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
 .tag {
   display: inline-block; padding: 2px 8px;
   border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
-  font-family: var(--mono); font-size: 10.5px;
+  font-family: var(--label); font-size: 10.5px;
   letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft);
 }
 .thumb {
@@ -781,7 +783,7 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
    stops "+ Inquiry" breaking across two in the process. */
 .row-act > * { white-space: nowrap; }
 .row-act .btn-sm {
-  font-family: var(--mono); font-size: 10.5px;
+  font-family: var(--label); font-size: 10.5px;
   letter-spacing: .08em; text-transform: uppercase;
 }
 /* The row being read brings its action forward. */
@@ -796,13 +798,13 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   display: inline-flex; align-items: center; padding: 4px 10px;
   border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
   color: var(--ink-soft); text-decoration: none;
-  font-family: var(--mono); font-size: 10.5px;
+  font-family: var(--label); font-size: 10.5px;
   letter-spacing: .08em; text-transform: uppercase;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .doc-link:hover { color: var(--brand-dark); border-color: var(--brand); }
 .in-basket {
-  font-family: var(--mono); font-size: var(--t-xs); font-weight: 500;
+  font-family: var(--label); font-size: var(--t-xs); font-weight: 500;
   letter-spacing: .06em; color: var(--brand); white-space: nowrap;
 }
 .muted { color: var(--ink-soft); }
@@ -835,14 +837,14 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 .viewer-title {
   margin: 0; min-width: 0; flex: 1 1 auto;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .12em; text-transform: uppercase;
   color: rgba(255, 255, 255, .88);
 }
 .viewer-tools { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0; }
 .viewer-zoom {
   min-width: 56px; margin-right: var(--s2); text-align: right;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, .7);
 }
 .viewer-btn {
@@ -850,7 +852,7 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   min-width: 44px; height: 44px; padding: 0 var(--s3);
   border: 1px solid rgba(255, 255, 255, .28); border-radius: var(--radius-sm);
   background: transparent; color: #fff; text-decoration: none;
-  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+  font-family: var(--label); font-size: var(--t-xs); font-weight: 400;
   letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
@@ -889,7 +891,7 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 .viewer-hint {
   margin: 0; padding: var(--s3) var(--s4);
   border-top: 1px solid rgba(255, 255, 255, .14);
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .08em; color: rgba(255, 255, 255, .62);
   text-align: center;
 }
@@ -961,7 +963,7 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 .staff-body h3 { margin: 0 0 2px; font-size: var(--t-md); font-weight: 600; }
 .staff-body .role {
   margin: 0 0 var(--s3);
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .1em; text-transform: uppercase; color: var(--accent);
 }
 .staff-contact { list-style: none; margin: 0; padding: 0; font-size: var(--t-sm); }
@@ -972,14 +974,14 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 .staff-contact li:first-child { border-top: 0; }
 .staff-contact .label {
   flex-shrink: 0; min-width: 76px;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint);
 }
 .staff-contact a { text-decoration: none; font-weight: 500; }
 .staff-contact a:hover { text-decoration: underline; }
 /* Numbers are figures: they line up and they never break mid-number. */
 .staff-contact li a[href^="tel:"], .staff-contact li a[href*="wa.me"] {
-  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  font-family: var(--label); font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 /* An address may wrap, but only where an address has joints. */
@@ -1010,8 +1012,8 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   grid-template-columns: 1fr;
 }
 .site-footer .colophon {
-  font-family: var(--display); font-weight: 400;
-  font-size: var(--t-xl); line-height: 1.1; color: #fff;
+  font-family: var(--display); font-weight: 600;
+  font-size: var(--t-lg); line-height: 1.1; letter-spacing: -.02em; color: #fff;
   margin: 0;
 }
 .site-footer .foot-grid {
@@ -1024,7 +1026,7 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   border-bottom: 1px solid rgba(255, 255, 255, .1);
 }
 .site-footer dt {
-  margin: 0; font-family: var(--mono); font-size: var(--t-xs);
+  margin: 0; font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .14em; text-transform: uppercase;
   color: rgba(255, 255, 255, .55);
 }
@@ -1033,7 +1035,7 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
   color: rgba(255, 255, 255, .86);
 }
 .site-footer .notice {
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .12em; text-transform: uppercase;
   color: rgba(255, 255, 255, .6);
 }
@@ -1060,7 +1062,7 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 }
 .rfq-section h2 .count {
   margin-left: auto;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint);
 }
 .rfq-section table.products td { vertical-align: middle; }
@@ -1131,13 +1133,13 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 }
 .rep-body { flex: 1 1 220px; min-width: 0; }
 .rep-label {
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint);
 }
 .rep-body h2 { margin: 2px 0 0; font-size: var(--t-md); font-weight: 600; }
 .rep-title { margin: 2px 0 0; font-size: var(--t-xs); color: var(--accent);
-  font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; }
-.rep-number { font-family: var(--mono); font-size: var(--t-sm); color: var(--ink-soft); }
+  font-family: var(--label); letter-spacing: .08em; text-transform: uppercase; }
+.rep-number { font-family: var(--label); font-size: var(--t-sm); color: var(--ink-soft); }
 .rep-actions { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
 .rep-email { font-size: var(--t-xs); color: var(--ink-soft); overflow-wrap: anywhere; }
 .rep-note { margin: var(--s3) 0 0; font-size: var(--t-xs); color: var(--ink-faint); }

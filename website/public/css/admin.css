@@ -56,7 +56,7 @@
 }
 .admin-side .side-brand small {
   display: block; margin-top: 5px;
-  font-family: var(--mono); font-weight: 400; font-size: var(--t-xs);
+  font-family: var(--label); font-weight: 400; font-size: var(--t-xs);
   letter-spacing: .16em; text-transform: uppercase;
   color: rgba(255, 255, 255, .62);
 }
@@ -95,13 +95,13 @@
 .side-role {
   display: inline-block; margin-left: 5px; padding: 1px 6px;
   border: 1px solid rgba(255, 255, 255, .35); border-radius: var(--radius-sm);
-  font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+  font-family: var(--label); font-size: 10px; letter-spacing: .08em;
   color: #fff;
 }
 .side-badge {
   margin-left: auto; min-width: 20px; padding: 1px 6px;
   border-radius: var(--radius-sm); background: var(--accent); color: #fff;
-  font-family: var(--mono); font-size: 10.5px; font-variant-numeric: tabular-nums;
+  font-family: var(--label); font-size: 10.5px; font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
@@ -125,7 +125,7 @@
 .admin-hint strong { color: var(--ink); }
 .scroll-hint {
   margin: 0 0 var(--s2);
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .1em; color: var(--ink-faint);
 }
 
@@ -163,13 +163,13 @@
   min-width: 0;
 }
 .stat .n {
-  font-family: var(--mono); font-size: var(--t-2xl); font-weight: 500;
+  font-family: var(--label); font-size: var(--t-2xl); font-weight: 500;
   font-variant-numeric: tabular-nums; letter-spacing: -.02em;
   color: var(--ink); line-height: 1.05;
 }
 .stat .k {
   margin-top: 6px;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .12em; color: var(--ink-faint);
 }
 
@@ -182,7 +182,7 @@ table.data th, table.data td {
 table.data thead th {
   background: var(--surface);
   border-bottom: 1px solid var(--line-strong);
-  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400;
+  font-family: var(--label); font-size: var(--t-xs); font-weight: 400;
   letter-spacing: .1em; color: var(--ink-faint); white-space: nowrap;
 }
 table.data tbody tr { transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
@@ -205,7 +205,7 @@ table.data .mini-thumb {
 }
 table.data td.nowrap { white-space: nowrap; }
 table.data td.mono, dl.kv dd.mono {
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
 }
 table.data td.ua {
@@ -222,7 +222,7 @@ table.data .num-input { width: 64px; }
   display: inline-block; padding: 2px 7px;
   border: 1px solid currentColor; border-radius: var(--radius-sm);
   background: none;
-  font-family: var(--mono); font-size: 10.5px; font-weight: 400;
+  font-family: var(--label); font-size: 10.5px; font-weight: 400;
   letter-spacing: .06em; white-space: nowrap;
 }
 .badge-on    { color: var(--brand); }
@@ -285,7 +285,7 @@ table.data .num-input { width: 64px; }
   position: relative;
   display: inline-flex; align-items: center; min-height: 44px; padding: 0;
   color: var(--ink-soft); text-decoration: none;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .1em; text-transform: uppercase;
   transition: color var(--dur) var(--ease);
 }
@@ -327,7 +327,7 @@ table.data .num-input { width: 64px; }
   background-repeat: no-repeat;
 }
 .admin-main input[type="date"] {
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
 }
 /* The last piece of browser chrome in the console: the file pickers. The
@@ -343,7 +343,7 @@ table.data .num-input { width: 64px; }
   margin-right: var(--s3); padding: 7px 14px;
   border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
   background: var(--bg); color: var(--ink);
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
@@ -361,7 +361,7 @@ table.data .num-input { width: 64px; }
 .pager {
   display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
   margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line);
-  font-family: var(--mono); font-size: var(--t-xs); color: var(--ink-soft);
+  font-family: var(--label); font-size: var(--t-xs); color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
 
@@ -378,7 +378,7 @@ dl.kv > div {
 }
 dl.kv dt {
   margin-bottom: 4px;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .12em; color: var(--ink-faint);
 }
 dl.kv dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
@@ -397,7 +397,7 @@ dl.kv dd.mono { font-weight: 400; font-size: var(--t-sm); }
 .rule-list code, .admin-main code {
   padding: 1px 6px; border-radius: var(--radius-sm);
   background: var(--bg); border: 1px solid var(--line);
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
 }
 
 /* ---------- 客户意向 ---------- */
@@ -420,7 +420,7 @@ dl.kv dd.mono { font-weight: 400; font-size: var(--t-sm); }
   font-size: var(--t-sm); color: var(--ink);
 }
 .term-n {
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   font-variant-numeric: tabular-nums; color: var(--ink-faint);
 }
 
@@ -447,12 +447,12 @@ dl.kv dd.mono { font-weight: 400; font-size: var(--t-sm); }
 .wa-tag {
   display: inline-block; margin-right: 4px; padding: 0 5px;
   border-radius: var(--radius-sm); background: #25d366; color: #05240f;
-  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  font-family: var(--label); font-size: 10px; font-weight: 500;
 }
 .src {
   display: inline-block; margin-left: 5px; padding: 0 5px; vertical-align: 1px;
   border: 1px solid currentColor; border-radius: var(--radius-sm);
-  font-family: var(--mono); font-size: 10px; letter-spacing: .04em;
+  font-family: var(--label); font-size: 10px; letter-spacing: .04em;
   white-space: nowrap;
 }
 .src-account { color: var(--brand); }
@@ -464,7 +464,7 @@ dl.kv dd.mono { font-weight: 400; font-size: var(--t-sm); }
    readable; <details> needs no JavaScript, which the CSP would block anyway. */
 .contact-edit > summary {
   cursor: pointer; padding: 2px 0;
-  font-family: var(--mono); font-size: var(--t-xs);
+  font-family: var(--label); font-size: var(--t-xs);
   letter-spacing: .06em; color: var(--brand-dark);
 }
 .contact-edit[open] > summary { margin-bottom: 6px; }
@@ -473,7 +473,7 @@ dl.kv dd.mono { font-weight: 400; font-size: var(--t-sm); }
 .contact-grid { min-width: 190px; }
 .contact-sum {
   display: flex; flex-wrap: wrap; gap: 2px 10px; margin-bottom: 4px;
-  font-family: var(--mono); font-size: var(--t-xs); color: var(--ink-soft);
+  font-family: var(--label); font-size: var(--t-xs); color: var(--ink-soft);
 }
 .contact-sum .ok { color: var(--brand); }
 .contact-set {

@@ -10,18 +10,11 @@
   <meta name="color-scheme" content="light">
   <title><%= pageTitle %></title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <%# The faces this page will certainly use, asked for before the stylesheet
-      that references them, so they arrive in time to be the first paint and
-      the swap never shows. The display serif is only preloaded where it is
-      used — the Chinese backend sets its headings in the system stack. %>
+  <%# The one face the page will use, asked for before the stylesheet that
+      references it, so it arrives in time to be the first paint and the swap
+      never shows. %>
   <link rel="preload" as="font" type="font/woff2" crossorigin
         href="<%= assetUrl('/fonts/archivo-400-700-latin.woff2') %>">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-        href="<%= assetUrl('/fonts/plexmono-400-latin.woff2') %>">
-  <% if (typeof adminCss === 'undefined' || !adminCss) { %>
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-        href="<%= assetUrl('/fonts/instrumentserif-400-latin.woff2') %>">
-  <% } %>
   <link rel="stylesheet" href="<%= assetUrl('/css/fonts.css') %>">
   <link rel="stylesheet" href="<%= assetUrl('/css/site.css') %>">
   <% if (typeof adminCss !== 'undefined' && adminCss) { %>

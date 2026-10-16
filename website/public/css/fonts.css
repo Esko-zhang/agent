@@ -1,33 +1,31 @@
 /* ============================================================================
-   Durlevel — the type layer.
+   Durlevel — the type.
 
-   Three OFL faces, served from this origin. Nothing here reaches a third
+   One family: Archivo, served from this origin. Nothing here reaches a third
    party, which the site's CSP forbids anyway, and which would also mean a
    blocked request for the sales team in mainland China. Only the `latin` and
-   `latin-ext` subsets are carried: Chinese never uses these faces, it uses the
+   `latin-ext` subsets are carried: Chinese never uses this face, it uses the
    system stack, so no CJK font is ever downloaded.
 
-     Instrument Serif  the title page of a bound spec book
-     Archivo           the body: a grotesque that still reads at 13px in a
-                       dense specification table
-     IBM Plex Mono     every figure, label, index and sheet number — the font
-                       technical documentation is actually set in
+   The whole weight axis is declared, 100 to 900, not the 400–700 the file was
+   originally asked for. With a single family, hierarchy has to come from
+   weight, size, case and letter-spacing instead of from a change of face, so
+   the extra weights are what the display sizes and the small labels are built
+   out of.
 
-   Each web face is followed by a fallback face built from a local system font
-   with its metrics overridden to match, so the swap at the end of the download
-   does not move a single line. The numbers come from measuring both fonts:
-   `size-adjust` is (web face average lowercase advance ÷ fallback's), and the
-   ascent/descent overrides are the web face's own, divided by that ratio.
+   The web face is followed by a fallback built from a local system font with
+   its metrics overridden to match, so the swap at the end of the download does
+   not move a single line. The numbers come from measuring both fonts:
+   `size-adjust` is (Archivo's average lowercase advance ÷ the fallback's), and
+   the ascent/descent overrides are Archivo's own, divided by that ratio.
 
-   Licences: OFL-Archivo.txt, OFL-IBMPlexMono.txt, OFL-InstrumentSerif.txt in
-   /fonts, beside the files they cover.
+   Licence: OFL-Archivo.txt in /fonts, beside the files it covers.
    ========================================================================= */
 
-/* ---------- Archivo — body (variable, 400–700) ---------- */
 @font-face {
   font-family: "Archivo";
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 100 900;
   font-display: swap;
   src: url("/fonts/archivo-400-700-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
@@ -37,13 +35,14 @@
 @font-face {
   font-family: "Archivo";
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 100 900;
   font-display: swap;
   src: url("/fonts/archivo-400-700-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
     U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
     U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 /* Arial, Helvetica Neue and Segoe UI all sit within ~1% of each other on
    average lowercase width, so one adjusted face covers all three platforms. */
 @font-face {
@@ -53,96 +52,5 @@
   size-adjust: 106.26%;
   ascent-override: 82.63%;
   descent-override: 19.76%;
-  line-gap-override: 0%;
-}
-
-/* ---------- Instrument Serif — display ---------- */
-@font-face {
-  font-family: "Instrument Serif";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/instrumentserif-400-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-    U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: "Instrument Serif";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/instrumentserif-400-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
-    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
-    U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* Instrument Serif is unusually narrow, so Times is scaled down to meet it. */
-@font-face {
-  font-family: "Instrument Serif Fallback";
-  src: local("Times New Roman"), local("Times"), local("Liberation Serif");
-  size-adjust: 85.39%;
-  ascent-override: 115.94%;
-  descent-override: 36.30%;
-  line-gap-override: 0%;
-}
-
-/* ---------- IBM Plex Mono — figures and labels (400, 500) ---------- */
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/plexmono-400-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-    U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/plexmono-400-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
-    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
-    U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/plexmono-500-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-    U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/plexmono-500-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
-    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
-    U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* Menlo and Courier New happen to match Plex Mono's advance exactly; Consolas
-   is narrower, so it gets its own scaled face further down the stack. */
-@font-face {
-  font-family: "Plex Mono Fallback";
-  src: local("Menlo"), local("Courier New"), local("Liberation Mono");
-  size-adjust: 100%;
-  ascent-override: 102.50%;
-  descent-override: 27.50%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Plex Mono Fallback Win";
-  src: local("Consolas");
-  size-adjust: 109.13%;
-  ascent-override: 93.92%;
-  descent-override: 25.20%;
   line-gap-override: 0%;
 }
