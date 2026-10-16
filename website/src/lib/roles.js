@@ -36,6 +36,9 @@ const SECTIONS = [
   // Sales may read the log, but only rows belonging to their own customers;
   // the scoping lives in routes/admin/logs.js.
   { key: 'logs', path: '/admin/logs', zh: '访问记录', roles: ['admin', 'sales'] },
+  // The whole customer book in one place, so it is administrators only: a
+  // sales account must not read another rep's customers' contact details.
+  { key: 'contacts', path: '/admin/contacts', zh: '联系方式汇总', roles: ['admin'] },
   { key: 'settings', path: '/admin/settings', zh: '网站设置', roles: ['admin'] },
 ];
 

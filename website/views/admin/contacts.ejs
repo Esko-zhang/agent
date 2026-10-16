@@ -1,0 +1,213 @@
+<%- include('_shell-top', { heading: '联系方式汇总' }) %>
+
+<%
+// Carries the current filter into the export link, the backfill posts and the
+// "clear" link.
+function qs(overrides) {
+  var p = new URLSearchParams();
+  var base = { role: filter.role, country: filter.country, q: filter.q, only: filter.only };
+  Object.keys(base).forEach(function (k) {
+    var v = (overrides && k in overrides) ? overrides[k] : base[k];
+    if (v) p.set(k, v);
+  });
+  var s = p.toString();
+  return s ? '?' + s : '';
+}
+var hasFilter = filter.role || filter.country || filter.q || filter.only;
+%>
+
+<div class="admin-head">
+  <h1>联系方式汇总</h1>
+  <div class="spacer"></div>
+  <div class="actions">
+    <% if (pendingCount) { %>
+      <form method="post" action="/admin/contacts/backfill<%= qs() %>"
+            data-confirm="将把客户在询盘里填写的邮箱、电话、公司和国家，补到 <%= pendingCount %> 个账号上（已填写的不会被覆盖）。继续？">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-ghost" type="submit">从询盘回填（<%= pendingCount %>）</button>
+      </form>
+    <% } %>
+    <a class="btn btn-ghost" href="/admin/contacts/export.csv<%= qs() %>">导出 CSV</a>
+  </div>
+</div>
+
+<% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
+
+<p class="admin-hint">
+  这里汇总<strong>每个账号的有效联系方式</strong>，只有管理员看得到。
+  每个值后面的小标签是它的来源：<strong>已存</strong>（存在账号上的值，最准；手工填写和一键回填都会写到这里）、
+  <strong>询盘</strong>（客户自己在询盘表单里填的，取最近一次）、
+  <strong>名片</strong>（业务员账号关联的名片）、
+  <strong>IP</strong>（按访问 IP 判断的国家，仅作兜底）。
+  要修改某个账号的联系方式，到「账号管理」里改——那里是唯一的填写入口，业务员也能维护自己客户的信息。
+</p>
+
+<div class="stat-grid">
+  <div class="stat">
+    <div class="n"><%= stats.accounts %></div>
+    <div class="k">账号总数</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.customers %></div>
+    <div class="k">其中客户账号</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.withEmail %></div>
+    <div class="k">有邮箱</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.withPhone %></div>
+    <div class="k">有电话或 WhatsApp</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.withCountry %></div>
+    <div class="k">已知国家/地区</div>
+  </div>
+  <div class="stat">
+    <div class="n"><%= stats.unreachable %></div>
+    <div class="k">暂无任何联系方式</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>筛选 <span class="hint">共 <%= total %> 个账号，当前显示 <%= rows.length %> 个</span></h2>
+  <form method="get" action="/admin/contacts">
+    <div class="form-grid">
+      <label class="field">
+        <span>角色</span>
+        <select name="role">
+          <option value="">全部角色</option>
+          <% allRoles.forEach(function (r) { %>
+            <option value="<%= r.key %>" <%= filter.role === r.key ? 'selected' : '' %>><%= r.zh %></option>
+          <% }); %>
+        </select>
+      </label>
+      <label class="field">
+        <span>国家 / 地区</span>
+        <select name="country">
+          <option value="">全部国家 / 地区</option>
+          <% countries.forEach(function (c) { %>
+            <option value="<%= c.code %>" <%= filter.country === c.code ? 'selected' : '' %>>
+              <%= c.flag %> <%= c.name %>（<%= c.n %>）
+            </option>
+          <% }); %>
+        </select>
+      </label>
+      <label class="field">
+        <span>联系方式情况</span>
+        <select name="only">
+          <option value="">全部</option>
+          <option value="reachable" <%= filter.only === 'reachable' ? 'selected' : '' %>>已有联系方式</option>
+          <option value="missing" <%= filter.only === 'missing' ? 'selected' : '' %>>暂无联系方式</option>
+          <option value="pending" <%= filter.only === 'pending' ? 'selected' : '' %>>有可回填的询盘信息</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>关键词 <span class="hint">（账号 / 姓名 / 公司 / 邮箱 / 电话 / 国家 / 业务员）</span></span>
+        <input name="q" value="<%= filter.q %>" maxlength="80" placeholder="例如 acme 或 bangladesh">
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn" type="submit">筛选</button>
+      <% if (hasFilter) { %><a class="btn btn-ghost" href="/admin/contacts">清空条件</a><% } %>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>联系方式（<%= rows.length %>）</h2>
+  <p class="scroll-hint">表格可左右滑动查看全部字段。</p>
+  <div class="table-wrap">
+    <table class="data contact-table">
+      <thead>
+        <tr>
+          <th>账号 / 所属业务员</th><th>公司 / 姓名</th><th>邮箱</th>
+          <th>电话 / WhatsApp</th><th>国家 / 地区</th><th>询盘 / 登录</th><th>回填</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="7" class="empty-row">
+            <%= hasFilter ? '没有符合条件的账号。' : '还没有账号。' %>
+          </td></tr>
+        <% } %>
+        <% rows.forEach(function (r) { %>
+          <tr>
+            <td class="nowrap">
+              <strong><%= r.username %></strong>
+              <div>
+                <span class="badge badge-role-<%= r.role %>"><%= roleLabels[r.role] %></span>
+                <% if (!r.is_active) { %><span class="badge badge-off">停用</span><% } %>
+              </div>
+              <div class="c-sub"><%= r.manager ? r.manager : '—' %></div>
+            </td>
+            <td>
+              <% if (r.company.value) { %>
+                <span class="c-val"><%= r.company.value %></span>
+                <span class="src src-<%= r.company.source %>"><%= r.company.sourceLabel %></span>
+              <% } %>
+              <% if (r.display_name) { %><div class="c-sub"><%= r.display_name %></div><% } %>
+              <% if (!r.company.value && !r.display_name) { %><span class="c-none">—</span><% } %>
+            </td>
+            <td>
+              <% if (r.email.value) { %>
+                <a class="c-val" href="mailto:<%= r.email.value %>"><%= r.email.value %></a>
+                <span class="src src-<%= r.email.source %>"><%= r.email.sourceLabel %></span>
+              <% } else { %><span class="c-none">—</span><% } %>
+            </td>
+            <td class="nowrap">
+              <% if (r.phone.value) { %>
+                <div>
+                  <a class="c-val" href="tel:<%= r.phone.value.replace(/[^0-9+]/g, '') %>"><%= r.phone.value %></a>
+                  <span class="src src-<%= r.phone.source %>"><%= r.phone.sourceLabel %></span>
+                </div>
+              <% } %>
+              <% if (r.whatsapp.value) { %>
+                <div class="wa-line">
+                  <span class="wa-tag">WA</span>
+                  <% if (r.waLink) { %>
+                    <a class="c-val" href="<%= r.waLink %>" target="_blank" rel="noopener noreferrer"><%= r.whatsapp.value %></a>
+                  <% } else { %>
+                    <span class="c-val"><%= r.whatsapp.value %></span>
+                  <% } %>
+                  <span class="src src-<%= r.whatsapp.source %>"><%= r.whatsapp.sourceLabel %></span>
+                </div>
+              <% } %>
+              <% if (!r.phone.value && !r.whatsapp.value) { %><span class="c-none">—</span><% } %>
+            </td>
+            <td class="nowrap">
+              <% if (r.country.value) { %>
+                <span class="c-val"><%= r.countryFlag %> <%= r.countryName %></span>
+                <span class="src src-<%= r.country.source %>"><%= r.country.sourceLabel %></span>
+              <% } else { %><span class="c-none">—</span><% } %>
+            </td>
+            <td class="nowrap">
+              <% if (r.inquiryCount) { %>
+                <div><%= r.inquiryCount %> 次<% if (r.lastInquiryAt) { %> · <%= r.lastInquiryAt.slice(5, 10) %><% } %></div>
+              <% } else { %>
+                <div class="c-none">未询盘</div>
+              <% } %>
+              <div class="c-sub"
+                   title="<%= r.last_login_at ? '最近登录 ' + r.last_login_at : '从未登录' %>">
+                <%= r.last_login_at ? '登录 ' + r.last_login_at.slice(5, 10) : '未登录' %>
+              </div>
+            </td>
+            <td class="nowrap">
+              <% if (r.hasPending) { %>
+                <form method="post" action="/admin/contacts/<%= r.id %>/backfill<%= qs() %>">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-ghost btn-sm" type="submit"
+                          title="把该客户在询盘里填写的信息，补到账号上">回填</button>
+                </form>
+              <% } else { %>
+                <span class="c-none">—</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('_shell-bottom') %>

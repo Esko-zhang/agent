@@ -18,7 +18,15 @@ CREATE TABLE IF NOT EXISTS users (
   created_by      INTEGER,
   created_by_name TEXT   NOT NULL DEFAULT '',
   -- For a sales account: the contact card customers should reach them on.
-  staff_id        INTEGER
+  staff_id        INTEGER,
+  -- Contact details, kept on the account itself so the directory in
+  -- /admin/contacts has one authoritative copy per customer. Filled in by an
+  -- administrator or by the sales account that issued the login.
+  company         TEXT   NOT NULL DEFAULT '',
+  email           TEXT   NOT NULL DEFAULT '',
+  phone           TEXT   NOT NULL DEFAULT '',
+  whatsapp        TEXT   NOT NULL DEFAULT '',
+  country         TEXT   NOT NULL DEFAULT ''   -- ISO 3166-1 alpha-2, '' if unknown
 );
 
 CREATE TABLE IF NOT EXISTS products (

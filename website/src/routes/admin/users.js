@@ -3,6 +3,7 @@ const express = require('express');
 const users = require('../../lib/users');
 const roles = require('../../lib/roles');
 const staff = require('../../lib/staff');
+const geo = require('../../lib/geo');
 
 const router = express.Router();
 const MIN_PASSWORD = 8;
@@ -12,11 +13,16 @@ function visibleTo(actor) {
   return roles.ownedAccounts(actor, users.q.list.all());
 }
 
-function view(req, res, status, error) {
+function view(req, res, status, error, draft = null) {
   return res.status(status).render('admin/users', {
     nav: 'users',
     rows: visibleTo(req.user),
     error,
+    draft,
+    // One shared <datalist> for every country field on the page, so a row's
+    // contact block stays small however many accounts are listed.
+    countryOptions: geo.options(),
+    countryNameOf: (code) => (code ? geo.nameOf(code) : ''),
     assignable: roles.assignableRoles(req.user),
     roleLabels: roles.ROLE_LABELS,
     allRoles: roles.ROLES,
@@ -47,7 +53,14 @@ router.post('/', (req, res) => {
     return view(req, res, 400, '该账号已存在。');
   }
 
+  // Contact details are optional, but a value that cannot be stored as typed
+  // is reported rather than dropped.
+  const contact = users.contactFields(req.body);
+  const contactProblem = users.contactError(contact, req.body);
+  if (contactProblem) return view(req, res, 400, contactProblem, req.body);
+
   users.create({
+    contact,
     username,
     password,
     display_name: String(req.body.display_name || '').trim(),
@@ -84,7 +97,12 @@ router.post('/:id', (req, res, next) => {
     return view(req, res, 400, '系统必须保留至少一个启用状态的管理员账号。');
   }
 
+  const contact = users.contactFields(req.body);
+  const contactProblem = users.contactError(contact, req.body);
+  if (contactProblem) return view(req, res, 400, contactProblem);
+
   users.q.update.run({
+    ...contact,
     id: target.id,
     display_name: String(req.body.display_name || '').trim(),
     role,

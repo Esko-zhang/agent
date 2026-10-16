@@ -54,6 +54,7 @@ router.use('/users', requireSection('users'), require('./users'));
 router.use('/inquiries', requireSection('inquiries'), require('./inquiries'));
 router.use('/intent', requireSection('intent'), require('./intent'));
 router.use('/logs', requireSection('logs'), require('./logs'));
+router.use('/contacts', requireSection('contacts'), require('./contacts'));
 router.use('/settings', requireSection('settings'), require('./settings'));
 
 module.exports = router;

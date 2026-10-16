@@ -2,6 +2,7 @@
 const bcrypt = require('bcryptjs');
 const { db } = require('../db');
 const { ROLE_KEYS } = require('./roles');
+const geo = require('./geo');
 
 const BCRYPT_ROUNDS = 12;
 
@@ -14,19 +15,28 @@ const q = {
   ),
   insert: db.prepare(
     `INSERT INTO users (username, password_hash, display_name, role, is_active,
-                        created_by, created_by_name, staff_id)
+                        created_by, created_by_name, staff_id,
+                        company, email, phone, whatsapp, country)
      VALUES (@username, @password_hash, @display_name, @role, @is_active,
-             @created_by, @created_by_name, @staff_id)`
+             @created_by, @created_by_name, @staff_id,
+             @company, @email, @phone, @whatsapp, @country)`
   ),
   update: db.prepare(
     `UPDATE users SET display_name = @display_name, role = @role,
-            is_active = @is_active, staff_id = @staff_id
+            is_active = @is_active, staff_id = @staff_id,
+            company = @company, email = @email, phone = @phone,
+            whatsapp = @whatsapp, country = @country
      WHERE id = @id`
   ),
   // Customers issued by one sales account, for its own view and for the
   // "who looks after this customer" lookup on the inquiry page.
   createdBy: db.prepare('SELECT * FROM users WHERE created_by = ? ORDER BY username COLLATE NOCASE'),
   setPassword: db.prepare('UPDATE users SET password_hash = ? WHERE id = ?'),
+  setContact: db.prepare(
+    `UPDATE users SET company = @company, email = @email, phone = @phone,
+            whatsapp = @whatsapp, country = @country
+     WHERE id = @id`
+  ),
   touchLogin: db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?"),
   remove: db.prepare('DELETE FROM users WHERE id = ?'),
 };
@@ -48,6 +58,51 @@ function verifyLogin(username, password) {
   return user;
 }
 
+/**
+ * Contact details, normalised the same way whether they arrive from the
+ * account form or from a backfill. The country is stored as an ISO code so the
+ * directory can group by it and show a flag; free text that cannot be matched
+ * to a country is dropped rather than stored as a guess.
+ */
+function contactFields(input = {}) {
+  const text = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+  const country = text(input.country, 64);
+  return {
+    company: text(input.company, 120),
+    email: text(input.email, 160).toLowerCase(),
+    phone: text(input.phone, 40),
+    whatsapp: text(input.whatsapp, 40),
+    country: /^[A-Za-z]{2}$/.test(country) ? country.toUpperCase() : geo.resolve(country),
+  };
+}
+
+/**
+ * A message when the contact details cannot be stored as typed, else null.
+ * `raw` is the untouched form body, so a country name we failed to match can
+ * be reported instead of quietly disappearing.
+ */
+function contactError(fields, raw = {}) {
+  if (fields.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(fields.email)) {
+    return '邮箱格式不正确，请填写 name@example.com 这样的地址。';
+  }
+  for (const [key, label] of [['phone', '电话'], ['whatsapp', 'WhatsApp']]) {
+    if (fields[key] && !/^[0-9+][0-9\s()\-]{4,}$/.test(fields[key])) {
+      return `${label}号码只能包含数字、空格和 + ( ) - 符号，且至少 5 位。`;
+    }
+  }
+  if (!fields.country && String(raw.country == null ? '' : raw.country).trim()) {
+    return '无法识别填写的国家/地区，请从输入框的下拉建议中选择，或填写两位国家代码（如 US、BD）。';
+  }
+  return null;
+}
+
+/** Writes contact details only, leaving the account's role and status alone. */
+function setContact(id, input) {
+  const f = contactFields(input);
+  q.setContact.run({ ...f, id });
+  return f;
+}
+
 function create({
   username,
   password,
@@ -56,8 +111,10 @@ function create({
   is_active = 1,
   createdBy = null,
   staff_id = null,
+  contact = {},
 }) {
   return q.insert.run({
+    ...contactFields(contact),
     username: String(username).trim(),
     password_hash: hashPassword(password),
     display_name: display_name || '',
@@ -103,6 +160,9 @@ module.exports = {
   hashPassword,
   verifyLogin,
   create,
+  contactFields,
+  contactError,
+  setContact,
   wouldRemoveLastAdmin,
   accountManagerOf,
   BCRYPT_ROUNDS,

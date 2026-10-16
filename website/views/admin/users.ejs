@@ -1,5 +1,19 @@
 <%- include('_shell-top', { heading: '账号管理' }) %>
 
+<%
+// Keeps what was typed when a validation error sends the form back.
+var d = typeof draft === 'object' && draft ? draft : {};
+function keep(name) { return d[name] == null ? '' : String(d[name]); }
+%>
+
+<%# One list for every country field on the page: the row blocks reference it
+    by id rather than repeating 249 options each. %>
+<datalist id="country-list">
+  <% countryOptions.forEach(function (c) { %>
+    <option value="<%= c.name %>"><%= c.flag %> <%= c.code %></option>
+  <% }); %>
+</datalist>
+
 <div class="admin-head">
   <h1>账号管理</h1>
 </div>
@@ -26,7 +40,7 @@
       <label class="field">
         <span>登录账号 *<span class="hint">（3-32 位字母、数字或 . _ @ -）</span></span>
         <input name="username" required maxlength="32" pattern="[A-Za-z0-9._@\-]{3,32}"
-               autocapitalize="none" spellcheck="false">
+               autocapitalize="none" spellcheck="false" value="<%= keep('username') %>">
       </label>
       <label class="field">
         <span>登录密码 *<span class="hint">（至少 8 位）</span></span>
@@ -34,7 +48,7 @@
       </label>
       <label class="field">
         <span>姓名 / 客户名称</span>
-        <input name="display_name" maxlength="100">
+        <input name="display_name" maxlength="100" value="<%= keep('display_name') %>">
       </label>
       <label class="field">
         <span>角色</span>
@@ -69,6 +83,34 @@
         </select>
       </label>
     <% } %>
+    <fieldset class="contact-set">
+      <legend>联系方式
+        <span class="hint">（选填，可随时补填；管理员在「联系方式汇总」里能看到全部账号的汇总）</span>
+      </legend>
+      <div class="form-grid">
+        <label class="field">
+          <span>公司名称</span>
+          <input name="company" maxlength="120" value="<%= keep('company') %>">
+        </label>
+        <label class="field">
+          <span>邮箱</span>
+          <input name="email" type="email" maxlength="160" autocapitalize="none"
+                 spellcheck="false" value="<%= keep('email') %>">
+        </label>
+        <label class="field">
+          <span>电话 <span class="hint">（建议带国际区号，如 +880 …）</span></span>
+          <input name="phone" maxlength="40" value="<%= keep('phone') %>">
+        </label>
+        <label class="field">
+          <span>WhatsApp <span class="hint">（号码，汇总页会生成聊天链接）</span></span>
+          <input name="whatsapp" maxlength="40" value="<%= keep('whatsapp') %>">
+        </label>
+        <label class="field">
+          <span>国家 / 地区 <span class="hint">（输入即有建议，也可填 US、BD 这样的代码）</span></span>
+          <input name="country" list="country-list" maxlength="64" value="<%= keep('country') %>">
+        </label>
+      </div>
+    </fieldset>
     <label class="check-row">
       <input type="checkbox" name="is_active" value="1" checked>
       <span>启用该账号</span>
@@ -85,13 +127,13 @@
     <table class="data">
       <thead>
         <tr>
-          <th>账号</th><th>姓名</th><th>角色 / 状态</th>
+          <th>账号</th><th>姓名</th><th>角色 / 状态</th><th>联系方式</th>
           <th>创建人</th><th>最近登录</th><th>重置密码</th><th>操作</th>
         </tr>
       </thead>
       <tbody>
         <% if (!rows.length) { %>
-          <tr><td colspan="7" class="empty-row">还没有可管理的账号。</td></tr>
+          <tr><td colspan="8" class="empty-row">还没有可管理的账号。</td></tr>
         <% } %>
         <% rows.forEach(function (u) { %>
           <tr>
@@ -129,6 +171,42 @@
                 <span>启用</span>
               </label>
               <button class="btn btn-ghost btn-sm" type="submit" form="u-<%= u.id %>">保存</button>
+            </td>
+            <td class="contact-grid">
+              <div class="contact-sum">
+                <span class="<%= u.email ? 'ok' : '' %>">邮箱<%= u.email ? '✓' : '—' %></span>
+                <span class="<%= u.phone ? 'ok' : '' %>">电话<%= u.phone ? '✓' : '—' %></span>
+                <span class="<%= u.whatsapp ? 'ok' : '' %>">WhatsApp<%= u.whatsapp ? '✓' : '—' %></span>
+                <span class="<%= u.country ? 'ok' : '' %>">国家<%= u.country ? '✓' : '—' %></span>
+              </div>
+              <details class="contact-edit">
+                <summary>填写 / 修改</summary>
+                <label class="field">
+                  <span>公司</span>
+                  <input name="company" form="u-<%= u.id %>" maxlength="120"
+                         value="<%= u.company || '' %>">
+                </label>
+                <label class="field">
+                  <span>邮箱</span>
+                  <input name="email" type="email" form="u-<%= u.id %>" maxlength="160"
+                         autocapitalize="none" spellcheck="false" value="<%= u.email || '' %>">
+                </label>
+                <label class="field">
+                  <span>电话</span>
+                  <input name="phone" form="u-<%= u.id %>" maxlength="40" value="<%= u.phone || '' %>">
+                </label>
+                <label class="field">
+                  <span>WhatsApp</span>
+                  <input name="whatsapp" form="u-<%= u.id %>" maxlength="40"
+                         value="<%= u.whatsapp || '' %>">
+                </label>
+                <label class="field">
+                  <span>国家 / 地区</span>
+                  <input name="country" form="u-<%= u.id %>" list="country-list" maxlength="64"
+                         value="<%= countryNameOf(u.country) %>">
+                </label>
+                <p class="hint">改完点这一行的「保存」。</p>
+              </details>
             </td>
             <td>
               <% if (u.created_by_name) { %>

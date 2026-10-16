@@ -70,6 +70,11 @@ function migrate() {
   addColumn('users', 'created_by', 'INTEGER');
   addColumn('users', 'created_by_name', "TEXT NOT NULL DEFAULT ''");
   addColumn('users', 'staff_id', 'INTEGER');
+
+  // Contact details for the 联系方式汇总 directory.
+  for (const col of ['company', 'email', 'phone', 'whatsapp', 'country']) {
+    addColumn('users', col, "TEXT NOT NULL DEFAULT ''");
+  }
 }
 
 // Run before anything else: the lib modules prepare their statements at import

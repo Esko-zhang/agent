@@ -232,3 +232,62 @@ dl.kv dd.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-weig
   display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
   background: rgba(255, 255, 255, .16); color: #fff; font-size: 10.5px; font-weight: 600;
 }
+
+/* ---------- 联系方式汇总 ---------- */
+/* Each value carries the source it came from, so a confirmed detail reads
+   differently from one a customer once typed into a form. */
+.contact-table { min-width: 920px; }
+/* Nine columns of contact data: a tighter gutter keeps them on one screen at
+   a laptop width, and the wrapper still scrolls on anything narrower. */
+.contact-table th, .contact-table td { padding-inline: 8px; }
+.contact-table th:nth-child(2), .contact-table td:nth-child(2) { min-width: 150px; }
+.contact-table th:nth-child(3), .contact-table td:nth-child(3) { min-width: 220px; }
+.contact-table .c-val { font-weight: 600; overflow-wrap: anywhere; }
+.contact-table a.c-val { color: var(--brand-dark); text-decoration: none; }
+.contact-table a.c-val:hover { text-decoration: underline; }
+.contact-table .c-sub { color: var(--ink-soft); font-size: 12.5px; margin-top: 2px; }
+.contact-table .wa-line { margin-top: 3px; }
+.wa-tag {
+  display: inline-block; margin-right: 4px; padding: 0 5px; border-radius: 4px;
+  background: #25d366; color: #05240f; font-size: 10px; font-weight: 700;
+}
+.contact-table .c-none { color: #b3bfb9; }
+.contact-table td { vertical-align: top; }
+.src {
+  display: inline-block; margin-left: 5px; padding: 1px 6px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 600; white-space: nowrap; vertical-align: 1px;
+}
+.src-account { background: var(--brand-light); color: var(--brand-dark); }
+.src-inquiry { background: #e4eefb; color: #1f5695; }
+.src-card    { background: #fbf0dc; color: #8a6118; }
+.src-ip      { background: #f0f0f0; color: #6b6b6b; }
+
+/* The account form's contact block, collapsed per row so the table stays
+   readable; <details> needs no JavaScript, which the CSP would block anyway. */
+.contact-edit > summary {
+  cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--brand-dark);
+  padding: 2px 0;
+}
+.contact-edit[open] > summary { margin-bottom: 6px; }
+.contact-edit .field { margin-bottom: 8px; }
+.contact-edit .field input, .contact-edit .field select { font-size: 12.5px; padding: 5px 8px; }
+.contact-grid { min-width: 190px; }
+.contact-sum {
+  display: flex; flex-wrap: wrap; gap: 2px 10px;
+  font-size: 12px; color: var(--ink-soft); margin-bottom: 4px;
+}
+.contact-sum .ok { color: var(--brand); font-weight: 600; }
+.contact-set {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px 2px; margin: 4px 0 16px;
+}
+.contact-set > legend { padding: 0 6px; font-weight: 600; font-size: 13px; }
+
+/* Six one-per-row tiles push the table off a phone screen; two up keeps the
+   numbers readable and the table in reach. */
+@media (max-width: 560px) {
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat { padding: 14px; }
+  .stat .n { font-size: 24px; }
+  .stat .k { font-size: 12px; }
+}
