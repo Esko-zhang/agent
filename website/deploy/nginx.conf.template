@@ -1,0 +1,46 @@
+# Durlevel site — Nginx reverse proxy.
+# Installed to /etc/nginx/sites-available/durlevel by deploy/install.sh, which
+# substitutes __DOMAIN__, __PORT__ and __APP_DIR__.
+#
+# certbot adds the TLS server block and the HTTP redirect when it runs, so this
+# file deliberately starts as plain HTTP on port 80.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN__;
+
+    # Must exceed MAX_UPLOAD_MB / MAX_DOC_MB in .env, or large uploads are cut
+    # off by Nginx before the app ever sees them.
+    client_max_body_size 25m;
+
+    # The site is private and sent to named customers; keep it out of indexes
+    # even if a crawler somehow reaches it.
+    add_header X-Robots-Tag "noindex, nofollow" always;
+
+    access_log /var/log/nginx/durlevel.access.log;
+    error_log  /var/log/nginx/durlevel.error.log;
+
+    # Product images: served straight off disk, skipping Node entirely.
+    location /uploads/ {
+        alias __APP_DIR__/public/uploads/;
+        expires 7d;
+        add_header Cache-Control "public";
+        # Uploaded files are user content: never let the browser guess a type.
+        add_header X-Content-Type-Options "nosniff" always;
+        access_log off;
+        try_files $uri =404;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:__PORT__;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        # TRUST_PROXY=1 in .env makes the app read the client IP from here.
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection        "";
+        proxy_read_timeout 60s;
+    }
+}

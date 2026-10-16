@@ -1,0 +1,44 @@
+# Durlevel site — systemd unit.
+# Installed to /etc/systemd/system/durlevel.service by deploy/install.sh,
+# which substitutes __APP_DIR__ and __APP_USER__.
+[Unit]
+Description=Durlevel product site
+Documentation=https://github.com/Esko-zhang/agent
+After=network-online.target
+Wants=network-online.target
+# A crash loop should back off rather than hammer the box. These belong to the
+# unit, not the service: systemd ignores StartLimitIntervalSec under [Service].
+StartLimitBurst=10
+StartLimitIntervalSec=120
+
+[Service]
+Type=simple
+User=__APP_USER__
+Group=__APP_USER__
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=__APP_DIR__/.env
+ExecStart=/usr/bin/env node server.js
+Restart=always
+RestartSec=3
+
+# The app only ever needs to write to its own data and uploads directories.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=__APP_DIR__/data __APP_DIR__/public/uploads
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=durlevel
+
+[Install]
+WantedBy=multi-user.target

@@ -346,39 +346,29 @@ npm start                     # http://localhost:3000
 
 ## 部署到服务器
 
+干净的 Debian / Ubuntu 服务器，一条命令装完——Node、运行用户、systemd 服务、
+Nginx 反向代理、HTTPS 证书、管理员账号：
+
 ```bash
-# 1. 安装 Node.js 20+，拉取代码
-npm ci --omit=dev
-
-# 2. 配置环境变量
-cp .env.example .env
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # 生成 SESSION_SECRET
-vi .env        # 填入 SESSION_SECRET，设 NODE_ENV=production、TRUST_PROXY=1
-
-# 3. 初始化
-npm run init-db
-
-# 4. 常驻运行
-pm2 start server.js --name durlevel   # 或用 systemd
+sudo DOMAIN=catalogue.你们的域名 WITH_TLS=1 TLS_EMAIL=you@yourdomain.com \
+     bash deploy/install.sh
 ```
 
-Nginx 反向代理（配好 HTTPS 证书后）：
+细节、参数、日常运维和排错都在 **[`deploy/README.md`](deploy/README.md)**。要点：
 
-```nginx
-server {
-  server_name www.example.com;
-  client_max_body_size 10m;          # 需大于 MAX_UPLOAD_MB
-  location / {
-    proxy_pass http://127.0.0.1:3000;
-    proxy_set_header Host              $host;
-    proxy_set_header X-Real-IP         $remote_addr;
-    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-  }
-}
-```
+- 脚本可重复执行：**不覆盖 `.env`、不动数据库、不重置已有管理员**，`git pull` 后再跑一次即可；
+- 应用只监听 `127.0.0.1`，外网一律走 Nginx，安全组**只放行 80 / 443 和 SSH**；
+- `deploy/update.sh` 更新（先自动备份），`deploy/backup.sh` 备份数据库 + 图片 + 文档；
+- 服务器在**中国大陆**且域名**未备案**的话，80 端口会被拦截。这个站是发给海外客户的，
+  **香港 / 新加坡地域更合适**：不用备案，客户访问也更快。
 
-> 走代理时务必设 `TRUST_PROXY`，否则登录限流会把所有访客当成同一个 IP，访问记录里的 IP 也全是错的。
+两个最容易踩的坑：
+
+> **没有 HTTPS 就别开 `COOKIE_SECURE=1`。** 带 Secure 的 Cookie 在 HTTP 下浏览器不回传，
+> 表现是密码输对了也一直弹回登录页。脚本在没配证书时会自动设成 0，证书装好后记得改回 1。
+
+> **走代理必须设 `TRUST_PROXY=1`。** 否则登录限流会把所有访客当成同一个 IP，
+> 访问记录里的 IP 和国家也全是 Nginx 自己的。
 
 ## 环境变量
 
@@ -439,6 +429,7 @@ website/
 ├── views/                   EJS 模板（前台英文 / 后台中文）
 ├── public/                  css、js、favicon、uploads/
 ├── scripts/                 init-db.js、reset-password.js、mail-test.js
+├── deploy/                  install.sh、update.sh、backup.sh、systemd / Nginx 模板
 └── docs/规划方案.md
 ```
 
