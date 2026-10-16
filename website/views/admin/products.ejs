@@ -5,6 +5,12 @@
   <div class="spacer"></div>
   <div class="actions">
     <% if (canImport) { %>
+      <form class="inline-form" method="post" action="/admin/products/renumber"
+            data-confirm="把<%= category ? '当前分类' : '全部分类' %>的排序值按现在的顺序重排成 1、2、3…？顺序本身不变。">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="category" value="<%= category || '' %>">
+        <button class="btn btn-ghost" type="submit">重新编号</button>
+      </form>
       <a class="btn btn-ghost" href="/admin/products/import">批量导入</a>
     <% } %>
     <a class="btn" href="/admin/products/new<%= category ? '?category=' + category : '' %>">+ 新增产品</a>

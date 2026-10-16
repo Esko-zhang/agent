@@ -111,6 +111,33 @@ router.post('/', uploadSingle('image'), (req, res) => {
   res.redirect(`/admin/products?category=${row.category}&ok=${encodeURIComponent(note)}`);
 });
 
+/**
+ * Renumbers a category 1, 2, 3 … in its current display order. Administrators
+ * only: it rewrites every row in the category, and the order itself is a
+ * catalogue-wide decision. Logged once rather than once per product.
+ */
+router.post('/renumber', (req, res) => {
+  if (denyUnlessAdmin(req, res, '只有管理员可以重新编号。')) return;
+  const one = config.CATEGORY_KEYS.includes(req.body.category) ? req.body.category : null;
+  const keys = one ? [one] : config.CATEGORY_KEYS;
+  let total = 0;
+  for (const key of keys) {
+    const n = products.renumber(key);
+    total += n;
+    if (!n) continue;
+    const zh = (config.CATEGORIES.find((c) => c.key === key) || {}).zh || key;
+    productlog.record(req, {
+      action: 'reorder',
+      category: key,
+      note: `重新编号「${zh}」：${n} 个产品按当前顺序排成 1…${n}`,
+    });
+  }
+  res.redirect(
+    `/admin/products${one ? '?category=' + one + '&' : '?'}ok=` +
+      encodeURIComponent(total ? `已重新编号 ${total} 个产品` : '没有可编号的产品')
+  );
+});
+
 router.post('/:id', uploadSingle('image'), (req, res, next) => {
   const existing = products.q.byId.get(req.params.id);
   if (!existing) {

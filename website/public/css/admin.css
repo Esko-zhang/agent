@@ -313,3 +313,4 @@ dl.kv dd.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-weig
 .change-feed > li:last-child { border-bottom: 0; }
 .change-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13.5px; }
 .change-body { margin-top: 4px; font-size: 13.5px; }
+.badge-act-reorder { background: #eef1f4; color: #4a5560; }

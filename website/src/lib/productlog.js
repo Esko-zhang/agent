@@ -22,6 +22,7 @@ const ACTIONS = [
   { key: 'unpublish', zh: '下架' },
   { key: 'delete', zh: '删除产品' },
   { key: 'import', zh: '批量导入' },
+  { key: 'reorder', zh: '重新编号' },
   { key: 'doc_add', zh: '上传文档' },
   { key: 'doc_remove', zh: '删除文档' },
 ];
@@ -111,9 +112,9 @@ function summarise(action, changes) {
  * a create, only `before` for a delete. `note` replaces the generated summary,
  * which is what the document actions use.
  */
-function record(req, { action, product, before = null, after = null, note = '' }) {
+function record(req, { action, product, before = null, after = null, note = '', category = '' }) {
   const actor = req?.user || null;
-  const row = product || after || before || {};
+  const row = product || after || before || { category };
   const changes = action === 'update' ? diff(before, after) : [];
   q.insert.run({
     product_id: row.id || null,

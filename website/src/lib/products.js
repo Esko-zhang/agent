@@ -61,8 +61,21 @@ function fromForm(body) {
   return row;
 }
 
+/** The next number in a category: 1, 2, 3 … rather than 10, 20, 30. */
 function nextSortOrder(category) {
-  return q.maxSort.get(category).m + 10;
+  return q.maxSort.get(category).m + 1;
 }
 
-module.exports = { q, publicList, fromForm, nextSortOrder, SEARCHABLE };
+/**
+ * Renumbers one category 1, 2, 3 … in the order it is displayed now, so a
+ * catalogue that grew gaps (or came from the old step-of-10 numbering) reads
+ * cleanly again. The display order itself does not change.
+ */
+const renumber = db.transaction((category) => {
+  const rows = q.listByCategoryAdmin.all(category);
+  const stmt = db.prepare('UPDATE products SET sort_order = ? WHERE id = ?');
+  rows.forEach((p, i) => stmt.run(i + 1, p.id));
+  return rows.length;
+});
+
+module.exports = { q, publicList, fromForm, nextSortOrder, renumber, SEARCHABLE };

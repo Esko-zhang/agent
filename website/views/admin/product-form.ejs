@@ -64,7 +64,8 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
 
     <label class="field">
       <span>排序值 <span class="hint">（数字越小越靠前）</span></span>
-      <input name="sort_order" type="number" value="<%= product.sort_order || 0 %>" step="10">
+      <input name="sort_order" type="number" value="<%= product.sort_order || 0 %>"
+             step="1" min="0">
     </label>
   </div>
 

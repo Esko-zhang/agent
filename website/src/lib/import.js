@@ -246,15 +246,15 @@ async function buildTemplate() {
   sheet.addRow({
     category: 'OEM成品', name_en: 'Vitamin C 1000mg Tablets', dosage_form: 'Tablet',
     spec: '1000mg x 60 tablets', tags: 'Immune Support, Best Seller',
-    remark: 'MOQ 5,000 bottles', sort_order: 10, is_active: '是',
+    remark: 'MOQ 5,000 bottles', sort_order: 1, is_active: '是',
   });
   sheet.addRow({
     category: '提取物', name_en: 'Green Tea Extract', content: 'EGCG 50%',
-    ratio: '10:1', remark: 'Water soluble', sort_order: 10, is_active: '是',
+    ratio: '10:1', remark: 'Water soluble', sort_order: 1, is_active: '是',
   });
   sheet.addRow({
     category: '食品添加剂', name_en: 'Sodium Citrate', dosage_form: 'Powder',
-    cas_no: '68-04-2', remark: 'Food grade, FCC', sort_order: 10, is_active: '是',
+    cas_no: '68-04-2', remark: 'Food grade, FCC', sort_order: 1, is_active: '是',
   });
 
   const notes = wb.addWorksheet('填写说明');
