@@ -93,6 +93,42 @@ function duplicateKeys() {
     .map(([key, hits]) => ({ key, hits }));
 }
 
+/**
+ * Lines where this check and the running site would disagree.
+ *
+ * The two read .env with different parsers: this script uses dotenv, which
+ * strips an inline `#` comment from an unquoted value, while systemd's
+ * EnvironmentFile only treats `#` as a comment at the START of a line and
+ * keeps the rest of it as part of the value. A line like
+ *
+ *   SMTP_FROM=Durlevel <info@x.com># 由 deploy/install.sh 生成于 ...
+ *
+ * therefore passes here and breaks in production, where the envelope sender
+ * comes out empty and the mail is rejected. Quoting the value makes both
+ * parsers agree, so that is what this suggests.
+ */
+function inlineComments() {
+  const fs = require('fs');
+  const path = require('path');
+  let text;
+  try {
+    text = fs.readFileSync(path.join(__dirname, '..', '.env'), 'utf8');
+  } catch {
+    return [];
+  }
+  const out = [];
+  text.split(/\r?\n/).forEach((raw, i) => {
+    const m = /^\s*(?:export\s+)?(SMTP_[A-Za-z0-9_]+|INQUIRY_NOTIFY_TO)\s*=(.*)$/.exec(raw);
+    if (!m) return;
+    const value = m[2].trim();
+    // A fully quoted value is safe: both parsers strip the quotes.
+    if (/^(".*"|'.*')$/.test(value)) return;
+    if (value.indexOf('#') === -1) return;
+    out.push({ key: m[1], line: i + 1, value, kept: value.split('#')[0].trim() });
+  });
+  return out;
+}
+
 (async () => {
   const s = mailer.status();
 
@@ -109,6 +145,33 @@ function duplicateKeys() {
     console.log('  删掉多余的那几行（通常是文件底部留下的空模板）：');
     console.log("    sudo sed -i '/^SMTP_\\(HOST\\|PORT\\|SECURE\\|USER\\|PASS\\|FROM\\)=$/d' " +
                 require('path').join(__dirname, '..', '.env'));
+  }
+
+  const inline = inlineComments();
+  if (inline.length) {
+    console.log('\n⚠ 这几行里有行内 # —— 本脚本和真正跑着的网站会读出不同的值');
+    for (const t of inline) {
+      console.log('  第 ' + t.line + ' 行 ' + t.key);
+      console.log('    本脚本读到 ：' + t.kept);
+      console.log('    网站读到   ：' + t.value.slice(0, 70));
+    }
+    console.log('  所以这里会显示成功，真实询盘邮件却发不出去。两种改法任选一种：');
+    console.log('    · 把 # 之后的注释挪到单独一行；');
+    console.log('    · 或者给值加上引号，例如 SMTP_FROM="Durlevel <name@example.com>"');
+  }
+
+  // A From that is not an address is accepted by the client and rejected by
+  // the server, with an empty envelope sender — worth saying before sending.
+  const fromAddr = /<([^>]+)>\s*$/.exec(s.from) ? /<([^>]+)>\s*$/.exec(s.from)[1] : s.from;
+  if (s.from && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(fromAddr).trim())) {
+    console.log('\n⚠ SMTP_FROM 不像一个邮箱地址：' + s.from.slice(0, 80));
+    console.log('  只能是 name@example.com，或者 显示名 <name@example.com>。');
+  } else if (s.from && process.env.SMTP_USER &&
+             String(fromAddr).trim().toLowerCase() !== String(process.env.SMTP_USER).trim().toLowerCase()) {
+    console.log('\n⚠ SMTP_FROM 的地址和 SMTP_USER 不是同一个：');
+    console.log('    SMTP_FROM 里的地址：' + fromAddr);
+    console.log('    SMTP_USER         ：' + process.env.SMTP_USER);
+    console.log('  阿里云会按「发件人不是本人」拒收，两者必须一致。');
   }
 
   console.log('\n当前配置');
