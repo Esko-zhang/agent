@@ -33,6 +33,23 @@ printf '密码（不显示）: ';          read -rs pass; echo
 [ -n "$user" ] && [ -n "$pass" ] || { echo "账号和密码都不能为空"; exit 1; }
 
 echo
+bold "0) 这台服务器出口的公网 IP"
+# 同一个账号在办公室的 Foxmail 能用、在这台机器上不行时，差别往往就是这个 IP：
+# 邮箱侧可能有异地登录保护或 IP 白名单。找客服时要报的就是它。
+myip=""
+for svc in https://ifconfig.me/ip https://api.ipify.org https://ipinfo.io/ip; do
+  myip="$(curl -fsS --max-time 8 "$svc" 2>/dev/null | tr -d '[:space:]')"
+  [ -n "$myip" ] && break
+done
+if [ -n "$myip" ]; then
+  echo "   $myip"
+  echo "   （办公室电脑上打开 https://ifconfig.me 看到的是另一个 IP —— 如果邮箱有"
+  echo "     异地登录保护或白名单，差别就在这里。）"
+else
+  warn "   取不到（出网被限制？）。可以在服务器上跑：curl ifconfig.me"
+fi
+
+echo
 bold "1) 这台服务器能不能解析并连上 $host:$port"
 if ! getent hosts "$host" >/dev/null 2>&1; then
   warn "   域名解析不了 —— SMTP_HOST 可能填错了"; exit 1
