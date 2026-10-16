@@ -44,6 +44,11 @@ function explain(result) {
             '  - 用 `nc -vz ' + (process.env.SMTP_HOST || 'smtp.qiye.aliyun.com') + ' ' +
               (Number(process.env.SMTP_PORT) || 465) + '` 可以单独验证通不通。'];
   }
+  if (code === 'EDNS' || text.indexOf('enotfound') !== -1 || text.indexOf('getaddrinfo') !== -1) {
+    return ['发信服务器的地址解析不了，多半是 SMTP_HOST 填错或这个租户不用这个域名：',
+            '  - 阿里云企业邮箱是 smtp.qiye.aliyun.com，部分租户要用 smtp.mxhichina.com；',
+            '  - 用 `ping ' + (process.env.SMTP_HOST || 'smtp.qiye.aliyun.com') + '` 看看能不能解析出 IP。'];
+  }
   if (text.indexOf('spf') !== -1) {
     return ['对方按 SPF 拒收。域名的 DNS 需要一条 TXT 记录：',
             '  v=spf1 include:spf.qiye.aliyun.com -all'];
