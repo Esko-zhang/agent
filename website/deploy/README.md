@@ -74,9 +74,21 @@ systemctl status durlevel        # 状态
 journalctl -u durlevel -f        # 实时日志
 systemctl restart durlevel       # 改完 .env 后重启
 
-bash /opt/durlevel/deploy/update.sh    # 更新代码（会先自动备份）
-bash /opt/durlevel/deploy/backup.sh    # 手动备份
+sudo bash /opt/durlevel/deploy/update.sh   # 更新到最新代码（先自动备份）
+sudo bash /opt/durlevel/deploy/backup.sh   # 手动备份
 ```
+
+### 更新是怎么拿到新代码的
+
+`update.sh` 按这个顺序找代码，所以多数情况下不用传任何参数：
+
+1. `SRC=/路径/到/website` —— 指定了就用它；
+2. `APP_DIR` 本身是 git 仓库 —— 就地 `git pull`；
+3. 都不是 —— **从 GitHub 浅克隆一份**（`REPO` / `BRANCH` 可覆盖），同步完即删。
+
+`.env`、`data/`、`public/uploads/`、`backups/` 四样永远不动，其余文件按新代码对齐
+（旧版本里删掉的文件也会跟着删）。数据库结构在应用启动时自己迁移，没有单独的迁移步骤。
+更新失败不用慌：第 1 步的备份就在 `/opt/durlevel/backups` 里。
 
 每晚自动备份，加一行 crontab：
 
