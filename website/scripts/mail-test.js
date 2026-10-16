@@ -62,8 +62,55 @@ function line(label, value) {
   console.log('  ' + label.padEnd(14) + (value === '' || value == null ? '（未填）' : value));
 }
 
+/**
+ * The trap that costs the most time: a key written twice in .env.
+ *
+ * dotenv keeps the LAST occurrence, so appending a working SMTP block above an
+ * older empty one leaves the empty one winning, and every value silently reads
+ * as blank. Nothing about the resulting "SMTP 未配置" says why, so this looks
+ * for it directly and points at the line to delete.
+ */
+function duplicateKeys() {
+  const fs = require('fs');
+  const path = require('path');
+  const file = path.join(__dirname, '..', '.env');
+  let text;
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return [];   // no .env at all: the environment is set some other way
+  }
+  const seen = new Map();
+  text.split(/\r?\n/).forEach((raw, i) => {
+    const m = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/.exec(raw);
+    if (!m) return;
+    if (!/^(SMTP_|INQUIRY_NOTIFY_TO)/.test(m[1])) return;
+    if (!seen.has(m[1])) seen.set(m[1], []);
+    seen.get(m[1]).push({ line: i + 1, value: m[2].trim() });
+  });
+  return [...seen.entries()]
+    .filter(([, hits]) => hits.length > 1)
+    .map(([key, hits]) => ({ key, hits }));
+}
+
 (async () => {
   const s = mailer.status();
+
+  const dupes = duplicateKeys();
+  if (dupes.length) {
+    console.log('\n⚠ .env 里有重复的键 —— 后面那行会覆盖前面那行');
+    for (const d of dupes) {
+      const last = d.hits[d.hits.length - 1];
+      console.log('  ' + d.key + '  出现在第 ' +
+        d.hits.map((h) => h.line).join('、') + ' 行；' +
+        '生效的是第 ' + last.line + ' 行：' +
+        (last.value === '' ? '（空值）' : last.value.slice(0, 40)));
+    }
+    console.log('  删掉多余的那几行（通常是文件底部留下的空模板）：');
+    console.log("    sudo sed -i '/^SMTP_\\(HOST\\|PORT\\|SECURE\\|USER\\|PASS\\|FROM\\)=$/d' " +
+                require('path').join(__dirname, '..', '.env'));
+  }
+
   console.log('\n当前配置');
   line('发信服务器', (process.env.SMTP_HOST || '') +
        (process.env.SMTP_HOST ? ':' + (Number(process.env.SMTP_PORT) || 465) : ''));
