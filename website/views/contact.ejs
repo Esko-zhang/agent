@@ -4,8 +4,15 @@
 
   <main class="wrap">
     <div class="page-head">
-      <h1>Contact Us</h1>
-      <p><%= settings.contact_intro %></p>
+      <div>
+        <p class="eyebrow">Durlevel · Export team</p>
+        <h1>Contact Us</h1>
+        <p><%= settings.contact_intro %></p>
+      </div>
+      <p class="issued eyebrow">
+        Signed in as
+        <strong><%= currentUser.display_name || currentUser.username %></strong>
+      </p>
     </div>
 
     <% if (!team.length) { %>

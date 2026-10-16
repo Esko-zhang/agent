@@ -4,8 +4,16 @@
 
   <main class="wrap">
     <div class="page-head">
-      <h1>Product Catalogue</h1>
-      <p><%= settings.products_intro %></p>
+      <div>
+        <p class="eyebrow">Durlevel · Private catalogue</p>
+        <h1>Product Catalogue</h1>
+        <p><%= settings.products_intro %></p>
+      </div>
+      <p class="issued eyebrow">
+        Issued to
+        <strong><%= currentUser.display_name || currentUser.username %></strong>
+        <%= totalFound %> <%= totalFound === 1 ? 'item' : 'items' %> · <%= sections.length %> categories
+      </p>
     </div>
 
     <!-- Search box + in-page category jump links (per the spreadsheet note on A5). -->
@@ -34,7 +42,7 @@
       </p>
     <% } %>
 
-    <% sections.forEach(function (s) { %>
+    <% sections.forEach(function (s, sIndex) { %>
       <%
       // Only the two or three attributes this category actually uses get a
       // column. Tags and remarks sit under the product name, and the image
@@ -44,7 +52,11 @@
       var colCount = cols.length + 2 + (hasImages ? 1 : 0);
       %>
       <section class="product-section" id="<%= s.anchor %>">
-        <h2><%= s.title %></h2>
+        <div class="section-head">
+          <span class="index" aria-hidden="true"><%= ('0' + (sIndex + 1)).slice(-2) %></span>
+          <h2><%= s.title %></h2>
+          <span class="count"><%= s.rows.length %> <%= s.rows.length === 1 ? 'item' : 'items' %></span>
+        </div>
 
         <p class="scroll-hint" aria-hidden="true">Swipe the table sideways to see all columns</p>
         <div class="table-scroll">

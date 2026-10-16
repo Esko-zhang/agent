@@ -2,14 +2,26 @@
 <body class="login-body">
   <main class="login-shell">
     <div class="login-card">
-      <div class="login-brand">
-        <% if (settings.logo_path) { %>
-          <img class="logo-img" src="<%= settings.logo_path %>" alt="<%= settings.brand_name %>">
-        <% } else { %>
-          <p class="logo-text"><%= settings.brand_name %></p>
-        <% } %>
-        <p class="tagline"><%= settings.login_tagline %></p>
-      </div>
+      <aside class="login-aside">
+        <div>
+          <p class="eyebrow">Private catalogue</p>
+          <% if (settings.logo_path) { %>
+            <img class="logo-img" src="<%= settings.logo_path %>" alt="<%= settings.brand_name %>">
+          <% } else { %>
+            <p class="logo-text"><%= settings.brand_name %></p>
+          <% } %>
+          <p class="tagline"><%= settings.login_tagline %></p>
+        </div>
+        <div class="login-meta">
+          <span class="eyebrow">OEM finished products</span>
+          <span class="eyebrow">Plant extracts</span>
+          <span class="eyebrow">Food additives</span>
+        </div>
+      </aside>
+
+      <div class="login-form">
+      <p class="eyebrow">Account access</p>
+      <h1>Sign in to view the catalogue</h1>
 
       <% if (error) { %>
         <p class="alert alert-error" role="alert"><%= error %></p>
@@ -38,6 +50,7 @@
         Accounts are issued by <%= settings.brand_name %> only — there is no public
         registration. Please contact your sales representative to request access.
       </p>
+      </div>
     </div>
   </main>
 </body>

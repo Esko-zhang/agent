@@ -4,8 +4,15 @@
 
   <main class="wrap">
     <div class="page-head">
-      <h1>Request a Quotation</h1>
-      <p>Tell us the quantities you need and our export team will reply with pricing.</p>
+      <div>
+        <p class="eyebrow">Durlevel · Quotation request</p>
+        <h1>Request a Quotation</h1>
+        <p>Tell us the quantities you need and our export team will reply with pricing.</p>
+      </div>
+      <p class="issued eyebrow">
+        Requested by
+        <strong><%= currentUser.display_name || currentUser.username %></strong>
+      </p>
     </div>
 
     <% if (error) { %><p class="alert alert-error" role="alert"><%= error %></p><% } %>
