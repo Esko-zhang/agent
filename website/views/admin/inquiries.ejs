@@ -19,6 +19,10 @@ function qs(over) {
 
 <% if (flash) { %><p class="alert alert-ok"><%= flash %></p><% } %>
 
+<% if (!roles.isAdmin(currentUser)) { %>
+  <p class="admin-hint">这里只显示<strong>你自己创建的客户</strong>提交的询盘。</p>
+<% } %>
+
 <% if (!mailStatus.enabled) { %>
   <p class="admin-hint">
     邮件通知未配置：询盘会正常保存并显示在这里，但不会自动发邮件给业务员。

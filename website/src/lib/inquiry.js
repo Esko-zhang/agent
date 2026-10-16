@@ -72,9 +72,19 @@ const create = db.transaction((header, items) => {
   return id;
 });
 
-function list({ status = '', q: term = '' } = {}, { limit = 50, offset = 0 } = {}) {
+/**
+ * `usernames` scopes the inbox to one sales account's own customers. null
+ * means no scoping (an administrator); an empty array means "nothing", which
+ * is correct for a rep with no customers yet.
+ */
+function list({ status = '', q: term = '', usernames = null } = {}, { limit = 50, offset = 0 } = {}) {
   const where = [];
   const params = [];
+  if (usernames) {
+    if (!usernames.length) return { rows: [], total: 0 };
+    where.push(`username IN (${usernames.map(() => '?').join(',')}) COLLATE NOCASE`);
+    params.push(...usernames);
+  }
   if (status && ['new', 'handled', 'closed'].includes(status)) {
     where.push('status = ?');
     params.push(status);

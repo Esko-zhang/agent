@@ -11,8 +11,8 @@
   <% if (canAssignRoles) { %>
     管理员可以创建<strong>业务员</strong>和<strong>用户</strong>账号；业务员只能创建<strong>用户</strong>账号。
   <% } else { %>
-    你是<strong>业务员</strong>账号，可以创建和管理<strong>用户</strong>账号。
-    业务员和管理员账号由管理员负责，这里不会显示。
+    你是<strong>业务员</strong>账号，可以创建用户账号。
+    这里只显示<strong>你自己创建的客户</strong>——其他业务员的客户、以及管理员和业务员账号都不会出现。
   <% } %>
   网站前台没有注册入口，账号只能在这里发放。
   <strong>每个用户账号会记录是谁创建的</strong>——该客户打开询盘页时，会看到创建他账号的那位业务员的 WhatsApp 按钮。
@@ -80,7 +80,7 @@
 </div>
 
 <div class="card">
-  <h2><%= canAssignRoles ? '现有账号' : '我可以管理的用户账号' %>（<%= rows.length %>）</h2>
+  <h2><%= canAssignRoles ? '现有账号' : '我的客户账号' %>（<%= rows.length %>）</h2>
   <div class="table-wrap">
     <table class="data">
       <thead>

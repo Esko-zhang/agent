@@ -7,10 +7,9 @@ const staff = require('../../lib/staff');
 const router = express.Router();
 const MIN_PASSWORD = 8;
 
-/** Only the accounts this role is allowed to see. */
+/** Only the accounts this role is responsible for. */
 function visibleTo(actor) {
-  const allowed = roles.managedRoles(actor);
-  return users.q.list.all().filter((u) => allowed.includes(u.role));
+  return roles.ownedAccounts(actor, users.q.list.all());
 }
 
 function view(req, res, status, error) {

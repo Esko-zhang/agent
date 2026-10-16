@@ -1,18 +1,21 @@
 /* Admin backend — Chinese UI, built on the same tokens as the public site. */
 .admin-body { background: var(--bg); }
 
-/* Fills the 1920px page set in site.css, so the sidebar runs the full height. */
+/* Fills the page height set in site.css; the dark band is painted on the grid
+   so it runs the full height while the sidebar stays put on screen. */
 .admin-shell {
   display: grid; grid-template-columns: 220px 1fr;
   flex: 1 0 auto; min-height: var(--page-min-height);
+  /* The sidebar itself is only one screen tall so it can stick; this paints
+     its column for the whole page so no light gap shows below it. */
+  background: linear-gradient(to right, var(--brand-dark) 0 220px, var(--bg) 220px);
 }
 
 .admin-side {
   background: var(--brand-dark); color: #fff; padding: 20px 0;
   display: flex; flex-direction: column;
-  /* Sticky, so navigation and "退出登录" stay reachable on a 1920px page
-     instead of sitting 1900px below the fold. */
-  position: sticky; top: 0; align-self: start; height: 100vh;
+  /* Sticky, so navigation and "退出登录" stay on screen on a long page. */
+  position: sticky; top: 0; align-self: start; height: var(--page-min-height);
 }
 .admin-side .side-brand {
   padding: 0 20px 18px; margin-bottom: 10px; font-weight: 700; font-size: 17px;

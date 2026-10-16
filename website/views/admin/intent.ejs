@@ -14,6 +14,7 @@
   产品列表是一整页，所以「打开了页面」说明不了客户关心哪个产品。真正有意义的信号是
   <strong>搜了什么</strong>、<strong>下载了谁的 TDS/COA</strong>、<strong>询了哪些产品</strong>——
   意向由弱到强。下表按这个权重排序，排在前面的最值得先打电话。
+  <% if (!roles.isAdmin(currentUser)) { %>这里只显示<strong>你自己创建的客户</strong>。<% } %>
 </p>
 
 <div class="card">

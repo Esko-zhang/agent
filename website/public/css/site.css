@@ -25,10 +25,15 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
-/* Every page is at least 1920px tall, as specified. The page is a flex column
-   so the footer is pushed to the bottom of that height instead of floating
-   halfway down with empty background beneath it. */
-:root { --page-min-height: 1920px; }
+/* A page fills exactly one screen, whatever the screen is — a laptop, a
+   27-inch monitor or a phone — and grows past that only when the content
+   needs it. The page is a flex column so the footer sits on the bottom edge
+   rather than floating halfway down.
+   dvh tracks the phone browser's collapsing toolbar; vh is the fallback. */
+:root { --page-min-height: 100vh; }
+@supports (height: 100dvh) {
+  :root { --page-min-height: 100dvh; }
+}
 
 html { min-height: 100%; }
 
@@ -95,11 +100,10 @@ img { max-width: 100%; }
 /* ---------- Login page ---------- */
 /* One centred card: the page has a single job, so nothing competes with it. */
 .login-body { background: var(--login-bg); }
-/* Centred in the first screenful rather than in the full 1920px page — at
-   1920px the midpoint is 960px down, which is below the fold on any laptop. */
+/* The card centres in the screen, and the shell grows with the page. */
 .login-shell {
-  flex: 0 0 auto;
-  min-height: 100vh;
+  flex: 1 0 auto;
+  min-height: var(--page-min-height);
   display: grid;
   place-items: center;
   padding: 40px max(16px, env(safe-area-inset-left, 0px));
@@ -134,6 +138,16 @@ img { max-width: 100%; }
 @media (max-width: 420px) {
   .login-shell { padding: 24px 16px; }
   .login-card { padding: 32px 22px 26px; }
+}
+
+/* On a short screen the card would otherwise be taller than the viewport and
+   could not centre; trim the padding so it still fits. */
+@media (max-height: 640px) {
+  .login-shell { padding-block: 16px; }
+  .login-card { padding: 24px 22px 20px; }
+  .login-card .login-brand { margin-bottom: 20px; gap: 6px; }
+  .login-card .logo-text { font-size: 25px; }
+  .login-note { margin-top: 18px; padding-top: 14px; }
 }
 
 /* ---------- Site header ---------- */

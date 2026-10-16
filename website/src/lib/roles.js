@@ -12,10 +12,14 @@
  * A sales account must never be able to widen its own reach, so it cannot
  * create, edit, or delete anything but customer accounts, and cannot hand out
  * the admin or sales role.
+ *
+ * Sales accounts are also kept to their own book of business: a sales account
+ * sees only the customers it issued, and their inquiries and intent. An
+ * administrator sees everyone's.
  */
 const ROLES = [
   { key: 'admin', zh: '管理员', hint: '可进入全部后台功能，并管理业务员账号' },
-  { key: 'sales', zh: '业务员', hint: '可管理用户账号，查看询盘与客户意向' },
+  { key: 'sales', zh: '业务员', hint: '可管理自己创建的用户账号，并查看这些客户的询盘与意向' },
   { key: 'user', zh: '用户', hint: '仅浏览前台产品，看不到管理后台' },
 ];
 const ROLE_KEYS = ROLES.map((r) => r.key);
@@ -62,14 +66,35 @@ function managedRoles(user) {
 }
 
 /**
- * Whether `actor` may modify `target`. Sales may only touch customers, and
- * nobody may act on an account whose role they could not create.
+ * Whether `actor` may modify `target`. Sales may only touch the customers it
+ * issued itself; an administrator may touch anyone.
  */
 function canManageAccount(actor, target) {
   if (!actor || !target) return false;
   if (isAdmin(actor)) return true;
-  if (isSales(actor)) return target.role === 'user';
+  if (isSales(actor)) return target.role === 'user' && target.created_by === actor.id;
   return false;
+}
+
+/** Filters a list of accounts down to the ones `actor` is responsible for. */
+function ownedAccounts(actor, accounts) {
+  if (isAdmin(actor)) return accounts;
+  if (isSales(actor)) {
+    return accounts.filter((u) => u.role === 'user' && u.created_by === actor.id);
+  }
+  return [];
+}
+
+/**
+ * True when `actor` may look at records belonging to the account named
+ * `username` — used by the inquiry inbox and the intent view, which are keyed
+ * by username rather than id.
+ */
+function canSeeCustomer(actor, username, accountsByName) {
+  if (isAdmin(actor)) return true;
+  if (!isSales(actor)) return false;
+  const u = accountsByName[String(username || '').toLowerCase()];
+  return !!u && u.role === 'user' && u.created_by === actor.id;
 }
 
 module.exports = {
@@ -85,4 +110,6 @@ module.exports = {
   assignableRoles,
   managedRoles,
   canManageAccount,
+  ownedAccounts,
+  canSeeCustomer,
 };
