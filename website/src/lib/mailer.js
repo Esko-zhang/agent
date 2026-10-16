@@ -23,6 +23,10 @@ function status() {
     enabled,
     host: process.env.SMTP_HOST || '',
     from: process.env.SMTP_FROM || process.env.SMTP_USER || '',
+    // Where a reply should land when the From address cannot take one. A
+    // relay like Aliyun DirectMail sends as noreply@<verified domain>, so
+    // without this a salesperson hitting Reply writes to nobody.
+    replyTo: process.env.SMTP_REPLY_TO || '',
     to: (process.env.INQUIRY_NOTIFY_TO || '').split(',').map((s) => s.trim()).filter(Boolean),
   };
 }
@@ -48,6 +52,7 @@ async function sendTest(to) {
   try {
     const info = await transport.sendMail({
       from: status().from,
+      replyTo: status().replyTo || undefined,
       to: to,
       subject: '[Durlevel] SMTP 测试邮件',
       text: '这是一封测试邮件。收到它说明询盘邮件通知已经可以正常发送。\n\n' +
@@ -88,6 +93,10 @@ async function notifyInquiry(inquiry, items, recipients) {
     await transport.sendMail({
       from: status().from,
       to,
+      // This notification goes to the sales team, so Reply should reach the
+      // buyer who sent the inquiry — not the mailbox it was sent from. That
+      // is what makes the mail answerable straight from the inbox.
+      replyTo: inquiry.email || status().replyTo || undefined,
       subject: `[询盘] ${inquiry.company || inquiry.username} - ${items.length} 个产品`,
       text: body,
     });

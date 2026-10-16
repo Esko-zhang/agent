@@ -18,6 +18,7 @@ set -euo pipefail
 APP_DIR="${APP_DIR:-/opt/durlevel}"
 ENV_FILE="$APP_DIR/.env"
 
+getenv_val() { grep -m1 "^$1=" "$ENV_FILE" 2>/dev/null | cut -d= -f2- | tr -d '"'"'" || true; }
 bold() { printf '\033[1m%s\033[0m\n' "$1"; }
 warn() { printf '\033[33m%s\033[0m\n' "$1"; }
 die()  { printf '\033[31m%s\033[0m\n' "$1" >&2; exit 1; }
@@ -68,13 +69,33 @@ from_name="$(printf '%s' "$from_name" | tr -d '"\\')"
 
 # ---- 服务器 ----------------------------------------------------------------
 echo
-echo "发信服务器：1) smtp.qiye.aliyun.com（默认）   2) smtp.mxhichina.com（部分租户只认这个）"
+echo "发信服务器："
+echo "  1) smtp.qiye.aliyun.com   阿里云企业邮箱（默认）"
+echo "  2) smtp.mxhichina.com     同上，部分租户只认这个"
+echo "  3) smtpdm.aliyun.com      阿里云「邮件推送」——专为服务器发信设计，"
+echo "                            不受企业邮箱的异地登录/IP 限制"
+echo "  4) 其他（手动输入，腾讯企业邮 smtp.exmail.qq.com 等）"
 printf '> [1] '
 read -r host_choice
 case "${host_choice:-1}" in
   2) smtp_host="smtp.mxhichina.com" ;;
+  3) smtp_host="smtpdm.aliyun.com" ;;
+  4) printf '发信服务器地址: '; read -r smtp_host
+     [ -n "$smtp_host" ] || die "地址不能为空。" ;;
   *) smtp_host="smtp.qiye.aliyun.com" ;;
 esac
+
+# ---- 回信地址 --------------------------------------------------------------
+# 用「邮件推送」这类中转发信时，发件人是一个 noreply 地址，业务员在邮箱里
+# 点「回复」会发到一个没人看的地方。询盘通知本身已经自动把回复指向客户，
+# 这里是其余邮件的兜底。
+current_reply="$(getenv_val SMTP_REPLY_TO)"
+echo
+printf '回信地址（业务员点「回复」时发到哪里，可留空）'
+[ -n "$current_reply" ] && printf '\n  直接回车沿用：%s' "$current_reply"
+printf '\n> '
+read -r smtp_reply
+smtp_reply="${smtp_reply:-$current_reply}"
 
 # ---- 写入 ------------------------------------------------------------------
 backup="$ENV_FILE.bak.$(date +%Y%m%d-%H%M%S)"
@@ -100,6 +121,7 @@ sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$ENV_FILE"
   else
     printf 'SMTP_FROM="%s"\n' "$smtp_user"
   fi
+  [ -n "$smtp_reply" ] && printf 'SMTP_REPLY_TO="%s"\n' "$smtp_reply"
 } >> "$ENV_FILE"
 
 # .env 的属主和权限保持原样（里面是密码，必须 600）。
