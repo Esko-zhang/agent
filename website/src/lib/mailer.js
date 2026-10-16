@@ -27,6 +27,40 @@ function status() {
   };
 }
 
+/**
+ * Opens a connection and authenticates, without sending anything. Returns
+ * `{ ok }` or `{ ok: false, code, message, response }` so the command-line
+ * check can explain which step failed.
+ */
+async function verify() {
+  if (!enabled) return { ok: false, code: 'DISABLED', message: 'SMTP_HOST / SMTP_USER 未配置' };
+  try {
+    await transport.verify();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, code: err.code || '', message: err.message, response: err.response || '' };
+  }
+}
+
+/** Sends one plain test message; used by `npm run mail-test`. */
+async function sendTest(to) {
+  if (!enabled) return { ok: false, code: 'DISABLED', message: 'SMTP_HOST / SMTP_USER 未配置' };
+  try {
+    const info = await transport.sendMail({
+      from: status().from,
+      to: to,
+      subject: '[Durlevel] SMTP 测试邮件',
+      text: '这是一封测试邮件。收到它说明询盘邮件通知已经可以正常发送。\n\n' +
+            '发信服务器: ' + (process.env.SMTP_HOST || '') + ':' + (Number(process.env.SMTP_PORT) || 465) + '\n' +
+            '发信账号: ' + (process.env.SMTP_USER || '') + '\n' +
+            '时间: ' + new Date().toISOString() + '\n',
+    });
+    return { ok: true, messageId: info.messageId, accepted: info.accepted, rejected: info.rejected };
+  } catch (err) {
+    return { ok: false, code: err.code || '', message: err.message, response: err.response || '' };
+  }
+}
+
 /** Fire-and-forget: resolves to true when sent, false when skipped or failed. */
 async function notifyInquiry(inquiry, items, recipients) {
   if (!enabled) return false;
@@ -64,4 +98,4 @@ async function notifyInquiry(inquiry, items, recipients) {
   }
 }
 
-module.exports = { enabled, status, notifyInquiry };
+module.exports = { enabled, status, verify, sendTest, notifyInquiry };

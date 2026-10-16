@@ -118,9 +118,42 @@ Account: buyer10
 
 ### 邮件通知（可选）
 
-不配也能用——询盘照样保存，只是不发邮件。要开启就在 `.env` 填 `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS`
-（见 `.env.example`）。收件人默认是所有「显示中」业务员的邮箱，也可以用 `INQUIRY_NOTIFY_TO` 额外指定。
+不配也能用——询盘照样保存，只是不发邮件。收件人默认是所有「显示中」业务员名片上的邮箱，
+也可以用 `INQUIRY_NOTIFY_TO` 额外指定（逗号分隔）。
 **发信失败只记日志，不会导致客户看到报错**——询盘已经存下来了。
+
+`.env.example` 里已按**阿里云企业邮箱**填好默认值：
+
+```
+SMTP_HOST=smtp.qiye.aliyun.com
+SMTP_PORT=465
+SMTP_SECURE=1
+SMTP_USER=sales@你们的域名
+SMTP_PASS=三方客户端安全密码
+SMTP_FROM=Durlevel <sales@你们的域名>
+```
+
+阿里云这边有三个坑，三个都踩过才会通：
+
+1. **管理员要先给这个账号开「SMTP 服务 / 三方客户端」**——较新开通的租户默认是关的，
+   不开的话密码再对也是 `535 authentication failed`。
+2. **`SMTP_PASS` 填「三方客户端安全密码」**，在邮箱设置 → 账户安全里生成，不是网页版登录密码。
+3. **`SMTP_FROM` 必须和 `SMTP_USER` 是同一个地址**（带显示名可以），换个地址发会被拒。
+
+端口用 465 + SSL 而不是 25：**阿里云 ECS 默认封禁 25 端口出站**。安全组也要放行 465 出站。
+域名的 SPF 记录应包含 `include:spf.qiye.aliyun.com`，否则对方可能按 SPF 退信。
+
+### 验证：`npm run mail-test`
+
+```bash
+npm run mail-test                  # 发给业务员名片上的邮箱
+npm run mail-test -- you@x.com     # 只发给指定地址
+npm run mail-test -- --check       # 只验证连接和登录，不发信
+```
+
+它先打印当前配置（密码只显示位数），再连接登录，最后发一封测试邮件。
+失败时不只给 SMTP 原文，还会直接指出该去改哪里——登录被拒、端口被挡、SPF 退信、
+发件人地址不符，各有各的提示。
 
 ## 产品文档（TDS / COA / MSDS）
 
@@ -358,6 +391,10 @@ server {
 | `TRUST_PROXY` | 信任几层代理，直接决定访问记录里的 IP 是否正确，见上文 |
 | `COOKIE_SECURE` | 仅经 HTTPS 发送会话 Cookie（`production` 下默认开启） |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | 仅 `npm run init-db` 首次建号时使用 |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | 发信服务器；阿里云企业邮箱为 `smtp.qiye.aliyun.com` / `465` / `1` |
+| `SMTP_USER` / `SMTP_PASS` | 完整邮箱地址 + 三方客户端安全密码；留空即关闭邮件通知 |
+| `SMTP_FROM` | 收件人看到的发件人，必须与 `SMTP_USER` 同一地址 |
+| `INQUIRY_NOTIFY_TO` | 除业务员名片邮箱外额外的收件人，逗号分隔 |
 | `MAX_UPLOAD_MB` | 单张图片上限，默认 5 |
 | `SESSION_TTL_HOURS` | 登录有效期，默认 12 小时 |
 | `LOGIN_MAX_ATTEMPTS` / `LOGIN_WINDOW_MINUTES` | 登录失败限流，默认 15 分钟内 8 次 |
@@ -401,7 +438,7 @@ website/
 │   └── routes/              auth.js、site.js、admin/*
 ├── views/                   EJS 模板（前台英文 / 后台中文）
 ├── public/                  css、js、favicon、uploads/
-├── scripts/                 init-db.js、reset-password.js
+├── scripts/                 init-db.js、reset-password.js、mail-test.js
 └── docs/规划方案.md
 ```
 

@@ -12,7 +12,8 @@
     "dev": "node --watch server.js",
     "init-db": "node scripts/init-db.js",
     "reset-password": "node scripts/reset-password.js",
-    "seed-demo": "node scripts/seed-demo.js"
+    "seed-demo": "node scripts/seed-demo.js",
+    "mail-test": "node scripts/mail-test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
