@@ -192,8 +192,9 @@ table.data tbody tr:focus-within {
   background: #fbfbf9; box-shadow: inset 2px 0 0 var(--brand);
 }
 table.data .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+/* 和前台同一个道理：后台看缩略图是为了确认传对了图，裁掉两边就看不出来了。 */
 table.data .mini-thumb {
-  display: block; width: 46px; height: 46px; object-fit: cover;
+  display: block; width: 46px; height: 46px; object-fit: contain;
   border: 1px solid var(--line); border-radius: var(--radius-sm);
 }
 /* position:relative for the same reason as .table-scroll: keep absolutely
@@ -263,7 +264,7 @@ table.data .num-input { width: 64px; }
   background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
 }
 .image-preview img {
-  width: 76px; height: 76px; object-fit: cover;
+  width: 76px; height: 76px; object-fit: contain;
   border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff;
 }
 

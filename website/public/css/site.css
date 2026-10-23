@@ -641,7 +641,9 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
   font-family: var(--label); font-size: var(--t-sm);
   font-variant-numeric: tabular-nums; color: var(--ink-soft);
 }
-.col-img { width: 76px; }
+/* 76px 列减去单元格左右各 16px 的内边距，只剩 44px —— 比缩略图本身还窄，
+   方框被压成竖条，横幅照片于是被裁掉两边。列宽要容得下图 + 内边距。 */
+.col-img { width: 100px; }
 
 /* A specification value is short — a ratio, a percentage, a CAS number — so
    its column is capped instead of taking an equal share of the table. Before
@@ -769,10 +771,14 @@ table.products td:not(.col-name):not(.col-act):not(.col-img) {
   font-family: var(--label); font-size: 10.5px;
   letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft);
 }
+/* contain 而不是 cover：买家要看的是这批货长什么样，不是一个构图好看的方块。
+   cover 会把横幅照片的左右两边直接切掉，圆盘、袋子、瓶身都只剩中间一条。
+   留白落在边框里，读起来像一个画框，不像缺了一块。 */
 .thumb {
-  display: block; width: 56px; height: 56px; aspect-ratio: 1; object-fit: cover;
+  display: block; width: 68px; height: 68px; aspect-ratio: 1;
+  object-fit: contain; object-position: center;
   border: 1px solid var(--line); border-radius: var(--radius-sm);
-  background: var(--bg);
+  background: var(--surface);
 }
 .row-act {
   display: inline-flex; flex-wrap: wrap; align-items: center;
