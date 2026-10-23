@@ -942,18 +942,30 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 .thumb-link:hover::after, .thumb-link:focus-visible::after { opacity: 1; }
 
 /* ---------- Contact ---------- */
+/* Three to a row, fixed — not auto-fill. auto-fill packed as many 300px
+   columns as the 1240px page would take, which is four, and a 310px column
+   leaves the body 174px once the photo and the padding are paid for. An
+   address does not fit in what is left after the label, so it broke as
+   "info@durlevel." / "com". Three columns give each card ~413px, and the
+   longest line on it — an address, a WhatsApp number — sits on one line. */
 .staff-grid {
   display: grid; gap: 0;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  border-top: 1px solid var(--line-strong);
-  border-left: 1px solid var(--line-strong);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Paid back by each card's -1px margin, so the frame still starts exactly
+     where the rule above it does. */
+  padding: 1px 0 0 1px;
 }
+/* The frame is drawn by the cards, not by the grid around them. Every card
+   carries all four sides and is pulled a pixel up and left so touching
+   borders land on each other. A row with an empty slot — two people in a
+   three-column grid — then stops at the last card instead of trailing a
+   hairline off into blank paper. */
 .staff-card {
   display: flex; gap: var(--s4);
   padding: var(--s5);
   background: var(--surface);
-  border-right: 1px solid var(--line-strong);
-  border-bottom: 1px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
+  margin: -1px 0 0 -1px;
 }
 .staff-photo, .staff-photo-empty {
   width: 72px; height: 72px; aspect-ratio: 1; flex-shrink: 0;
@@ -992,6 +1004,15 @@ table.products tbody tr .row-act .btn-ghost:hover { background: var(--brand); bo
 }
 /* An address may wrap, but only where an address has joints. */
 .staff-contact a[href^="mailto:"] { word-break: break-word; overflow-wrap: break-word; }
+
+/* Below these widths a third column would squeeze the body back under the
+   width an address needs, so drop a column rather than break the line. */
+@media (max-width: 1099px) {
+  .staff-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 759px) {
+  .staff-grid { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* Narrow screens: the label sits above its value on its own line, so a 250px
    column can no longer split "+86 138 0000 1111" across two. */
