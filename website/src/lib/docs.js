@@ -6,6 +6,7 @@ const multer = require('multer');
 const config = require('../config');
 const { db } = require('../db');
 const { verifyCsrf } = require('./csrf');
+const filetype = require('./filetype');
 
 fs.mkdirSync(config.docDir, { recursive: true });
 
@@ -36,8 +37,22 @@ const uploader = multer({
 });
 
 /** Parses the upload, then verifies the deferred CSV token — same pattern as images. */
+/**
+ * Rejects an upload whose bytes do not match the type it claimed, deleting it
+ * on the way out. Runs after multer has written the file, which is the first
+ * moment there is anything to look at.
+ */
+function verifyContent(req, res, next) {
+  if (!req.file) return next();
+  const ext = path.extname(req.file.filename).toLowerCase();
+  if (filetype.matches(req.file.path, ext)) return next();
+  fs.promises.unlink(req.file.path).catch(() => {});
+  req.file = undefined;
+  return next(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'file'));
+}
+
 function uploadDoc(field) {
-  return [uploader.single(field), verifyCsrf];
+  return [uploader.single(field), verifyCsrf, verifyContent];
 }
 
 const q = {

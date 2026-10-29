@@ -30,10 +30,21 @@ function parseTrustProxy(raw) {
 const isProd = process.env.NODE_ENV === 'production';
 const sessionSecret = process.env.SESSION_SECRET || '';
 
-if (isProd && sessionSecret.length < 32) {
+/**
+ * No key, no start — in every environment, not just production.
+ *
+ * This used to be guarded by `isProd`, with a constant fallback behind it. A
+ * deployment that lost its NODE_ENV line therefore came up signing session
+ * cookies with a string anyone can read in this repository, which is a login
+ * as user 1 for whoever tries it. The check cannot depend on the same config
+ * file the mistake lives in. Developers set a throwaway key in .env; that is
+ * cheaper than the failure mode this replaces.
+ */
+if (sessionSecret.length < 32) {
   throw new Error(
-    'SESSION_SECRET must be set to at least 32 characters in production. ' +
-      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+    'SESSION_SECRET 必须设置，且不少于 32 位。生成一个：\n' +
+      '  node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"\n' +
+      '然后写进 .env 的 SESSION_SECRET='
   );
 }
 
@@ -92,10 +103,12 @@ module.exports = {
   isProd,
   port: Number(process.env.PORT) || 3000,
   host: process.env.HOST || '0.0.0.0',
-  sessionSecret: sessionSecret || 'dev-only-insecure-secret-change-me',
+  sessionSecret,
   sessionTtlMs: Number(process.env.SESSION_TTL_HOURS || 12) * 60 * 60 * 1000,
   trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
-  cookieSecure: bool(process.env.COOKIE_SECURE, isProd),
+  // Default on. Turning it off is a decision someone has to write down
+  // (COOKIE_SECURE=0), not something a missing NODE_ENV decides for them.
+  cookieSecure: bool(process.env.COOKIE_SECURE, true),
   dbFile: process.env.DB_FILE || path.join(ROOT, 'data', 'site.db'),
   uploadDir: process.env.UPLOAD_DIR || path.join(ROOT, 'public', 'uploads'),
   // Spec sheets are deliberately NOT under public/: they are served only
@@ -104,7 +117,11 @@ module.exports = {
   maxUploadBytes: Number(process.env.MAX_UPLOAD_MB || 5) * 1024 * 1024,
   maxDocBytes: Number(process.env.MAX_DOC_MB || 20) * 1024 * 1024,
   login: {
+    // Per account, per source address.
     maxAttempts: Number(process.env.LOGIN_MAX_ATTEMPTS || 8),
+    // Across all accounts from one address, for password spraying. Set well
+    // above what a shared office line produces in a bad morning.
+    maxAttemptsPerIp: Number(process.env.LOGIN_MAX_ATTEMPTS_PER_IP || 30),
     windowMs: Number(process.env.LOGIN_WINDOW_MINUTES || 15) * 60 * 1000,
   },
   bootstrapAdmin: {

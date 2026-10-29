@@ -31,7 +31,11 @@ const q = {
   // Customers issued by one sales account, for its own view and for the
   // "who looks after this customer" lookup on the inquiry page.
   createdBy: db.prepare('SELECT * FROM users WHERE created_by = ? ORDER BY username COLLATE NOCASE'),
-  setPassword: db.prepare('UPDATE users SET password_hash = ? WHERE id = ?'),
+  // Resetting a password must also end the sessions that password protected,
+  // or the obvious response to a stolen account does nothing for 12 hours.
+  setPassword: db.prepare(
+    'UPDATE users SET password_hash = ?, session_epoch = session_epoch + 1 WHERE id = ?'
+  ),
   setContact: db.prepare(
     `UPDATE users SET company = @company, email = @email, phone = @phone,
             whatsapp = @whatsapp, country = @country

@@ -12,6 +12,12 @@
         <button class="btn btn-ghost" type="submit">重新编号</button>
       </form>
       <a class="btn btn-ghost" href="/admin/products/import">批量导入</a>
+      <%# 导出跟着当前的分类和搜索条件走，所以导出的就是眼前这一批。 %>
+      <a class="btn btn-ghost"
+         href="/admin/products/export.xlsx<%= category || search ? '?' : '' %><%=
+           category ? 'category=' + category : '' %><%=
+           category && search ? '&' : '' %><%=
+           search ? 'q=' + encodeURIComponent(search) : '' %>">批量导出</a>
     <% } %>
     <a class="btn" href="/admin/products/new<%= category ? '?category=' + category : '' %>">+ 新增产品</a>
   </div>
@@ -109,11 +115,17 @@
             <td><%= p.name_zh || '—' %></td>
             <td><%= cat ? cat.zh : p.category %></td>
             <td>
-              <% cat.fields.forEach(function (f) { %>
+              <%# cat is undefined when a product points at a category that no
+                  longer exists. Guarding the name two cells up but not here
+                  turned that into a 500 on the whole page — the one page you
+                  need in order to fix it. Same guard as import.ejs. %>
+              <% if (cat) { cat.fields.forEach(function (f) { %>
                 <% if (p[f]) { %>
                   <div><span class="hint"><%= fieldLabels[f].zh %>：</span><%= p[f] %></div>
                 <% } %>
-              <% }); %>
+              <% }); } else { %>
+                <span class="hint">分类「<%= p.category || '（空）' %>」已不存在</span>
+              <% } %>
             </td>
             <td><%= p.remark || '—' %></td>
             <td>

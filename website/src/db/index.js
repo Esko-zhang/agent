@@ -131,6 +131,34 @@ function addColumn(table, column, definition) {
   db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
 
+/**
+ * The unique index on (category, name_en) cannot simply be created on an
+ * existing database: it may already hold duplicates, and a failed CREATE INDEX
+ * inside schema.sql would stop the whole app from starting. So it is tried
+ * separately, and a database that is not ready keeps running while the
+ * administrator merges the rows by hand.
+ */
+function addProductIdentityIndex() {
+  const dup = db
+    .prepare(
+      `SELECT category, lower(trim(name_en)) AS name, COUNT(*) AS n
+       FROM products GROUP BY category, name HAVING n > 1`
+    )
+    .all();
+  if (dup.length) {
+    console.warn(
+      `[db] 有 ${dup.length} 组「同分类同英文名」的重复产品，暂不建立唯一索引。\n` +
+        '     批量导入对这些产品只会更新其中一个，请在「产品管理」里合并或改名：\n' +
+        dup.map((d) => `       · ${d.category} / ${d.name}（${d.n} 个）`).join('\n')
+    );
+    return;
+  }
+  db.exec(
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_products_identity ' +
+      'ON products (category, lower(trim(name_en)))'
+  );
+}
+
 /** Create any missing tables, then apply schema changes. Safe to run repeatedly. */
 function migrate() {
   db.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
@@ -147,6 +175,10 @@ function migrate() {
   addColumn('users', 'created_by_name', "TEXT NOT NULL DEFAULT ''");
   addColumn('users', 'staff_id', 'INTEGER');
 
+  // Lets a password reset invalidate the sessions already issued; see the
+  // column comment in schema.sql.
+  addColumn('users', 'session_epoch', 'INTEGER NOT NULL DEFAULT 0');
+
   // The Chinese product name, for the admin list and form. Admin-only: the
   // catalogue a customer sees is English, and nothing renders this column.
   addColumn('products', 'name_zh', "TEXT NOT NULL DEFAULT ''");
@@ -155,6 +187,10 @@ function migrate() {
   for (const col of ['company', 'email', 'phone', 'whatsapp', 'country']) {
     addColumn('users', col, "TEXT NOT NULL DEFAULT ''");
   }
+
+  // Last, because it reads the products table the columns above may have just
+  // changed, and because it is allowed to decline.
+  addProductIdentityIndex();
 }
 
 // Run before anything else: the lib modules prepare their statements at import

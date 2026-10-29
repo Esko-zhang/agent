@@ -7,11 +7,17 @@ function loadUser(req, res, next) {
   res.locals.currentUser = null;
   if (req.session?.uid) {
     const user = q.byId.get(req.session.uid);
-    if (user && user.is_active) {
+    // A cookie is good only while the account is still there, still enabled,
+    // and still on the password epoch the cookie was issued under. Cookies
+    // issued before this column existed carry no `ep` and read as 0, which is
+    // where every existing account starts — nobody is logged out by the
+    // upgrade itself.
+    const sameEpoch = user && (req.session.ep ?? 0) === (user.session_epoch ?? 0);
+    if (user && user.is_active && sameEpoch) {
       req.user = user;
       res.locals.currentUser = user;
     } else {
-      // Account was deleted or disabled after the cookie was issued.
+      // Deleted, disabled, or the password has been reset since.
       res.clearSession();
     }
   }

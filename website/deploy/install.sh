@@ -188,8 +188,10 @@ else
     firewall-cmd --reload >/dev/null
     echo "    firewalld 已放行 80 / 443"
   fi
-  # Nginx needs to traverse the app directory to serve /uploads/ off disk.
-  chmod o+x "$APP_DIR" "$APP_DIR/public" "$APP_DIR/public/uploads"
+  # Nginx only needs the static assets now — uploaded images go through the
+  # app so they stay behind the login. public/uploads is deliberately not
+  # opened up: nothing outside the app user reads it any more.
+  chmod o+x "$APP_DIR" "$APP_DIR/public"
 
   if [ "$WITH_TLS" = "1" ]; then
     say "申请 HTTPS 证书"
@@ -199,6 +201,16 @@ else
     for d in $DOMAIN; do CERTBOT_NAMES+=(-d "$d"); done
     certbot --nginx "${CERTBOT_NAMES[@]}" --non-interactive --agree-tos -m "$TLS_EMAIL" --redirect
     sed -i 's/^COOKIE_SECURE=0/COOKIE_SECURE=1/' "$APP_DIR/.env"
+    # certbot writes the TLS server block but adds no HSTS, so a first visit —
+    # or any visit after the browser forgets — can still be downgraded to plain
+    # HTTP in front of the login form. One year, no includeSubDomains and no
+    # preload: those commit every subdomain and are hard to walk back.
+    if ! grep -q 'Strict-Transport-Security' /etc/nginx/sites-available/durlevel; then
+      sed -i '/listen 443/a\    add_header Strict-Transport-Security "max-age=31536000" always;' \
+        /etc/nginx/sites-available/durlevel
+      nginx -t >/dev/null 2>&1 && systemctl reload nginx \
+        || warn "HSTS 写入后 nginx -t 没通过，已跳过重载，请手动检查 /etc/nginx/sites-available/durlevel。"
+    fi
     systemctl restart durlevel
   fi
 fi

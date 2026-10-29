@@ -21,16 +21,11 @@ server {
     access_log /var/log/nginx/durlevel.access.log;
     error_log  /var/log/nginx/durlevel.error.log;
 
-    # Product images: served straight off disk, skipping Node entirely.
-    location /uploads/ {
-        alias __APP_DIR__/public/uploads/;
-        expires 7d;
-        add_header Cache-Control "public";
-        # Uploaded files are user content: never let the browser guess a type.
-        add_header X-Content-Type-Options "nosniff" always;
-        access_log off;
-        try_files $uri =404;
-    }
+    # NOTE: there is deliberately no `location /uploads/` block here any more.
+    # Product images are private catalogue content, so they are served by the
+    # app behind a login check. Serving them off disk here would bypass that
+    # guard entirely. If you are upgrading an install that still has the old
+    # block, delete it and reload Nginx — otherwise the fix does nothing.
 
     location / {
         proxy_pass http://127.0.0.1:__PORT__;

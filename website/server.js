@@ -28,7 +28,11 @@ app.use((_req, res, next) => {
   res.setHeader('Referrer-Policy', 'same-origin');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; form-action 'self'; frame-ancestors 'none'"
+    // base-uri does not fall back to default-src, so it has to be named: without
+    // it an injected <base> could point every relative URL on the page
+    // elsewhere. object-src is named for the same reason of being explicit.
+    "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; " +
+      "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
   );
   next();
 });
@@ -40,8 +44,13 @@ app.use(sessionMiddleware);
 app.use(loadUser);
 app.use(csrfMiddleware);
 
-// Static assets. Uploads are user content, so they are served with nosniff
-// and never executed.
+// Uploaded images go through a guard, so this must be mounted ahead of the
+// static directory they physically live in — Express matches in order, and
+// express.static has no idea who is asking.
+app.use('/uploads', require('./src/routes/uploads'));
+
+// Static assets: stylesheets, scripts, fonts, favicon, robots.txt. These are
+// not secrets. Uploads are handled above and never reach here.
 app.use(
   express.static(path.join(__dirname, 'public'), {
     maxAge: config.isProd ? '7d' : 0,
@@ -84,10 +93,16 @@ app.use((req, res) => {
 // Errors, including upload rejections from multer.
 app.use((err, req, res, _next) => {
   if (err instanceof multer.MulterError) {
+    // The same handler covers images and spec sheets, so the size limit named
+    // has to be the one that actually applied.
+    const isDoc = String(req.path || '').includes('/docs');
+    const limitMb = Math.round((isDoc ? config.maxDocBytes : config.maxUploadBytes) / 1024 / 1024);
     const message =
       err.code === 'LIMIT_FILE_SIZE'
-        ? `图片过大，单张不得超过 ${Math.round(config.maxUploadBytes / 1024 / 1024)} MB。`
-        : '只允许上传 JPG / PNG / WebP / GIF 格式的图片。';
+        ? `文件过大，单个不得超过 ${limitMb} MB。`
+        : isDoc
+          ? '文件格式不正确。只接受 PDF / Word / Excel / JPG / PNG，并且文件内容要和扩展名相符。'
+          : '图片格式不正确。只接受 JPG / PNG / WebP / GIF，并且文件内容要和扩展名相符。';
     return res.status(400).render('error', { title: 'Upload rejected', message });
   }
   console.error('[error]', err);

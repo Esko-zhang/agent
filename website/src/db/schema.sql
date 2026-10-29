@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS users (
   -- user:  the catalogue only, no backend
   role          TEXT    NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'sales', 'user')),
   is_active     INTEGER NOT NULL DEFAULT 1,
+  -- Bumped whenever this account's password is reset. Session cookies carry
+  -- the value they were issued under, so bumping it invalidates every cookie
+  -- already out there — which is what resetting a password is supposed to do.
+  session_epoch INTEGER NOT NULL DEFAULT 0,
   created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
   last_login_at TEXT,
   -- Who issued this account. The name is copied in so the record still reads
@@ -70,6 +74,13 @@ CREATE TABLE IF NOT EXISTS products (
   created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+-- A product is identified by its English name within its category: that is
+-- what the Excel import matches on, and what a buyer reads. Without this,
+-- two rows could share both, and an import would silently update only one of
+-- them — whichever the lookup Map happened to keep.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_identity
+  ON products (category, lower(trim(name_en)));
 
 CREATE INDEX IF NOT EXISTS idx_products_category
   ON products (category, is_active, sort_order, id);

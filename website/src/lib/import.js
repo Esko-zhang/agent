@@ -5,6 +5,7 @@ const { db } = require('../db');
 const config = require('../config');
 const categories = require('./categories');
 const products = require('./products');
+const productlog = require('./productlog');
 
 /**
  * Column headers accepted in an uploaded sheet. Chinese and English are both
@@ -181,29 +182,56 @@ function analyse(rawRows) {
 }
 
 /** Applies a previously analysed batch. Error rows are skipped. */
-const apply = db.transaction((analysed) => {
+const apply = db.transaction((analysed, req) => {
   let created = 0;
   let updated = 0;
+  // Every row carries the same source note, so one glance at 产品变更记录
+  // tells you which upload a change came from.
+  const source = `批量导入 · ${analysed.meta?.filename || '表格'}`;
   for (const item of analysed.rows) {
     if (item.action === 'error') continue;
     if (item.action === 'create') {
-      products.q.insert.run({
+      // The preview may be half an hour old. Someone else could have created
+      // this product in the meantime, and inserting now would either duplicate
+      // it or trip the unique index and roll the whole batch back. Re-check
+      // and turn it into the update it has become.
+      const now = products.findByIdentity(item.row.category, item.row.name_en);
+      if (now) {
+        products.q.update.run({
+          ...item.row,
+          id: now.id,
+          image_path: now.image_path,
+          name_zh: analysed.hasNameZh ? item.row.name_zh : now.name_zh,
+          sort_order: item.row.sort_order || now.sort_order,
+        });
+        productlog.recordUpdate(req, now, { ...item.row, id: now.id }, source);
+        updated += 1;
+        continue;
+      }
+      const row = {
         ...item.row,
         image_path: '',
         sort_order: item.row.sort_order || products.nextSortOrder(item.row.category),
-      });
+      };
+      const id = Number(products.q.insert.run(row).lastInsertRowid);
+      // Logged for the same reason every other write is: this is the one
+      // operation that can rewrite hundreds of rows, so it is the one whose
+      // "what did it say before" is worth most.
+      productlog.record(req, { action: 'create', product: { ...row, id }, source });
       created += 1;
     } else {
       const current = products.q.byId.get(item.existingId);
       if (!current) continue;
-      products.q.update.run({
+      const row = {
         ...item.row,
         id: current.id,
         image_path: current.image_path, // the sheet never carries images
         // A sheet without the column leaves the Chinese name alone.
         name_zh: analysed.hasNameZh ? item.row.name_zh : current.name_zh,
         sort_order: item.row.sort_order || current.sort_order,
-      });
+      };
+      products.q.update.run(row);
+      productlog.recordUpdate(req, current, row, source);
       updated += 1;
     }
   }
@@ -219,6 +247,7 @@ const PENDING_TTL_MS = 30 * 60 * 1000;
 
 function stash(userId, analysed, meta) {
   const token = crypto.randomBytes(12).toString('hex');
+  analysed.meta = meta;   // apply() names the source file in every log entry
   pending.set(token, { userId, analysed, meta, at: Date.now() });
   for (const [k, v] of pending) {
     if (Date.now() - v.at > PENDING_TTL_MS) pending.delete(k);
@@ -241,6 +270,73 @@ function peek(token, userId) {
   const entry = pending.get(String(token || ''));
   if (!entry || entry.userId !== userId) return null;
   return entry;
+}
+
+/**
+ * The catalogue as a spreadsheet, in exactly the layout the importer reads.
+ *
+ * It lives beside the importer on purpose: both sides share one COLUMNS list,
+ * so an exported file can be edited and fed straight back in. Export it, fix
+ * twenty rows in Excel, import it — the English name in its category is what
+ * matches a row to a product, which is why that column is written first and
+ * never left blank.
+ *
+ * The category cell carries the Chinese name rather than the key, because that
+ * is what the person editing the sheet recognises, and parseCategory accepts
+ * either on the way back.
+ */
+async function buildExport(rows, { title = '产品' } = {}) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Durlevel';
+  wb.created = new Date();
+  const sheet = wb.addWorksheet(title.slice(0, 28) || '产品');
+
+  sheet.columns = COLUMNS.map((c) => ({ header: c.zh, key: c.key, width: 22 }));
+  sheet.getRow(1).font = { bold: true };
+  sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE7F2EE' } };
+  sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+  const nameOfCategory = (key) => {
+    const c = categories.all().find((x) => x.key === key);
+    return c ? c.zh : key || '';
+  };
+
+  for (const p of rows) {
+    sheet.addRow({
+      category: nameOfCategory(p.category),
+      name_en: p.name_en || '',
+      name_zh: p.name_zh || '',
+      dosage_form: p.dosage_form || '',
+      spec: p.spec || '',
+      tags: p.tags || '',
+      content: p.content || '',
+      ratio: p.ratio || '',
+      cas_no: p.cas_no || '',
+      remark: p.remark || '',
+      sort_order: p.sort_order,
+      // The importer reads 是/否; writing the same words keeps a round trip
+      // from silently republishing everything it touched.
+      is_active: p.is_active ? '是' : '否',
+    });
+  }
+
+  const notes = wb.addWorksheet('说明');
+  notes.columns = [{ width: 100 }];
+  [
+    '这是产品目录的导出文件。',
+    '',
+    `导出时间：${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC`,
+    `产品数量：${rows.length}`,
+    '',
+    '这张表的列和「批量导入」完全一致，可以直接改完再导回去：',
+    '1. 改完后在「产品管理 → 批量导入」上传本文件即可。',
+    '2. 匹配依据是「分类 + 产品英文名字」—— 不要改这两列，否则会被当成新产品。',
+    '3.「上架」列写 是 / 否；导回去会按这一列调整上下架状态。',
+    '4. 删除产品请在后台操作：从这张表里删掉一行不会删除产品。',
+    '5. 产品图片和 TDS/COA 文档不在表格里，导回去也不会影响它们。',
+  ].forEach((line) => notes.addRow([line]));
+
+  return wb.xlsx.writeBuffer();
 }
 
 /** Builds the .xlsx template, with one example row per category. */
@@ -298,6 +394,7 @@ async function buildTemplate() {
 }
 
 module.exports = {
+  buildExport,
   COLUMNS,
   readRows,
   analyse,

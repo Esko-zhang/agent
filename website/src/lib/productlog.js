@@ -22,6 +22,7 @@ const ACTIONS = [
   { key: 'unpublish', zh: '下架' },
   { key: 'delete', zh: '删除产品' },
   { key: 'import', zh: '批量导入' },
+  { key: 'export', zh: '批量导出' },
   { key: 'reorder', zh: '重新编号' },
   { key: 'category', zh: '品类变更' },
   { key: 'doc_add', zh: '上传文档' },
@@ -114,7 +115,7 @@ function summarise(action, changes) {
  * a create, only `before` for a delete. `note` replaces the generated summary,
  * which is what the document actions use.
  */
-function record(req, { action, product, before = null, after = null, note = '', category = '' }) {
+function record(req, { action, product, before = null, after = null, note = '', category = '', source = '' }) {
   const actor = req?.user || null;
   const row = product || after || before || { category };
   const changes = action === 'update' ? diff(before, after) : [];
@@ -126,14 +127,16 @@ function record(req, { action, product, before = null, after = null, note = '', 
     actor_id: actor ? actor.id : null,
     actor_name: actor ? actor.display_name || actor.username : '',
     actor_role: actor ? actor.role : '',
-    summary: note || summarise(action, changes),
+    // `source` is appended rather than substituted: a bulk import still wants
+    // to say what it changed, with the file it came from after it.
+    summary: (note || summarise(action, changes)) + (source ? ` · ${source}` : ''),
     detail: changes.length ? JSON.stringify(changes) : '',
   });
   return changes;
 }
 
 /** An update worth recording: skips the no-op save that changed nothing. */
-function recordUpdate(req, before, after) {
+function recordUpdate(req, before, after, source = '') {
   const changes = diff(before, after);
   if (!changes.length) return [];
   // 上架 / 下架 on its own reads better as its own action than as a diff line.
@@ -141,10 +144,11 @@ function recordUpdate(req, before, after) {
     record(req, {
       action: after.is_active ? 'publish' : 'unpublish',
       product: after,
+      source,
     });
     return changes;
   }
-  record(req, { action: 'update', product: after, before, after });
+  record(req, { action: 'update', product: after, before, after, source });
   return changes;
 }
 

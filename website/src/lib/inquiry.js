@@ -64,6 +64,38 @@ const q = {
   newCount: db.prepare("SELECT COUNT(*) AS n FROM inquiries WHERE status = 'new'"),
 };
 
+/**
+ * The same account's most recent inquiry, if it landed within `seconds`.
+ *
+ * A double-click, or a back-then-resubmit, sends the basket cookie twice
+ * before the response that clears it has been applied — two identical
+ * inquiries, two notification mails, and a rep following up on both.
+ */
+const recentByUser = db.prepare(
+  `SELECT * FROM inquiries
+   WHERE user_id = ? AND created_at >= datetime('now', ?)
+   ORDER BY id DESC LIMIT 1`
+);
+
+function recentDuplicate(userId, fingerprint, seconds = 90) {
+  if (!userId) return null;
+  const row = recentByUser.get(userId, `-${Math.max(1, seconds)} seconds`);
+  if (!row) return null;
+  return fingerprintOf(row, q.items.all(row.id)) === fingerprint ? row : null;
+}
+
+/** What makes two submissions "the same one twice": who, what, and the note. */
+function fingerprintOf(header, items) {
+  return JSON.stringify([
+    String(header.email || '').toLowerCase(),
+    String(header.company || ''),
+    String(header.message || ''),
+    items
+      .map((i) => `${i.product_id}|${i.quantity || ''}|${i.note || ''}`)
+      .sort(),
+  ]);
+}
+
 /** Writes the inquiry and its lines in one transaction. */
 const create = db.transaction((header, items) => {
   const info = q.insert.run(header);
@@ -109,6 +141,8 @@ function list({ status = '', q: term = '', usernames = null } = {}, { limit = 50
 }
 
 module.exports = {
+  recentDuplicate,
+  fingerprintOf,
   COOKIE_NAME,
   MAX_ITEMS,
   readBasket,

@@ -119,10 +119,32 @@ function lastPublishedAt() {
   return row && row.t ? String(row.t).slice(0, 10) : '';
 }
 
+/**
+ * The product occupying this category + English name, if any. `exceptId` lets
+ * an edit ignore the row it is editing. Matched the same way the unique index
+ * and the importer match, so all three agree on what "the same product" means.
+ */
+function findByIdentity(category, nameEn, exceptId = null) {
+  const row = db
+    .prepare(
+      `SELECT * FROM products
+       WHERE category = ? AND lower(trim(name_en)) = lower(trim(?))
+         AND (? IS NULL OR id <> ?)
+       LIMIT 1`
+    )
+    .get(category, String(nameEn || ''), exceptId, exceptId);
+  return row || null;
+}
+
 /** Normalises a submitted admin form into a row for insert/update. */
 function fromForm(body) {
   const known = categories.keys();
-  const category = known.includes(body.category) ? body.category : known[0] || '';
+  // A product has to belong to a real category. The old fallback to '' wrote a
+  // row nothing could render, and the admin list then threw on every visit.
+  if (!known.length) {
+    throw new Error('请先在「品类管理」里创建至少一个品类，然后再录入产品。');
+  }
+  const category = known.includes(body.category) ? body.category : known[0];
   const row = {
     category,
     name_en: String(body.name_en || '').trim(),
@@ -133,6 +155,22 @@ function fromForm(body) {
   for (const f of ALL_PRODUCT_FIELDS) row[f] = String(body[f] || '').trim();
   return row;
 }
+
+/**
+ * A product and its entry in 产品变更记录 are one fact, so they are written
+ * together. They used to be two statements in a row: a failure between them
+ * (a full disk, a locked database) left a change with no record of it, or —
+ * on delete, where the log was written first — a record of a deletion that
+ * never happened.
+ *
+ * `log` is called inside the transaction and returns whatever the caller
+ * wants back; better-sqlite3 turns the nested transaction into a savepoint.
+ */
+const saveWithLog = db.transaction((write, log) => {
+  const result = write();
+  log(result);
+  return result;
+});
 
 /** The next number in a category: 1, 2, 3 … rather than 10, 20, 30. */
 function nextSortOrder(category) {
@@ -152,6 +190,6 @@ const renumber = db.transaction((category) => {
 });
 
 module.exports = {
-  q, publicList, adminList, countOutsideCategory,
+  q, publicList, adminList, countOutsideCategory, saveWithLog, findByIdentity,
   lastPublishedAt, fromForm, nextSortOrder, renumber, SEARCHABLE, ADMIN_SEARCHABLE,
 };

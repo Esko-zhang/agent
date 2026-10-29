@@ -102,10 +102,13 @@ router.post('/', uploader.single('sheet'), verifyCsrf, async (req, res, next) =>
       meta: { filename: req.file.originalname, rows: raw.length },
     });
   } catch (err) {
+    console.error('[import] 解析失败:', err);
     return res.status(400).render('admin/import', {
       nav: 'products',
       stage: 'upload',
-      error: '无法读取这个文件：' + err.message,
+      // The parser's own message can carry a server path; it belongs in the
+      // log, not on the page.
+      error: '无法读取这个文件。请确认它是 .xlsx 或 .csv，第一行是表头，并且没有加密。',
       columns: imp.COLUMNS,
       categories: categories.all(),
     });
@@ -125,7 +128,26 @@ router.post('/confirm', (req, res) => {
       categories: categories.all(),
     });
   }
-  const { created, updated } = imp.apply(entry.analysed);
+  let created;
+  let updated;
+  try {
+    ({ created, updated } = imp.apply(entry.analysed, req));
+  } catch (err) {
+    // The whole batch is one transaction, so nothing was written. Say which
+    // kind of problem it was without putting the driver's message on screen.
+    console.error('[import] 写入失败:', err);
+    const duplicate = String(err.code || '').includes('CONSTRAINT');
+    return res.status(400).render('admin/import', {
+      nav: 'products',
+      stage: 'upload',
+      error: duplicate
+        ? '导入没有执行：表格里有产品和现有目录「同分类同英文名」冲突，或表格内部有重复行。' +
+          '请检查后重新上传。'
+        : '导入没有执行，数据库写入失败。本次没有改动任何产品，请重试或联系维护人员。',
+      columns: imp.COLUMNS,
+      categories: categories.all(),
+    });
+  }
   const skipped = entry.analysed.summary.error;
   const msg =
     `导入完成：新增 ${created} 个，更新 ${updated} 个` +

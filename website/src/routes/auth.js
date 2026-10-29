@@ -17,10 +17,26 @@ function catalogueLines() {
   return categories.active().map((c) => c.en).slice(0, 5);
 }
 
-/** Only allow redirects back into this site. */
+/**
+ * Only allow redirects back into this site.
+ *
+ * Parsed rather than pattern-matched: browsers normalise a backslash to a
+ * slash, so "/\evil.com" is "//evil.com" to them while a /^\/(?!\/)/ test
+ * sees a harmless path and waves it through. Resolving against a placeholder
+ * origin and checking what came out is the only version that agrees with the
+ * browser.
+ */
 function safeNext(next) {
   const v = String(next || '');
-  return /^\/(?!\/)/.test(v) ? v : '/products';
+  if (!v.startsWith('/')) return '/products';
+  try {
+    const base = 'http://durlevel.invalid';
+    const u = new URL(v, base);
+    if (u.origin !== base) return '/products';
+    return u.pathname + u.search + u.hash;
+  } catch {
+    return '/products';
+  }
 }
 
 // The homepage IS the login page (see 规划方案 §1).
@@ -71,7 +87,7 @@ router.post('/login', (req, res) => {
 
   ratelimit.reset(ip, username);
   q.touchLogin.run(user.id);
-  res.setSession({ uid: user.id });
+  res.setSession({ uid: user.id, ep: user.session_epoch || 0 });
   accesslog.record(req, 'login_success', { user, username: user.username, path: '/login' });
   return res.redirect(next);
 });

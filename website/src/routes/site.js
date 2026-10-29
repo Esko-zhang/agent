@@ -11,6 +11,7 @@ const accesslog = require('../lib/accesslog');
 const mailer = require('../lib/mailer');
 const categories = require('../lib/categories');
 const { requireAuth } = require('../lib/auth');
+const roles = require('../lib/roles');
 const usersLib = require('../lib/users');
 
 const router = express.Router();
@@ -32,12 +33,20 @@ router.use((req, res, next) => {
  */
 function safeBack(value, fallback) {
   const v = String(value || '');
-  if (!/^\/(?!\/)/.test(v)) return fallback;
-  const [path, query = ''] = v.split('?');
-  const params = new URLSearchParams(query);
-  params.delete('ok');
-  const rest = params.toString();
-  return rest ? `${path}?${rest}` : path;
+  if (!v.startsWith('/')) return fallback;
+  let u;
+  try {
+    // Same reason as safeNext in routes/auth.js: a regex cannot see that a
+    // browser reads "/\evil.com" as "//evil.com".
+    const base = 'http://durlevel.invalid';
+    u = new URL(v, base);
+    if (u.origin !== base) return fallback;
+  } catch {
+    return fallback;
+  }
+  u.searchParams.delete('ok');
+  const rest = u.searchParams.toString();
+  return rest ? `${u.pathname}?${rest}` : u.pathname;
 }
 
 /** Appends a one-off message to a path that may or may not already have a query. */
@@ -137,9 +146,17 @@ router.get('/contact', requireAuth, (_req, res) => {
 function loadDoc(req) {
   const doc = docs.q.byId.get(req.params.id);
   if (!doc) return null;
+  const product = products.q.byId.get(doc.product_id);
+  // A document is only as visible as the product it hangs off. The catalogue
+  // filters on is_active and this route did not, so a draft a sales account
+  // had not had approved yet was hidden from the listing while its TDS stayed
+  // one guessable id away — and a deleted product's files stayed downloadable
+  // for good. Backend accounts still see both, which is how they review them.
+  if (!product) return null;
+  if (!product.is_active && !roles.hasBackend(req.user)) return null;
   const full = docs.filePath(doc.filename);
   if (!full || !fs.existsSync(full)) return null;
-  return { doc, full, product: products.q.byId.get(doc.product_id) };
+  return { doc, full, product };
 }
 
 /** "/docs/3 (Vitamin C 1000mg Tablets · TDS)" — readable in the access log. */
@@ -303,21 +320,30 @@ router.post('/inquiry', requireAuth, async (req, res) => {
   if (!form.email) return reject('Please provide an email address so we can reply.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return reject('Please check the email address.');
 
-  const id = inquiry.create(
-    {
-      user_id: req.user.id,
-      username: req.user.username,
-      ...form,
-      ip: accesslog.clientIp(req),
-    },
-    rows.map((r) => ({
-      product_id: r.id,
-      name_en: r.name_en,
-      category: r.category,
-      quantity: quantities[r.id] || '',
-      note: notes[r.id] || '',
-    }))
-  );
+  const header = {
+    user_id: req.user.id,
+    username: req.user.username,
+    ...form,
+    ip: accesslog.clientIp(req),
+  };
+  const items = rows.map((r) => ({
+    product_id: r.id,
+    name_en: r.name_en,
+    category: r.category,
+    quantity: quantities[r.id] || '',
+    note: notes[r.id] || '',
+  }));
+
+  // A double-click should send one inquiry, not two. If the identical thing
+  // arrived moments ago, treat this as the same submission and show the same
+  // confirmation rather than filing it again.
+  const already = inquiry.recentDuplicate(req.user.id, inquiry.fingerprintOf(header, items));
+  if (already) {
+    inquiry.clearBasket(res);
+    return res.redirect('/inquiry/sent?id=' + already.id);
+  }
+
+  const id = inquiry.create(header, items);
 
   accesslog.record(req, 'inquiry_submitted', {
     path: `/inquiry #${id} (${rows.length} 个产品)`,

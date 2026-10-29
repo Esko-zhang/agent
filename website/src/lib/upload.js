@@ -5,6 +5,7 @@ const path = require('path');
 const multer = require('multer');
 const config = require('../config');
 const { verifyCsrf } = require('./csrf');
+const filetype = require('./filetype');
 
 fs.mkdirSync(config.uploadDir, { recursive: true });
 
@@ -36,8 +37,22 @@ const uploadImage = multer({
  * body, then the deferred CSRF check runs immediately after. Bundling the two
  * means an upload route can never be wired up without CSRF protection.
  */
+/**
+ * Rejects an upload whose bytes do not match the type it claimed, deleting it
+ * on the way out. Runs after multer has written the file, which is the first
+ * moment there is anything to look at.
+ */
+function verifyContent(req, res, next) {
+  if (!req.file) return next();
+  const ext = path.extname(req.file.filename).toLowerCase();
+  if (filetype.matches(req.file.path, ext)) return next();
+  fs.promises.unlink(req.file.path).catch(() => {});
+  req.file = undefined;
+  return next(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'file'));
+}
+
 function uploadSingle(field) {
-  return [uploadImage.single(field), verifyCsrf];
+  return [uploadImage.single(field), verifyCsrf, verifyContent];
 }
 
 /** Public URL for a stored upload, e.g. `/uploads/ab12.jpg`. */

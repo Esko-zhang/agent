@@ -29,6 +29,10 @@ if (existing) {
   console.log(`✓ Created admin account "${username}".`);
   if (generated) {
     console.log(`  Generated password: ${password}`);
+    // It has to be printed — nothing else knows it. But it now exists in this
+    // terminal's scrollback, in the install transcript, and in the journal if
+    // this ran as a service, so say what to do about that.
+    console.log('  ⚠ 请立即登录后台修改这个密码，然后清掉这段终端记录。');
     console.log('  Store it now — it is not shown again. Change it after first sign-in.');
   } else {
     console.log('  Password taken from ADMIN_PASSWORD.');
