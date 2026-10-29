@@ -192,6 +192,16 @@ table.data tbody tr:focus-within {
   background: #fbfbf9; box-shadow: inset 2px 0 0 var(--brand);
 }
 table.data .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+/* Where there is room, a row's buttons stay on one line. The product list has
+   nine columns now, and letting 编辑 and 删除 stack adds a storey to every
+   row; the text columns beside them can give up the width instead. Below this
+   the table scrolls sideways anyway, so wrapping is the kinder failure. */
+@media (min-width: 1100px) {
+  table.data .row-actions { flex-wrap: nowrap; }
+  /* The label too: a button free to break "编辑" across two lines is no
+     shorter than two stacked buttons, it just looks broken. */
+  table.data .row-actions .btn { white-space: nowrap; }
+}
 /* 和前台同一个道理：后台看缩略图是为了确认传对了图，裁掉两边就看不出来了。 */
 table.data .mini-thumb {
   display: block; width: 46px; height: 46px; object-fit: contain;

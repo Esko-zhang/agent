@@ -13,6 +13,7 @@ const products = require('./products');
 const COLUMNS = [
   { key: 'category', zh: '分类', aliases: ['分类', '类别', 'category', '产品分类'] },
   { key: 'name_en', zh: '产品英文名字', aliases: ['产品英文名字', '产品名称', '英文名', 'name', 'product name', 'name_en'] },
+  { key: 'name_zh', zh: '中文品名', aliases: ['中文品名', '中文名', '中文名称', '品名', 'name_zh', 'chinese name'] },
   { key: 'dosage_form', zh: '剂型', aliases: ['剂型', 'dosage form', 'dosage_form', 'form'] },
   { key: 'spec', zh: '规格', aliases: ['规格', 'specification', 'spec'] },
   { key: 'tags', zh: '产品标签', aliases: ['产品标签', '标签', 'tags', 'product tags'] },
@@ -110,6 +111,13 @@ async function readRows(filePath, originalName) {
  * product in their own sheet.
  */
 function analyse(rawRows) {
+  // readRows only writes keys for headers it actually found, so an absent
+  // 中文品名 column is distinguishable from one whose cells are blank. It
+  // matters because every sheet written before this column existed has no
+  // such header, and importing one to update products must not wipe the
+  // Chinese names already entered by hand. A blank cell still clears it —
+  // that is how every other column behaves.
+  const hasNameZh = rawRows.some((r) => 'name_zh' in r);
   const existing = products.q.listAll.all();
   const index = new Map(
     existing.map((p) => [p.category + '\u0000' + p.name_en.trim().toLowerCase(), p])
@@ -139,6 +147,7 @@ function analyse(rawRows) {
       _row: r._row,
       category,
       name_en: name,
+      name_zh: (r.name_zh || '').trim(),
       dosage_form: (r.dosage_form || '').trim(),
       spec: (r.spec || '').trim(),
       tags: (r.tags || '').trim(),
@@ -161,6 +170,7 @@ function analyse(rawRows) {
 
   return {
     rows: results,
+    hasNameZh,
     summary: {
       create: results.filter((r) => r.action === 'create').length,
       update: results.filter((r) => r.action === 'update').length,
@@ -190,6 +200,8 @@ const apply = db.transaction((analysed) => {
         ...item.row,
         id: current.id,
         image_path: current.image_path, // the sheet never carries images
+        // A sheet without the column leaves the Chinese name alone.
+        name_zh: analysed.hasNameZh ? item.row.name_zh : current.name_zh,
         sort_order: item.row.sort_order || current.sort_order,
       });
       updated += 1;
@@ -246,16 +258,18 @@ async function buildTemplate() {
   };
 
   sheet.addRow({
-    category: 'OEM成品', name_en: 'Vitamin C 1000mg Tablets', dosage_form: 'Tablet',
+    category: 'OEM成品', name_en: 'Vitamin C 1000mg Tablets', name_zh: '维生素C片 1000mg',
+    dosage_form: 'Tablet',
     spec: '1000mg x 60 tablets', tags: 'Immune Support, Best Seller',
     remark: 'MOQ 5,000 bottles', sort_order: 1, is_active: '是',
   });
   sheet.addRow({
-    category: '提取物', name_en: 'Green Tea Extract', content: 'EGCG 50%',
+    category: '提取物', name_en: 'Green Tea Extract', name_zh: '绿茶提取物', content: 'EGCG 50%',
     ratio: '10:1', remark: 'Water soluble', sort_order: 1, is_active: '是',
   });
   sheet.addRow({
-    category: '食品添加剂', name_en: 'Sodium Citrate', dosage_form: 'Powder',
+    category: '食品添加剂', name_en: 'Sodium Citrate', name_zh: '柠檬酸钠',
+    dosage_form: 'Powder',
     cas_no: '68-04-2', remark: 'Food grade, FCC', sort_order: 1, is_active: '是',
   });
 

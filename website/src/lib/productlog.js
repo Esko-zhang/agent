@@ -33,6 +33,7 @@ const ACTION_LABELS = Object.fromEntries(ACTIONS.map((a) => [a.key, a.zh]));
 /** Columns worth reporting a change on, in the order they read best. */
 const TRACKED = [
   { field: 'name_en', label: '产品英文名字' },
+  { field: 'name_zh', label: '中文品名' },
   { field: 'category', label: '所属分类' },
   ...Object.entries(config.FIELD_LABELS).map(([field, l]) => ({ field, label: l.zh })),
   { field: 'sort_order', label: '排序值' },

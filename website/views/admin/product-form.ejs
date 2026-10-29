@@ -44,6 +44,11 @@ var fieldOrder = ['dosage_form', 'spec', 'tags', 'content', 'ratio', 'cas_no', '
       <input name="name_en" value="<%= product.name_en || '' %>" required maxlength="200">
     </label>
 
+    <label class="field">
+      <span>中文品名<span class="hint">（只在后台显示，客户看不到；可留空）</span></span>
+      <input name="name_zh" value="<%= product.name_zh || '' %>" maxlength="200">
+    </label>
+
     <% fieldOrder.forEach(function (f) { %>
       <% var owners = fieldOwners[f] || allCatKeys; %>
       <div class="field <%= f === 'remark' ? 'span-2' : '' %>"

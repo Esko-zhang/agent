@@ -12,13 +12,14 @@ const q = {
     'SELECT * FROM products WHERE category = ? ORDER BY sort_order, id'
   ),
   insert: db.prepare(
-    `INSERT INTO products (category, name_en, image_path, dosage_form, spec, tags,
+    `INSERT INTO products (category, name_en, name_zh, image_path, dosage_form, spec, tags,
                            content, ratio, cas_no, remark, sort_order, is_active)
-     VALUES (@category, @name_en, @image_path, @dosage_form, @spec, @tags,
+     VALUES (@category, @name_en, @name_zh, @image_path, @dosage_form, @spec, @tags,
              @content, @ratio, @cas_no, @remark, @sort_order, @is_active)`
   ),
   update: db.prepare(
-    `UPDATE products SET category = @category, name_en = @name_en, image_path = @image_path,
+    `UPDATE products SET category = @category, name_en = @name_en, name_zh = @name_zh,
+            image_path = @image_path,
             dosage_form = @dosage_form, spec = @spec, tags = @tags, content = @content,
             ratio = @ratio, cas_no = @cas_no, remark = @remark, sort_order = @sort_order,
             is_active = @is_active, updated_at = datetime('now')
@@ -29,8 +30,16 @@ const q = {
   maxSort: db.prepare('SELECT COALESCE(MAX(sort_order), 0) AS m FROM products WHERE category = ?'),
 };
 
-/** Columns the free-text search box looks at. */
+/** Columns the catalogue's search box looks at. */
 const SEARCHABLE = ['name_en', ...ALL_PRODUCT_FIELDS];
+
+/**
+ * The admin list searches one column more: the Chinese name. It is the name
+ * the team actually has in mind when hunting for a product, and it is theirs
+ * alone — a buyer must not be able to probe for it through the catalogue
+ * search, so it stays out of SEARCHABLE above.
+ */
+const ADMIN_SEARCHABLE = [...SEARCHABLE, 'name_zh'];
 
 /**
  * The SQL and bindings for "any searchable column contains this term", or null
@@ -39,13 +48,13 @@ const SEARCHABLE = ['name_en', ...ALL_PRODUCT_FIELDS];
  * rather than any character. Shared so the catalogue and the admin list can
  * never drift into matching on different columns.
  */
-function searchClause(search) {
+function searchClause(search, columns = SEARCHABLE) {
   const term = String(search || '').trim();
   if (!term) return null;
   const like = '%' + term.replace(/[\\%_]/g, (m) => '\\' + m) + '%';
   return {
-    sql: '(' + SEARCHABLE.map((c) => `${c} LIKE ? ESCAPE '\\'`).join(' OR ') + ')',
-    params: SEARCHABLE.map(() => like),
+    sql: '(' + columns.map((c) => `${c} LIKE ? ESCAPE '\\'`).join(' OR ') + ')',
+    params: columns.map(() => like),
     term,
   };
 }
@@ -77,7 +86,7 @@ function adminList(category, search) {
   let sql = 'SELECT * FROM products';
   const clauses = [];
   if (category) { clauses.push('category = ?'); params.push(category); }
-  const where = searchClause(search);
+  const where = searchClause(search, ADMIN_SEARCHABLE);
   if (where) { clauses.push(where.sql); params.push(...where.params); }
   if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
   sql += category ? ' ORDER BY sort_order, id' : ' ORDER BY category, sort_order, id';
@@ -90,7 +99,7 @@ function adminList(category, search) {
  * nothing otherwise reads as "this product does not exist".
  */
 function countOutsideCategory(category, search) {
-  const where = searchClause(search);
+  const where = searchClause(search, ADMIN_SEARCHABLE);
   if (!where || !category) return 0;
   return db
     .prepare(`SELECT COUNT(*) AS n FROM products WHERE category <> ? AND ${where.sql}`)
@@ -117,6 +126,7 @@ function fromForm(body) {
   const row = {
     category,
     name_en: String(body.name_en || '').trim(),
+    name_zh: String(body.name_zh || '').trim(),
     sort_order: Number.parseInt(body.sort_order, 10) || 0,
     is_active: body.is_active ? 1 : 0,
   };
@@ -143,5 +153,5 @@ const renumber = db.transaction((category) => {
 
 module.exports = {
   q, publicList, adminList, countOutsideCategory,
-  lastPublishedAt, fromForm, nextSortOrder, renumber, SEARCHABLE,
+  lastPublishedAt, fromForm, nextSortOrder, renumber, SEARCHABLE, ADMIN_SEARCHABLE,
 };

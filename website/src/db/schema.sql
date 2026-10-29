@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS products (
   -- edits at runtime.
   category    TEXT    NOT NULL,
   name_en     TEXT    NOT NULL,
+  -- The name the team uses internally. Shown in the admin console only;
+  -- the customer-facing catalogue never prints it.
+  name_zh     TEXT    NOT NULL DEFAULT '',
   image_path  TEXT,
   dosage_form TEXT    NOT NULL DEFAULT '',
   spec        TEXT    NOT NULL DEFAULT '',

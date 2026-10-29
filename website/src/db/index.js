@@ -147,6 +147,10 @@ function migrate() {
   addColumn('users', 'created_by_name', "TEXT NOT NULL DEFAULT ''");
   addColumn('users', 'staff_id', 'INTEGER');
 
+  // The Chinese product name, for the admin list and form. Admin-only: the
+  // catalogue a customer sees is English, and nothing renders this column.
+  addColumn('products', 'name_zh', "TEXT NOT NULL DEFAULT ''");
+
   // Contact details for the 联系方式汇总 directory.
   for (const col of ['company', 'email', 'phone', 'whatsapp', 'country']) {
     addColumn('users', col, "TEXT NOT NULL DEFAULT ''");
