@@ -307,6 +307,9 @@ table.data .num-input { width: 64px; }
 .search-row input:focus, .search-row select:focus {
   outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light);
 }
+/* What a search actually returned, under the box that ran it. */
+.search-row + .search-summary { margin: var(--s3) 0 0; }
+
 /* The filter controls were the one place the browser's own chrome showed
    through a system built entirely from hairlines. */
 .admin-main select,

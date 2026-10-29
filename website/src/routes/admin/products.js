@@ -54,13 +54,16 @@ function formContext(req, product, isNew, error, productDocs) {
 
 router.get('/', (req, res) => {
   const category = categories.keys().includes(req.query.category) ? req.query.category : null;
-  const rows = category
-    ? products.q.listByCategoryAdmin.all(category)
-    : products.q.listAll.all();
+  const search = String(req.query.q || '').trim();
+  const rows = products.adminList(category, search);
   res.render('admin/products', {
     nav: 'products',
     rows,
     category,
+    search,
+    // Only asked for while a category is open, and only to warn that the
+    // list in front of you is not the whole answer.
+    outsideCategory: products.countOutsideCategory(category, search),
     canPublish: roles.canPublishProducts(req.user),
     canDelete: roles.canDeleteProducts(req.user),
     canImport: roles.canImportProducts(req.user),

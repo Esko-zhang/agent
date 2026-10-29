@@ -6,7 +6,7 @@
   <div class="actions">
     <% if (canImport) { %>
       <form class="inline-form" method="post" action="/admin/products/renumber"
-            data-confirm="把<%= category ? '当前分类' : '全部分类' %>的排序值按现在的顺序重排成 1、2、3…？顺序本身不变。">
+            data-confirm="把<%= category ? '当前分类' : '全部分类' %>的排序值按现在的顺序重排成 1、2、3…？顺序本身不变<%= search ? '；搜索条件不影响它，整个分类都会重排' : '' %>。">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <input type="hidden" name="category" value="<%= category || '' %>">
         <button class="btn btn-ghost" type="submit">重新编号</button>
@@ -32,12 +32,41 @@
   </p>
 <% } %>
 
+<%# The tabs carry the search term, so switching category keeps what you
+    typed — and the 全部 tab is the one click that widens a search that came
+    up short inside one category. %>
+<% var qs = search ? '&q=' + encodeURIComponent(search) : ''; %>
 <div class="filter-tabs">
-  <a href="/admin/products" class="<%= category ? '' : 'active' %>">全部</a>
+  <a href="/admin/products<%= search ? '?q=' + encodeURIComponent(search) : '' %>"
+     class="<%= category ? '' : 'active' %>">全部</a>
   <% categories.forEach(function (c) { %>
-    <a href="/admin/products?category=<%= c.key %>"
+    <a href="/admin/products?category=<%= c.key %><%= qs %>"
        class="<%= category === c.key ? 'active' : '' %>"><%= c.zh %></a>
   <% }); %>
+</div>
+
+<div class="card">
+  <form method="get" action="/admin/products" class="search-row" role="search">
+    <% if (category) { %><input type="hidden" name="category" value="<%= category %>"><% } %>
+    <label class="visually-hidden" for="product-q">搜索产品</label>
+    <input id="product-q" name="q" value="<%= search %>"
+           placeholder="搜索产品名、规格、含量、比例、CAS号、标签或备注">
+    <button class="btn" type="submit">搜索</button>
+    <% if (search) { %>
+      <a class="btn btn-ghost"
+         href="/admin/products<%= category ? '?category=' + category : '' %>">清除</a>
+    <% } %>
+  </form>
+  <% if (search) { %>
+    <p class="hint search-summary">
+      找到 <strong><%= rows.length %></strong> 个匹配「<%= search %>」的产品<%
+        %><%= category ? '（仅当前分类，含已下架）' : '（含已下架）' %>。
+      <% if (outsideCategory) { %>
+        其他分类还有 <strong><%= outsideCategory %></strong> 个匹配 —
+        <a href="/admin/products?q=<%= encodeURIComponent(search) %>">在全部分类中搜索</a>。
+      <% } %>
+    </p>
+  <% } %>
 </div>
 
 <div class="card">
@@ -57,7 +86,9 @@
       </thead>
       <tbody>
         <% if (!rows.length) { %>
-          <tr><td colspan="8" class="empty-row">暂无产品，点击右上角「新增产品」开始录入。</td></tr>
+          <tr><td colspan="8" class="empty-row"><%
+            if (search) { %>没有匹配「<%= search %>」的产品。换个关键词，或点上方「清除」看全部。<%
+            } else { %>暂无产品，点击右上角「新增产品」开始录入。<% } %></td></tr>
         <% } %>
         <% rows.forEach(function (p) { %>
           <% var cat = categories.find(function (c) { return c.key === p.category; }); %>

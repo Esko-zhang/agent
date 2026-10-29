@@ -33,20 +33,68 @@ const q = {
 const SEARCHABLE = ['name_en', ...ALL_PRODUCT_FIELDS];
 
 /**
+ * The SQL and bindings for "any searchable column contains this term", or null
+ * for an empty term. % and _ are the wildcards of LIKE and a backslash escapes
+ * them, so a CAS number typed with an underscore matches that underscore
+ * rather than any character. Shared so the catalogue and the admin list can
+ * never drift into matching on different columns.
+ */
+function searchClause(search) {
+  const term = String(search || '').trim();
+  if (!term) return null;
+  const like = '%' + term.replace(/[\\%_]/g, (m) => '\\' + m) + '%';
+  return {
+    sql: '(' + SEARCHABLE.map((c) => `${c} LIKE ? ESCAPE '\\'`).join(' OR ') + ')',
+    params: SEARCHABLE.map(() => like),
+    term,
+  };
+}
+
+/**
  * Public listing: active products of one category, optionally filtered by a
  * search term matched against the name and every attribute column.
  */
 function publicList(category, search) {
   const params = [category];
   let sql = 'SELECT * FROM products WHERE category = ? AND is_active = 1';
-  const term = String(search || '').trim();
-  if (term) {
-    const like = '%' + term.replace(/[\\%_]/g, (m) => '\\' + m) + '%';
-    sql += ' AND (' + SEARCHABLE.map((c) => `${c} LIKE ? ESCAPE '\\'`).join(' OR ') + ')';
-    params.push(...SEARCHABLE.map(() => like));
+  const where = searchClause(search);
+  if (where) {
+    sql += ' AND ' + where.sql;
+    params.push(...where.params);
   }
   sql += ' ORDER BY sort_order, id';
   return db.prepare(sql).all(...params);
+}
+
+/**
+ * Admin listing: the same search over every product, published or not, since
+ * an unpublished draft is exactly what someone is usually hunting for. With no
+ * category it keeps the grouped order of q.listAll so the page reads the same
+ * either way.
+ */
+function adminList(category, search) {
+  const params = [];
+  let sql = 'SELECT * FROM products';
+  const clauses = [];
+  if (category) { clauses.push('category = ?'); params.push(category); }
+  const where = searchClause(search);
+  if (where) { clauses.push(where.sql); params.push(...where.params); }
+  if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
+  sql += category ? ' ORDER BY sort_order, id' : ' ORDER BY category, sort_order, id';
+  return db.prepare(sql).all(...params);
+}
+
+/**
+ * How many products the term matches outside the category being shown. The
+ * list says so when it is not zero: searching inside one category and finding
+ * nothing otherwise reads as "this product does not exist".
+ */
+function countOutsideCategory(category, search) {
+  const where = searchClause(search);
+  if (!where || !category) return 0;
+  return db
+    .prepare(`SELECT COUNT(*) AS n FROM products WHERE category <> ? AND ${where.sql}`)
+    .get(category, ...where.params).n;
 }
 
 /**
@@ -94,5 +142,6 @@ const renumber = db.transaction((category) => {
 });
 
 module.exports = {
-  q, publicList, lastPublishedAt, fromForm, nextSortOrder, renumber, SEARCHABLE,
+  q, publicList, adminList, countOutsideCategory,
+  lastPublishedAt, fromForm, nextSortOrder, renumber, SEARCHABLE,
 };
